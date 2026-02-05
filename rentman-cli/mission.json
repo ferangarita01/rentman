@@ -1,0 +1,21 @@
+{
+  "title": "Test iOS login flow",
+  "description": "Test login functionality on real iPhone device using TestFlight",
+  "task_type": "verification",
+  "location": {
+    "lat": 40.7128,
+    "lng": -74.0060,
+    "address": "New York, NY"
+  },
+  "budget_amount": 15.00,
+  "required_skills": ["iOS testing", "TestFlight"],
+  "requirements": {
+    "testflight_url": "https://testflight.apple.com/join/xxxxx",
+    "verification_methods": ["video_verification"],
+    "expected_output": {
+      "login_success": "boolean",
+      "video_proof": "string",
+      "error_message": "string"
+    }
+  }
+}

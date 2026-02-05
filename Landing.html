@@ -195,12 +195,14 @@
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button onclick="trackButtonClick('Start Integrating', 'Hero')"
+                <button
+                    onclick="trackButtonClick('Start Integrating', 'Hero'); document.getElementById('integrateWrapper').scrollIntoView({behavior: 'smooth'})"
                     class="w-full sm:w-auto px-8 py-4 bg-[#00ff88] text-black font-mono text-sm font-semibold rounded hover:bg-[#33ff99] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] transition-all duration-300 flex items-center justify-center gap-2">
                     <iconify-icon icon="solar:code-linear" class="text-lg"></iconify-icon>
                     Start Integrating
                 </button>
-                <button onclick="trackButtonClick('Become an Operator', 'Hero')"
+                <button
+                    onclick="trackButtonClick('Become an Operator', 'Hero'); document.getElementById('operatorModal').showModal()"
                     class="w-full sm:w-auto px-8 py-4 bg-transparent border border-white/10 text-white font-mono text-sm font-medium rounded hover:border-white/30 hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2">
                     <iconify-icon icon="solar:user-id-linear" class="text-lg"></iconify-icon>
                     Become an Operator
@@ -491,15 +493,84 @@
                 </div>
             </div>
 
-            <div class="mt-16 p-8 bg-[#0a0a0a] border border-white/5 rounded-2xl w-full max-w-2xl text-center">
-                <h3 class="text-white text-lg font-medium mb-2">Become a Verified Operator</h3>
-                <p class="text-slate-400 text-sm mb-6">Complete real-world tasks requested by autonomous systems. Paid
-                    instantly upon verified completion.</p>
-                <button
-                    class="px-6 py-2 bg-white/5 border border-white/10 text-white rounded hover:bg-white/10 transition-colors text-xs font-mono font-medium">
-                    Apply as Operator
-                </button>
+            <!-- Integrate Form (Agent/Developer) -->
+            <div id="integrateWrapper" class="w-full max-w-lg mx-auto">
+                <form id="integrateForm" class="flex flex-col gap-4" onsubmit="handleIntegrateSubmit(event)">
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <input type="text" id="devName" placeholder="Your Name" required
+                            class="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded text-white placeholder-slate-500 font-mono text-sm focus:outline-none focus:border-[#00ff88]/50 focus:ring-1 focus:ring-[#00ff88]/20 transition-all">
+                        <input type="email" id="devEmail" placeholder="Work Email" required
+                            class="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded text-white placeholder-slate-500 font-mono text-sm focus:outline-none focus:border-[#00ff88]/50 focus:ring-1 focus:ring-[#00ff88]/20 transition-all">
+                    </div>
+                    <button type="submit"
+                        class="w-full px-8 py-3 bg-[#00ff88] text-black font-mono text-sm font-medium rounded hover:bg-[#33ff99] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] transition-all duration-300 flex items-center justify-center gap-2">
+                        <iconify-icon icon="solar:code-bold" class="text-lg"></iconify-icon>
+                        Start Integrating
+                    </button>
+                    <p class="text-center text-slate-600 text-[10px] font-mono">Get API Keys & Documentation</p>
+                </form>
+                <div id="integrateSuccess"
+                    class="hidden p-4 bg-[#00ff88]/10 border border-[#00ff88]/30 rounded text-center">
+                    <p class="text-[#00ff88] font-mono text-sm">✓ Welcome to the protocol. Check your email.</p>
+                </div>
             </div>
+
+            <!-- Operator Modal (Hidden by default, triggered by buttons) -->
+            <dialog id="operatorModal"
+                class="bg-[#0a0a0a] border border-white/10 rounded-xl p-0 backdrop:bg-black/80 w-full max-w-md shadow-2xl">
+                <div class="p-6 relative">
+                    <button onclick="document.getElementById('operatorModal').close()"
+                        class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                        <iconify-icon icon="solar:close-square-linear" width="24"></iconify-icon>
+                    </button>
+
+                    <div class="mb-6 text-center">
+                        <div
+                            class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#00ff88]/10 mb-3">
+                            <iconify-icon icon="solar:user-id-linear" class="text-[#00ff88] text-2xl"></iconify-icon>
+                        </div>
+                        <h3 class="text-white font-mono text-lg">Become an ApiHuman</h3>
+                        <p class="text-slate-500 text-xs mt-1">Earn by completing tasks for AI Agents.</p>
+                    </div>
+
+                    <form id="operatorForm" class="space-y-4" onsubmit="handleOperatorSubmit(event)">
+                        <div>
+                            <label class="block text-[10px] font-mono text-slate-500 uppercase mb-1">Full Name</label>
+                            <input type="text" id="opName" required
+                                class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-mono text-slate-500 uppercase mb-1">Email
+                                Address</label>
+                            <input type="email" id="opEmail" required
+                                class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-mono text-slate-500 uppercase mb-1">City</label>
+                                <input type="text" id="opCity" required placeholder="e.g. New York"
+                                    class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-sm">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-mono text-slate-500 uppercase mb-1">Specialty</label>
+                                <select id="opSpecialty"
+                                    class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-sm appearance-none">
+                                    <option value="general">General (Runner)</option>
+                                    <option value="photography">Photography</option>
+                                    <option value="notary">Notary / Legal</option>
+                                    <option value="transport">Transport</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-3 bg-white text-black font-mono text-sm font-bold rounded hover:bg-[#00ff88] transition-colors mt-2">
+                            Submit Application
+                        </button>
+                    </form>
+                </div>
+            </dialog>
         </div>
     </section>
 
@@ -541,6 +612,95 @@
         }
     </style>
 
+    <!-- Supabase Client & Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://uoekolfgbbmvhzsfkjef.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZWtvbGZnYmJtdmh6c2ZramVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjQzNzUsImV4cCI6MjA4NTkwMDM3NX0.DYxAxi4TTBLgdVruu8uGM3Jog7JZaplWqikAvI0EXvk';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- Integrate Form (Agent/Dev) ---
+        async function handleIntegrateSubmit(e) {
+            e.preventDefault();
+            const form = document.getElementById('integrateForm');
+            const btn = form.querySelector('button');
+            const originalText = btn.innerHTML;
+
+            const name = document.getElementById('devName').value;
+            const email = document.getElementById('devEmail').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="line-md:loading-loop"></iconify-icon> Integrating...';
+
+            try {
+                const { error } = await supabase.from('waitlist').insert({
+                    name: name,
+                    email: email,
+                    type: 'agent_developer',
+                    metadata: { source: 'landing_integrate_form' }
+                });
+
+                if (error) {
+                    if (error.code === '23505') throw new Error("Email already registered!");
+                    throw error;
+                }
+
+                form.classList.add('hidden');
+                document.getElementById('integrateSuccess').classList.remove('hidden');
+                gtag('event', 'lead_integrate', { 'event_category': 'conversion' });
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // --- ApiHuman Form (Operator) ---
+        async function handleOperatorSubmit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+
+            const name = document.getElementById('opName').value;
+            const email = document.getElementById('opEmail').value;
+            const city = document.getElementById('opCity').value;
+            const specialty = document.getElementById('opSpecialty').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="line-md:loading-loop"></iconify-icon> Processing...';
+
+            try {
+                const { error } = await supabase.from('waitlist').insert({
+                    name: name,
+                    email: email,
+                    type: 'api_human',
+                    metadata: {
+                        city: city,
+                        specialty: specialty,
+                        source: 'landing_operator_modal'
+                    }
+                });
+
+                if (error) {
+                    if (error.code === '23505') throw new Error("Email already registered!");
+                    throw error;
+                }
+
+                document.getElementById('operatorModal').close();
+                alert("Application Received! Welcome to the API Human network.");
+                gtag('event', 'lead_operator', { 'event_category': 'conversion' });
+                e.target.reset();
+
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    </script>
 </body>
 
 </html>
