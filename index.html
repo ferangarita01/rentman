@@ -9,7 +9,7 @@
             }); var f = d.getElementsByTagName(s)[0],
                 j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
                     'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
-        })(window, document, 'script', 'dataLayer', 'GTM-WDCLWK4P');</script>
+        })(window, document, 'script', 'dataLayer', 'GTM-T3STSKKC');</script>
     <!-- End Google Tag Manager -->
 
     <meta charset="UTF-8">
@@ -163,7 +163,7 @@
 
 <body class="text-slate-400 antialiased selection:bg-[#00ff88] selection:text-black overflow-x-hidden">
     <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WDCLWK4P" height="0" width="0"
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T3STSKKC" height="0" width="0"
             style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
@@ -647,32 +647,63 @@
         }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://uoekolfgbbmvhzsfkjef.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZWtvbGZnYmJtdmh6c2ZramVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjQzNzUsImV4cCI6MjA4NTkwMDM3NX0.DYxAxi4TTBLgdVruu8uGM3Jog7JZaplWqikAvI0EXvk';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
         // Waitlist Form Handler
         document.getElementById('waitlistForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('emailInput').value;
+            const emailInput = document.getElementById('emailInput');
+            const submitButton = e.target.querySelector('button');
             const form = document.getElementById('waitlistForm');
             const successMsg = document.getElementById('successMessage');
 
-            try {
-                // Option 1: Supabase (uncomment when ready)
-                // const { error } = await supabase.from('waitlist').insert({ email, type: 'agent' });
+            const email = emailInput.value;
 
-                // Option 2: Store locally for now
-                const waitlist = JSON.parse(localStorage.getItem('rentman_waitlist') || '[]');
-                waitlist.push({ email, timestamp: new Date().toISOString() });
-                localStorage.setItem('rentman_waitlist', JSON.stringify(waitlist));
+            // Loading state
+            const originalBtnText = submitButton.innerHTML;
+            submitButton.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-lg"></iconify-icon> Joining...';
+            submitButton.disabled = true;
+
+            try {
+                // Save to Supabase
+                const { error } = await supabase.from('waitlist').insert({ email, type: 'agent' });
+
+                if (error) throw error;
 
                 // Show success
                 form.classList.add('hidden');
                 successMsg.classList.remove('hidden');
 
+                // Track event
+                gtag('event', 'generate_lead', {
+                    'event_category': 'waitlist',
+                    'event_label': 'hero_form'
+                });
+
             } catch (err) {
                 console.error('Waitlist error:', err);
-                alert('Error joining waitlist. Please try again.');
+                // Handle duplicate email specifically (Postgres code 23505)
+                if (err.code === '23505') {
+                    form.classList.add('hidden');
+                    successMsg.innerHTML = '<p class="text-[#00ff88] font-mono text-sm">🎉 You are already on the list!</p>';
+                    successMsg.classList.remove('hidden');
+                } else {
+                    alert('Error joining: ' + err.message);
+                    submitButton.innerHTML = originalBtnText;
+                    submitButton.disabled = false;
+                }
             }
         });
+    </script>
+
+    <!-- Auto-scroll to top on load -->
+    <script>
+        window.scrollTo(0, 0);
     </script>
 
 </body>
