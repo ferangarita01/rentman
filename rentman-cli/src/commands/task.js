@@ -1,10 +1,9 @@
 const { Command } = require('commander');
-const chalk = require('chalk');
 const fs = require('fs');
 const Ajv = require('ajv');
 const { apiRequest } = require('../lib/api');
 
-const taskCommand = new Command('task');
+const taskCommand = new Command();
 
 // JSON Schema for task validation
 const taskSchema = {
@@ -36,14 +35,13 @@ const taskSchema = {
 };
 
 taskCommand
-  .command('create')
+  .command('create <file>')
   .description('Create a new task from JSON file')
-  .argument('<file>', 'Path to JSON file with task definition')
   .action(async (file) => {
     try {
       // Read and parse JSON file
       if (!fs.existsSync(file)) {
-        console.error(chalk.red(`❌ File not found: ${file}`));
+        console.error(`❌ File not found: ${file}`);
         process.exit(1);
       }
 
@@ -55,31 +53,31 @@ taskCommand
       const valid = validate(taskData);
       
       if (!valid) {
-        console.error(chalk.red('❌ Invalid task schema:'));
+        console.error('❌ Invalid task schema:');
         console.error(validate.errors);
         process.exit(1);
       }
 
-      console.log(chalk.cyan('📋 Creating task...'));
-      console.log(chalk.gray(JSON.stringify(taskData, null, 2)));
+      console.log('📋 Creating task...');
+      console.log(JSON.stringify(taskData, null, 2));
 
       // POST to API
-      const response = await apiRequest('/market/tasks', {
+      const response = await apiRequest('/market-tasks', {
         method: 'POST',
         body: JSON.stringify(taskData),
       });
 
       if (response.success) {
         const taskId = response.data.id;
-        console.log(chalk.green(`✅ Task Created: ${taskId}`));
-        console.log(chalk.gray(`Status: ${response.data.status}`));
-        console.log(chalk.gray(`Budget: $${response.data.budget_amount}`));
+        console.log(`✅ Task Created: ${taskId}`);
+        console.log(`Status: ${response.data.status}`);
+        console.log(`Budget: $${response.data.budget_amount}`);
       } else {
-        console.error(chalk.red('❌ Task creation failed'));
+        console.error('❌ Task creation failed');
         process.exit(1);
       }
     } catch (error) {
-      console.error(chalk.red('❌ Error:'), error.message);
+      console.error('❌ Error:', error.message);
       process.exit(1);
     }
   });
@@ -89,26 +87,26 @@ taskCommand
   .description('ASCII visualization of active tasks')
   .action(async () => {
     try {
-      const response = await apiRequest('/market/tasks?status=OPEN');
+      const response = await apiRequest('/market-tasks?status=OPEN');
       
-      console.log(chalk.cyan('🗺️  ACTIVE TASKS MAP'));
-      console.log(chalk.gray('─'.repeat(50)));
+      console.log('🗺️  ACTIVE TASKS MAP');
+      console.log('─'.repeat(50));
       
       if (response.success && response.data.length > 0) {
         response.data.forEach((task, i) => {
           const icon = getTaskIcon(task.task_type);
-          const loc = task.location ? `📍 ${task.location.address || 'Remote'}` : '💻 Remote';
+          const loc = task.location_address || '💻 Remote';
           
           console.log(`${icon} ${task.title}`);
-          console.log(chalk.gray(`   ${loc} | $${task.budget_amount} | ${task.status}`));
-          console.log(chalk.gray(`   ID: ${task.id}`));
+          console.log(`   📍 ${loc} | $${task.budget_amount} | ${task.status}`);
+          console.log(`   ID: ${task.id}`);
           console.log('');
         });
       } else {
-        console.log(chalk.gray('No active tasks found.'));
+        console.log('No active tasks found.');
       }
     } catch (error) {
-      console.error(chalk.red('❌ Error:'), error.message);
+      console.error('❌ Error:', error.message);
       process.exit(1);
     }
   });
