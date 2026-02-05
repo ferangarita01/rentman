@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account | Rentman</title>
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            color: #94a3b8;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'JetBrains Mono', monospace;
+            color: white;
+        }
+
+        a {
+            color: #00ff88;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="antialiased flex flex-col min-h-screen">
+    <div class="flex-grow max-w-lg mx-auto px-6 py-20 w-full">
+        <div class="mb-12 text-center">
+            <div
+                class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 mb-6 border border-red-500/20">
+                <iconify-icon icon="solar:trash-bin-trash-linear" class="text-red-500 text-3xl"></iconify-icon>
+            </div>
+            <h1 class="text-3xl font-bold mb-4">Delete Account</h1>
+            <p class="text-sm text-slate-500 leading-relaxed">
+                If you wish to delete your Rentman account and associated data, please submit your registered email
+                below.
+                This action is irreversible.
+            </p>
+        </div>
+
+        <div class="bg-[#0a0a0a] border border-white/10 rounded-xl p-8 shadow-2xl">
+            <form id="deleteForm" class="space-y-6" onsubmit="handleDeleteSubmit(event)">
+                <div>
+                    <label class="block text-[10px] font-mono text-slate-500 uppercase mb-1">Email Address</label>
+                    <input type="email" id="email" required placeholder="Enter your registered email"
+                        class="w-full px-4 py-3 bg-black border border-white/10 rounded text-white focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none text-sm transition-all">
+                </div>
+
+                <div class="bg-red-500/5 border border-red-500/10 rounded p-4">
+                    <div class="flex items-start gap-3">
+                        <iconify-icon icon="solar:danger-triangle-linear"
+                            class="text-red-500 mt-0.5 shrink-0"></iconify-icon>
+                        <p class="text-xs text-red-400/80">
+                            By clicking "Request Deletion", you authorize us to permanently remove your personal
+                            identity data from our active systems within 30 days. Ledger records of completed tasks will
+                            be anonymized.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-mono text-sm font-bold rounded transition-colors flex items-center justify-center gap-2">
+                    Request Deletion
+                </button>
+            </form>
+
+            <div id="successMessage" class="hidden text-center py-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#00ff88]/10 mb-3">
+                    <iconify-icon icon="solar:check-circle-bold" class="text-[#00ff88] text-2xl"></iconify-icon>
+                </div>
+                <h3 class="text-white text-lg font-medium mb-1">Request Received</h3>
+                <p class="text-slate-500 text-xs">
+                    We will process your deletion request shortly. A confirmation email will be sent once completed.
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-12 text-center">
+            <a href="/" class="font-mono text-xs text-slate-500 hover:text-white">← Cancel and Return Home</a>
+        </div>
+    </div>
+
+    <!-- Supabase Client & Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://uoekolfgbbmvhzsfkjef.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZWtvbGZnYmJtdmh6c2ZramVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjQzNzUsImV4cCI6MjA4NTkwMDM3NX0.DYxAxi4TTBLgdVruu8uGM3Jog7JZaplWqikAvI0EXvk';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function handleDeleteSubmit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const form = document.getElementById('deleteForm');
+            const successMsg = document.getElementById('successMessage');
+            const originalText = btn.innerHTML;
+            const email = document.getElementById('email').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="line-md:loading-loop"></iconify-icon> Processing...';
+
+            try {
+                // Log deletion request to waitlist table for now (or a specific requests table)
+                // Using 'deletion_request' type to distinguish
+                const { error } = await supabase.from('waitlist').insert({
+                    email: email,
+                    type: 'deletion_request',
+                    metadata: {
+                        source: 'delete_account_page',
+                        timestamp: new Date().toISOString()
+                    }
+                });
+
+                if (error) {
+                    // Ignore duplicate key error if user requests multiple times, treat as success
+                    if (error.code !== '23505') throw error;
+                }
+
+                form.classList.add('hidden');
+                successMsg.classList.remove('hidden');
+
+            } catch (err) {
+                alert("Error submitting request: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    </script>
+</body>
+
+</html>
