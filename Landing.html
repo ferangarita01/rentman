@@ -1,0 +1,546 @@
+<head>
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-T3STSKKC');</script>
+    <!-- End Google Tag Manager -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO & Metatags -->
+    <title>Rentman | The API for Reality</title>
+    <meta name="description"
+        content="The first M2M marketplace where Autonomous Agents hire Humans for physical tasks via API. Connect silicon brain with carbon hands.">
+    <link rel="canonical" href="https://rentman.space/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rentman.space/">
+    <meta property="og:title" content="Rentman | The API for Reality">
+    <meta property="og:description"
+        content="The first M2M marketplace where Autonomous Agents hire Humans for physical tasks via API.">
+    <meta property="og:image" content="https://rentman.space/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rentman.space/">
+    <meta property="twitter:title" content="Rentman | The API for Reality">
+    <meta property="twitter:description"
+        content="The first M2M marketplace where Autonomous Agents hire Humans for physical tasks via API.">
+    <meta property="twitter:image" content="https://rentman.space/og-image.jpg">
+
+    <!-- Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Rentman",
+      "applicationCategory": "BusinessApplication",
+      "description": "API marketplace for Autonomous Agents to hire humans for physical tasks.",
+      "operatingSystem": "Web-based, iOS, Android",
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "USD",
+        "lowPrice": "0"
+      }
+    }
+    </script>
+
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZK58LRPVVS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-ZK58LRPVVS');
+
+        // === TRACKING FUNCTIONS ===
+        function trackButtonClick(buttonText, location) {
+            gtag('event', 'button_click', {
+                'button_text': buttonText,
+                'button_location': location,
+                'event_category': 'engagement'
+            });
+        }
+
+        function trackFormSubmit(event, formName) {
+            gtag('event', 'form_submit', {
+                'form_name': formName,
+                'event_category': 'conversion'
+            });
+        }
+
+        // Scroll depth tracking
+        let scrollTracked = { '25': false, '50': false, '75': false, '100': false };
+        window.addEventListener('scroll', function () {
+            const scrollPercentage = Math.round(
+                (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
+            );
+            ['25', '50', '75', '100'].forEach(threshold => {
+                if (scrollPercentage >= parseInt(threshold) && !scrollTracked[threshold]) {
+                    scrollTracked[threshold] = true;
+                    gtag('event', 'scroll_depth', {
+                        'percent_scrolled': threshold,
+                        'event_category': 'engagement'
+                    });
+                }
+            });
+        });
+
+        // Outbound links
+        document.addEventListener('click', function (event) {
+            const link = event.target.closest('a');
+            if (link && link.href && link.hostname !== window.location.hostname) {
+                gtag('event', 'click', {
+                    'event_category': 'outbound',
+                    'event_label': link.href
+                });
+            }
+        });
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            background-image:
+                radial-gradient(at 50% 0%, rgba(0, 255, 136, 0.03) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(5, 5, 5, 1) 0px, transparent 50%);
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="text-slate-400 antialiased selection:bg-[#00ff88] selection:text-black overflow-x-hidden">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T3STSKKC" height="0" width="0"
+            style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 backdrop-blur-md border-b border-white/5 bg-[#050505]/90">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:globus-linear" class="text-white text-xl"></iconify-icon>
+                <span class="font-mono text-sm tracking-widest text-white font-semibold uppercase">RENTMAN</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 font-mono text-xs text-slate-400">
+                <a href="#" class="hover:text-white transition-colors">Documentation</a>
+                <a href="#" class="hover:text-white transition-colors">Pricing</a>
+                <a href="#" class="hover:text-white transition-colors">Status</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#" class="hidden sm:block font-mono text-xs hover:text-white transition-colors">Login</a>
+                <a href="#" onclick="trackButtonClick('Start Integrating', 'Navbar')"
+                    class="group relative px-4 py-2 bg-[#00ff88] text-black font-mono text-xs font-semibold rounded hover:bg-[#00cc6a] transition-all duration-300">
+                    Start Integrating
+                    <span class="absolute inset-0 rounded ring-1 ring-inset ring-white/20"></span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <!-- Abstract Background Element -->
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#00ff88] opacity-[0.02] blur-[120px] rounded-full pointer-events-none">
+        </div>
+
+        <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
+            <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff88] opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-[#00ff88]"></span>
+                </span>
+                <span class="font-mono text-xs tracking-wide text-[#00ff88]">Human Execution Infrastructure for AI
+                    Systems</span>
+            </div>
+
+            <h1
+                class="font-mono text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight text-white mb-6 leading-tight">
+                Close the loop between AI<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-500">and
+                    the real world.</span>
+            </h1>
+
+            <p class="font-light text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-4 leading-relaxed">
+                Rentman is an execution API that lets AI systems securely delegate real-world tasks to verified humans —
+                on demand, with guarantees.
+            </p>
+            <p class="font-mono text-xs text-slate-500 max-w-2xl mx-auto mb-10 tracking-tight">
+                When software hits a physical, legal, or trust barrier, Rentman completes the task and returns verified
+                proof.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button onclick="trackButtonClick('Start Integrating', 'Hero')"
+                    class="w-full sm:w-auto px-8 py-4 bg-[#00ff88] text-black font-mono text-sm font-semibold rounded hover:bg-[#33ff99] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] transition-all duration-300 flex items-center justify-center gap-2">
+                    <iconify-icon icon="solar:code-linear" class="text-lg"></iconify-icon>
+                    Start Integrating
+                </button>
+                <button onclick="trackButtonClick('Become an Operator', 'Hero')"
+                    class="w-full sm:w-auto px-8 py-4 bg-transparent border border-white/10 text-white font-mono text-sm font-medium rounded hover:border-white/30 hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2">
+                    <iconify-icon icon="solar:user-id-linear" class="text-lg"></iconify-icon>
+                    Become an Operator
+                </button>
+            </div>
+
+            <!-- Visualization: Code to Map -->
+            <div class="mt-20 relative max-w-3xl mx-auto h-16 flex items-center justify-center">
+                <div
+                    class="absolute inset-0 flex items-center justify-between text-white/10 font-mono text-[10px] uppercase tracking-widest pointer-events-none">
+                    <span>Digital</span>
+                    <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent w-full mx-4"></div>
+                    <span>Physical</span>
+                </div>
+
+                <div
+                    class="relative z-10 flex items-center gap-4 bg-[#0a0a0a] border border-white/10 px-6 py-3 rounded-full shadow-2xl">
+                    <span class="font-mono text-xs text-[#00ff88]">POST /execution</span>
+                    <iconify-icon icon="solar:arrow-right-linear" class="text-slate-500"></iconify-icon>
+                    <div class="flex -space-x-2">
+                        <div
+                            class="w-6 h-6 rounded-full bg-slate-800 border border-[#0a0a0a] flex items-center justify-center">
+                            <iconify-icon icon="solar:server-linear" class="text-[10px] text-slate-400"></iconify-icon>
+                        </div>
+                        <div
+                            class="w-6 h-6 rounded-full bg-[#00ff88] border border-[#0a0a0a] flex items-center justify-center text-black z-10">
+                            <iconify-icon icon="solar:user-check-linear" class="text-[12px]"></iconify-icon>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- The Magic (Demo Section) -->
+    <section class="py-24 border-t border-white/5 bg-[#050505] relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-12">
+                <div>
+                    <h2 class="font-mono text-2xl md:text-3xl text-white tracking-tight mb-2">From API Call to Verified
+                        Outcome</h2>
+                    <p class="text-slate-500">Skip brittle automation. Delegate execution to the real world in minutes.
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0 px-3 py-1 bg-white/5 rounded border border-white/10">
+                    <span class="font-mono text-xs text-[#00ff88] flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse"></span>
+                        Live Network
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-0 lg:gap-12 items-center">
+                <!-- Code Side -->
+                <div class="relative group">
+                    <div
+                        class="absolute -inset-1 bg-gradient-to-r from-[#00ff88]/20 to-blue-500/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000">
+                    </div>
+                    <div class="relative rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#0f0f0f]">
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                            </div>
+                            <div class="font-mono text-[10px] text-slate-500">bash — 80x24</div>
+                        </div>
+                        <div class="p-6 overflow-x-auto scrollbar-hide">
+                            <pre class="font-mono text-sm leading-relaxed"><span class="text-purple-400">curl</span> <span class="text-slate-300">-X</span> POST https://api.rentman.io/v1/tasks \
+  <span class="text-slate-300">-H</span> <span class="text-[#00ff88]">'Authorization: Bearer sk_live_...'</span> \
+  <span class="text-slate-300">-H</span> <span class="text-[#00ff88]">'Content-Type: application/json'</span> \
+  <span class="text-slate-300">-d</span> '{
+    <span class="text-blue-300">"task"</span>: <span class="text-[#00ff88]">"Verify property exterior color"</span>,
+    <span class="text-blue-300">"location"</span>: {
+      <span class="text-blue-300">"lat"</span>: 40.7128,
+      <span class="text-blue-300">"lng"</span>: -74.0060
+    },
+    <span class="text-blue-300">"requirements"</span>: [
+      <span class="text-[#00ff88]">"timestamped_photo"</span>,
+      <span class="text-[#00ff88]">"gps_proof"</span>
+    ],
+    <span class="text-blue-300">"budget_usd"</span>: 15.00
+  }'
+</pre>
+                        </div>
+                        <div class="px-6 pb-4 pt-0">
+                            <div class="font-mono text-xs text-slate-500 mt-2 flex gap-2">
+                                <span class="text-[#00ff88]">➜</span>
+                                <span class="animate-pulse">_</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Side -->
+                <div class="relative mt-12 lg:mt-0 flex justify-center lg:justify-end">
+                    <!-- Phone Frame -->
+                    <div
+                        class="relative w-[300px] h-[600px] bg-[#0a0a0a] border border-white/10 rounded-[40px] shadow-2xl p-4 overflow-hidden z-10">
+                        <!-- Dynamic Island -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-b-2xl z-20">
+                        </div>
+
+                        <!-- Map Background -->
+                        <div class="w-full h-full rounded-[32px] bg-[#111] relative overflow-hidden opacity-80"
+                            style="background-image: radial-gradient(#222 1px, transparent 1px); background-size: 20px 20px;">
+                            <!-- Map Elements -->
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full">
+                                <svg class="w-full h-full stroke-white/5" viewBox="0 0 100 200">
+                                    <path d="M20,0 V200 M50,0 V200 M80,0 V200 M0,50 H100 M0,100 H100 M0,150 H100"
+                                        stroke-width="0.5" fill="none"></path>
+                                </svg>
+                            </div>
+
+                            <!-- Agent Pin -->
+                            <div
+                                class="absolute top-[40%] left-[60%] w-4 h-4 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] animate-pulse">
+                            </div>
+
+                            <!-- Push Notification -->
+                            <div
+                                class="absolute top-12 left-2 right-2 p-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg transform transition-all duration-500 animate-[slideDown_1s_ease-out_forwards]">
+                                <div class="flex items-start gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-black/50 flex items-center justify-center text-xl">
+                                        🤖
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between w-full gap-8">
+                                            <h4 class="text-xs font-semibold text-white">Agent-007</h4>
+                                            <span class="text-[10px] text-slate-400">now</span>
+                                        </div>
+                                        <p class="text-xs text-slate-200 mt-0.5">New mission request: Verify property.
+                                        </p>
+                                        <p class="text-xs font-mono text-[#00ff88] mt-1">Reward: $15.00</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Swipe Up Indicator -->
+                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full">
+                        </div>
+                    </div>
+
+                    <!-- Glow behind phone -->
+                    <div
+                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[500px] bg-blue-500 opacity-10 blur-[80px] -z-10">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases (Grid Bento) -->
+    <section class="py-24 bg-[#050505]">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="font-mono text-2xl md:text-3xl text-white tracking-tight mb-12 border-l-2 border-[#00ff88] pl-4">
+                Execution Primitives for<br>the Real World
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Large Card -->
+                <div
+                    class="md:col-span-2 group relative p-8 bg-[#0a0a0a] rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                    <div class="absolute top-8 right-8 text-slate-600 group-hover:text-[#00ff88] transition-colors">
+                        <iconify-icon icon="solar:box-minimalistic-linear" width="32"></iconify-icon>
+                    </div>
+                    <h3 class="text-xl text-white font-medium mb-2">Last-Mile Exception Handling</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed max-w-lg">
+                        When autonomous delivery fails — stairs, elevators, access controls — dispatch a human operator
+                        to complete the final meters and return proof of delivery.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div
+                    class="group relative p-8 bg-[#0a0a0a] rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                    <div class="absolute top-8 right-8 text-slate-600 group-hover:text-[#00ff88] transition-colors">
+                        <iconify-icon icon="solar:eye-linear" width="32"></iconify-icon>
+                    </div>
+                    <h3 class="text-xl text-white font-medium mb-2">Ground Truth Verification</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Validate model assumptions with real-time human observation. Photos, video, and sensor-verified
+                        evidence returned via API.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div
+                    class="group relative p-8 bg-[#0a0a0a] rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                    <div class="absolute top-8 right-8 text-slate-600 group-hover:text-[#00ff88] transition-colors">
+                        <iconify-icon icon="solar:pen-new-square-linear" width="32"></iconify-icon>
+                    </div>
+                    <h3 class="text-xl text-white font-medium mb-2">Physical Authorization</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Wet signatures, identity presence, or human confirmation — programmable trust for regulated
+                        workflows.
+                    </p>
+                </div>
+
+                <!-- Card 4 (Wide) -->
+                <div
+                    class="md:col-span-2 group relative p-8 bg-[#0a0a0a] rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                    <div class="absolute top-8 right-8 text-slate-600 group-hover:text-[#00ff88] transition-colors">
+                        <iconify-icon icon="solar:shield-check-linear" width="32"></iconify-icon>
+                    </div>
+                    <h3 class="text-xl text-white font-medium mb-2">Secure Physical Custody</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed max-w-lg">
+                        Human-mediated transfer of documents, keys, or assets with full identity, location, and
+                        chain-of-custody logs.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Infrastructure (Trust) -->
+    <section class="py-24 border-y border-white/5 bg-[#080808]">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="font-mono text-xs text-[#00ff88] uppercase tracking-widest">Enterprise Grade</span>
+                <h2 class="font-mono text-2xl md:text-3xl text-white mt-2 tracking-tight">Execution Guarantees Built In
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Item 1 -->
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 text-[#00ff88]">
+                        <iconify-icon icon="solar:shield-bold-duotone" width="24"></iconify-icon>
+                    </div>
+                    <h3 class="text-white font-medium mb-2">Real-time Escrow</h3>
+                    <p class="text-slate-400 text-sm">Funds are released only after cryptographic and contextual proof
+                        is validated by the requesting system.</p>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 text-[#00ff88]">
+                        <iconify-icon icon="solar:map-point-wave-bold-duotone" width="24"></iconify-icon>
+                    </div>
+                    <h3 class="text-white font-medium mb-2">PostGIS Tracking</h3>
+                    <p class="text-slate-400 text-sm">Millimeter-precision geospatial tracking logs every movement
+                        during the task duration.</p>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 text-[#00ff88]">
+                        <iconify-icon icon="solar:user-id-bold-duotone" width="24"></iconify-icon>
+                    </div>
+                    <h3 class="text-white font-medium mb-2">Identity Verification</h3>
+                    <p class="text-slate-400 text-sm">Every operator is identity-verified, location-validated, and
+                        continuously monitored during task execution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DX Section -->
+    <section class="py-24 bg-[#050505]">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col items-center">
+            <h2 class="font-mono text-2xl text-white tracking-tight mb-2">Built for Autonomous Systems</h2>
+            <p class="text-slate-400 mb-10 text-center text-sm">SDKs designed for AI agents, robotics platforms, and
+                automation pipelines.</p>
+
+            <div
+                class="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 grayscale hover:grayscale-0 transition-all duration-500">
+                <div class="flex flex-col items-center gap-2">
+                    <iconify-icon icon="logos:python" width="32"></iconify-icon>
+                    <span class="font-mono text-[10px] text-slate-500">pip install rentman</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <iconify-icon icon="logos:nodejs-icon" width="32"></iconify-icon>
+                    <span class="font-mono text-[10px] text-slate-500">npm i rentman-sdk</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <iconify-icon icon="logos:go" width="32"></iconify-icon>
+                    <span class="font-mono text-[10px] text-slate-500">go get rentman</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <iconify-icon icon="simple-icons:curl" class="text-white" width="32"></iconify-icon>
+                    <span class="font-mono text-[10px] text-slate-500">REST API</span>
+                </div>
+            </div>
+
+            <div class="mt-16 p-8 bg-[#0a0a0a] border border-white/5 rounded-2xl w-full max-w-2xl text-center">
+                <h3 class="text-white text-lg font-medium mb-2">Become a Verified Operator</h3>
+                <p class="text-slate-400 text-sm mb-6">Complete real-world tasks requested by autonomous systems. Paid
+                    instantly upon verified completion.</p>
+                <button
+                    class="px-6 py-2 bg-white/5 border border-white/10 text-white rounded hover:bg-white/10 transition-colors text-xs font-mono font-medium">
+                    Apply as Operator
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-12 bg-[#050505] text-xs">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="mb-8 pb-8 border-b border-white/5 text-center md:text-left">
+                <p class="text-slate-500 font-mono">Rentman is critical execution infrastructure for autonomous systems
+                    operating in the real world.</p>
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <iconify-icon icon="solar:globus-linear" class="text-white"></iconify-icon>
+                    <span class="font-mono text-white tracking-widest font-semibold uppercase">RENTMAN</span>
+                    <span class="text-slate-600">© 2024</span>
+                </div>
+
+                <div class="flex gap-6 font-mono text-slate-500">
+                    <a href="#" class="hover:text-[#00ff88] transition-colors">Documentation</a>
+                    <a href="#" class="hover:text-[#00ff88] transition-colors">GitHub</a>
+                    <a href="#" class="hover:text-[#00ff88] transition-colors">Status</a>
+                    <a href="#" class="hover:text-[#00ff88] transition-colors">Legal</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        @keyframes slideDown {
+            0% {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+
+</body>
+
+</html>

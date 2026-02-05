@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wallet &amp; Analytics - Rentman</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00ff88",
+              "background-light": "#f5f8f7",
+              "background-dark": "#050505",
+              "terminal-border": "#1a2e25",
+              "terminal-grid": "#0d1a14"
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"],
+              "mono": ["JetBrains Mono", "monospace"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-nav {
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+        }
+        .grid-bg {
+            background-image: linear-gradient(to right, #0d1a14 1px, transparent 1px),
+                              linear-gradient(to bottom, #0d1a14 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 136, 0.05);
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white selection:bg-primary selection:text-black">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<nav class="sticky top-0 z-50 glass-nav flex items-center p-4 justify-between h-16">
+<div class="flex size-10 items-center justify-center border border-primary/20 rounded">
+<span class="material-symbols-outlined text-primary text-[20px]">arrow_back_ios_new</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="text-[10px] uppercase tracking-widest text-primary/60 font-mono">Terminal_v4.2</span>
+<h2 class="text-white text-sm font-bold leading-tight tracking-wider font-mono">WALLET_DASHBOARD</h2>
+</div>
+<div class="flex size-10 items-center justify-center border border-primary/20 rounded">
+<span class="material-symbols-outlined text-primary text-[20px]">settings_input_component</span>
+</div>
+</nav>
+<main class="flex-1 p-4 space-y-6">
+<section class="flex flex-col items-center pt-6 pb-2 border-x border-primary/10 relative">
+<div class="absolute inset-0 grid-bg opacity-30"></div>
+<p class="text-primary/60 text-[10px] font-mono uppercase tracking-[0.2em] relative z-10">Total_Balance_Available</p>
+<h1 class="text-primary font-mono text-[40px] font-bold leading-none py-2 drop-shadow-[0_0_10px_rgba(0,255,136,0.3)] relative z-10">
+                    $1,240.50
+                </h1>
+<div class="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/30 rounded-full relative z-10">
+<span class="material-symbols-outlined text-primary text-[14px]">trending_up</span>
+<span class="text-primary text-[11px] font-mono font-bold">+12.5% (24H)</span>
+</div>
+</section>
+<section class="border border-terminal-border bg-black/40 rounded-lg overflow-hidden">
+<div class="flex items-center justify-between p-3 border-b border-terminal-border bg-terminal-grid/50">
+<div class="flex items-center gap-2">
+<span class="size-2 bg-primary animate-pulse"></span>
+<h3 class="text-primary text-xs font-mono font-bold uppercase tracking-widest">Earnings_Trend_HUD</h3>
+</div>
+<span class="text-[10px] font-mono text-primary/40 uppercase">Live_Feed</span>
+</div>
+<div class="p-4 grid-bg relative">
+<div class="flex items-end justify-between h-[160px] w-full">
+<svg class="w-full h-full" viewbox="0 0 400 150">
+<defs>
+<lineargradient id="lineGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#00ff88" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#00ff88" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,130 Q50,120 80,100 T160,80 T240,40 T320,60 T400,20 V150 H0 Z" fill="url(#lineGradient)"></path>
+<path d="M0,130 Q50,120 80,100 T160,80 T240,40 T320,60 T400,20" fill="none" stroke="#00ff88" stroke-width="2"></path>
+<rect fill="#00ff88" height="4" width="4" x="78" y="98"></rect>
+<rect fill="#00ff88" height="4" width="4" x="158" y="78"></rect>
+<rect fill="#00ff88" height="4" width="4" x="238" y="38"></rect>
+<rect fill="#00ff88" height="4" width="4" x="318" y="58"></rect>
+<rect fill="#00ff88" height="4" width="4" x="396" y="18"></rect>
+</svg>
+</div>
+<div class="flex justify-between mt-4 border-t border-terminal-border pt-2">
+<p class="text-primary/40 font-mono text-[9px]">00:00</p>
+<p class="text-primary/40 font-mono text-[9px]">06:00</p>
+<p class="text-primary/40 font-mono text-[9px]">12:00</p>
+<p class="text-primary/40 font-mono text-[9px]">18:00</p>
+<p class="text-primary/40 font-mono text-[9px]">NOW</p>
+</div>
+</div>
+</section>
+<section class="space-y-3">
+<div class="flex items-center gap-2">
+<span class="text-primary material-symbols-outlined text-sm">token</span>
+<h3 class="text-white text-xs font-mono font-bold uppercase tracking-widest">Token_Breakdown</h3>
+</div>
+<div class="border border-terminal-border rounded overflow-hidden">
+<table class="w-full font-mono text-left border-collapse">
+<thead class="bg-terminal-grid text-primary/60 text-[10px] uppercase border-b border-terminal-border">
+<tr>
+<th class="p-3 font-medium">Asset</th>
+<th class="p-3 font-medium text-right">Balance</th>
+<th class="p-3 font-medium text-right">USD_Val</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-terminal-border text-[12px]">
+<tr class="hover:bg-primary/5 transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-primary/20 rounded flex items-center justify-center">
+<span class="text-[10px] text-primary font-bold">U</span>
+</div>
+<span>USDG</span>
+</div>
+</td>
+<td class="p-3 text-right">840.50</td>
+<td class="p-3 text-right text-primary">$840.50</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-primary/20 rounded flex items-center justify-center">
+<span class="text-[10px] text-primary font-bold">E</span>
+</div>
+<span>ETH</span>
+</div>
+</td>
+<td class="p-3 text-right">0.124</td>
+<td class="p-3 text-right text-primary">$290.00</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-primary/20 rounded flex items-center justify-center">
+<span class="text-[10px] text-primary font-bold">R</span>
+</div>
+<span>RENT</span>
+</div>
+</td>
+<td class="p-3 text-right">45,000</td>
+<td class="p-3 text-right text-primary">$110.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="flex gap-3">
+<button class="flex-1 bg-primary text-black font-mono font-bold py-4 rounded flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">call_made</span>
+<span>WITHDRAW</span>
+</button>
+<button class="flex-1 border border-primary text-primary font-mono font-bold py-4 rounded flex items-center justify-center gap-2 active:scale-95 transition-transform bg-primary/5">
+<span class="material-symbols-outlined text-[20px]">call_received</span>
+<span>DEPOSIT</span>
+</button>
+</section>
+</main>
+<footer class="h-20 glass-nav border-t border-primary/20 flex items-center justify-around px-6">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-[9px] font-mono">WALLET</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary/40">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[9px] font-mono">MARKET</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary/40">
+<span class="material-symbols-outlined">robot_2</span>
+<span class="text-[9px] font-mono">AGENTS</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary/40">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[9px] font-mono">USER</span>
+</button>
+</footer>
+<div class="fixed bottom-24 right-6 size-12 bg-primary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(0,255,136,0.4)] active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-black">terminal</span>
+</div>
+</div>
+</body></html>
