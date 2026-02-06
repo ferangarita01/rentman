@@ -395,21 +395,43 @@ const Landing: React.FC = () => {
                 </div>
 
                 <div className="w-full max-w-lg px-6">
-                    {!integrateSuccess ? (
-                        <form onSubmit={handleIntegrateSubmit} className="space-y-4">
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <input type="text" placeholder="YOUR NAME" required className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded text-white placeholder-slate-600 font-mono text-[10px] uppercase focus:outline-none focus:border-[#00ff88]/50 transition-all" />
-                                <input type="email" placeholder="WORK EMAIL" required className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded text-white placeholder-slate-600 font-mono text-[10px] uppercase focus:outline-none focus:border-[#00ff88]/50 transition-all" />
-                            </div>
-                            <button type="submit" className="w-full px-8 py-3 bg-[#00ff88] text-black font-mono text-xs font-bold uppercase rounded hover:bg-[#33ff99] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] transition-all">
-                                Get API Credentials
-                            </button>
-                        </form>
-                    ) : (
-                        <div className="p-6 bg-[#00ff88]/10 border border-[#00ff88]/30 rounded text-center animate-in fade-in zoom-in">
-                            <p className="text-[#00ff88] font-mono text-xs uppercase tracking-widest">✓ Handshake Successful. Check your inbox.</p>
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-8 relative overflow-hidden group hover:border-[#00ff88]/30 transition-all">
+                        <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-100 transition-opacity">
+                            <IconifyIcon icon="solar:terminal-linear" width="24" className="text-[#00ff88]"></IconifyIcon>
                         </div>
-                    )}
+
+                        <h3 className="font-mono text-white text-sm uppercase tracking-widest mb-2">Initialize Protocol</h3>
+                        <p className="text-slate-500 text-xs mb-6 leading-relaxed">
+                            Create your operator credentials directly from your terminal. Use these same credentials to access the web dashboard.
+                        </p>
+
+                        <div className="bg-black/50 rounded border border-white/5 p-4 font-mono text-xs relative">
+                            <div className="flex gap-2 mb-2">
+                                <span className="text-[#00ff88]">$</span>
+                                <span className="text-slate-300">npx rentman init</span>
+                            </div>
+                            <div className="text-slate-500 text-[10px] space-y-1 pl-4 border-l border-white/10 ml-1">
+                                <div>{'>'} keygen ssh-ed25519... OK</div>
+                                <div>{'>'} registering node... OK</div>
+                                <div className="text-[#00ff88]">{'>'} credentials created.</div>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex gap-4 justify-center">
+                            <button
+                                onClick={() => { navigator.clipboard.writeText('npx rentman init'); alert('Command copied: npx rentman init'); }}
+                                className="px-6 py-2 bg-[#00ff88] text-black font-mono text-[10px] font-bold uppercase rounded hover:bg-[#33ff99] transition-all"
+                            >
+                                Copy Command
+                            </button>
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="px-6 py-2 bg-white/5 text-white font-mono text-[10px] uppercase rounded hover:bg-white/10 transition-all"
+                            >
+                                Web Login
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
