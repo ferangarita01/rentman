@@ -1,2 +1,8 @@
 .vercel
 .env*.local
+
+# Build logs
+*.log
+
+# Key output
+key_output.txt

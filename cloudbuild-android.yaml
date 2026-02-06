@@ -1,0 +1,53 @@
+steps:
+  # Step 1: Install Node.js dependencies
+  - name: 'node:20'
+    dir: 'rentman-app'
+    entrypoint: 'npm'
+    args: ['install', '--force']
+
+  # Step 2: Generate Android project with Expo
+  - name: 'node:20'
+    dir: 'rentman-app'
+    entrypoint: 'npx'
+    args: ['expo', 'prebuild', '--platform', 'android', '--clean']
+
+  # Step 3: Copy keystore into android/app
+  - name: 'ubuntu'
+    dir: 'rentman-app'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'cp rentman.keystore android/app/'
+
+  # Step 4: Build Android APK with cirruslabs/android-sdk:34 (Trusted, Java 17, Pre-accepted licenses)
+  - name: 'ghcr.io/cirruslabs/android-sdk:34'
+    dir: 'rentman-app/android'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Updating gradle.properties for ARM64 & Memory..."
+        echo "reactNativeArchitectures=arm64-v8a" >> gradle.properties
+        echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m" >> gradle.properties
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+        apt-get install -y nodejs
+        chmod +x gradlew
+        sed -i 's/\r$//' gradlew
+        ./gradlew assembleRelease --no-daemon --stacktrace
+
+  # Step 5: Copy APK to output bucket
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gsutil cp /workspace/rentman-app/android/app/build/outputs/apk/release/app-release.apk \
+          gs://rentman-builds/app-release-$SHORT_SHA.apk
+        echo "APK uploaded to: gs://rentman-builds/app-release-$SHORT_SHA.apk"
+
+options:
+  logging: GCS_ONLY
+  machineType: 'E2_HIGHCPU_8'
+logsBucket: 'gs://rentman-builds'
+
+timeout: '3600s'
