@@ -467,37 +467,122 @@ const Landing: React.FC = () => {
                             <h3 className="text-white font-mono text-lg uppercase tracking-widest">Become an ApiHuman</h3>
                             <p className="text-slate-500 text-[9px] uppercase tracking-widest mt-2">Earn by completing tasks for AI Agents.</p>
                         </div>
-                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsOperatorModalOpen(false); alert("Application Received!"); }}>
-                            <div>
-                                <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Full Name</label>
-                                <input type="text" required className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text" />
-                            </div>
-                            <div>
-                                <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Email</label>
-                                <input type="email" required className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">City</label>
-                                    <input type="text" required className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text" />
-                                </div>
-                                <div>
-                                    <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Specialty</label>
-                                    <select className="w-full px-3 py-2 bg-black border border-white/10 rounded text-slate-400 focus:border-[#00ff88] outline-none text-xs mono-text appearance-none">
-                                        <option>General Runner</option>
-                                        <option>Photography</option>
-                                        <option>Legal/Notary</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button type="submit" className="w-full py-3 bg-white text-black font-mono text-[10px] font-bold uppercase tracking-widest rounded hover:bg-[#00ff88] transition-colors mt-4">
-                                Submit Application
-                            </button>
-                        </form>
+                        <OperatorRegistrationForm onClose={() => setIsOperatorModalOpen(false)} />
                     </div>
                 </div>
             )}
         </div>
+    );
+};
+
+const OperatorRegistrationForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        fullName: '',
+        city: '',
+        specialty: 'General Runner'
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        // 1. Sign Up using Supabase (Lazy import to avoid top-level issues if not needed immediately, but actually supabase is safe)
+        const { supabase } = await import('../lib/supabase');
+
+        const { error } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+                data: {
+                    full_name: formData.fullName,
+                    city: formData.city,
+                    specialty: formData.specialty,
+                    role: 'operator_candidate' // Marker for this flow
+                }
+            }
+        });
+
+        setLoading(false);
+
+        if (error) {
+            alert('Registration Failed: ' + error.message);
+        } else {
+            alert('Application Received! Please check your email to confirm your identity.');
+            onClose();
+        }
+    };
+
+    return (
+        <form className="space-y-4" onSubmit={handleSubmit}>
+            <div>
+                <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Full Name</label>
+                <input
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                    className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text"
+                />
+            </div>
+            <div>
+                <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Email</label>
+                <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text"
+                />
+            </div>
+            <div>
+                <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Password</label>
+                <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={formData.password}
+                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text"
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">City</label>
+                    <input
+                        type="text"
+                        required
+                        value={formData.city}
+                        onChange={e => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs mono-text"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[8px] font-mono text-slate-500 uppercase mb-1">Specialty</label>
+                    <select
+                        value={formData.specialty}
+                        onChange={e => setFormData({ ...formData, specialty: e.target.value })}
+                        className="w-full px-3 py-2 bg-black border border-white/10 rounded text-slate-400 focus:border-[#00ff88] outline-none text-xs mono-text appearance-none"
+                    >
+                        <option>General Runner</option>
+                        <option>Photography</option>
+                        <option>Legal/Notary</option>
+                    </select>
+                </div>
+            </div>
+            <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-white text-black font-mono text-[10px] font-bold uppercase tracking-widest rounded hover:bg-[#00ff88] transition-colors mt-4 disabled:opacity-50"
+            >
+                {loading ? 'Processing...' : 'Submit Application'}
+            </button>
+        </form>
+    );
+
+        </div >
     );
 };
 
