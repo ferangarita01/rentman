@@ -1,0 +1,22 @@
+<svg viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <style>
+      .rentman-text {
+        fill: #00ff88;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-weight: 800;
+        font-size: 82px;
+        letter-spacing: -6px;
+        filter: url(#neonGlow);
+      }
+    </style>
+  </defs>
+  <rect width="100%" height="100%" fill="transparent" />
+  <text x="50%" y="85" text-anchor="middle" class="rentman-text">
+    RENTMAN_
+  </text>
+</svg>
