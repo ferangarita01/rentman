@@ -1,0 +1,11 @@
+{
+    "title": "Test Delivery Mission",
+    "description": "Pick up a package from Office A and deliver it to Building B. Take photo of delivery confirmation.",
+    "task_type": "delivery",
+    "budget_amount": 25,
+    "location_address": "123 Main Street, Downtown",
+    "required_skills": [
+        "driving",
+        "photography"
+    ]
+}

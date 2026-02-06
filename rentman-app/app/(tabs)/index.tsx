@@ -1,7 +1,11 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import JobCard from '@/components/ui/JobCard';
+import NeoButton from '@/components/ui/NeoButton';
+import { API_URL } from '@/lib/constants';
 
 interface Task {
     id: string;
@@ -15,8 +19,10 @@ interface Task {
 }
 
 export default function Dashboard() {
+    const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
+    const [acceptingTask, setAcceptingTask] = useState<string | null>(null);
 
     const loadTasks = async () => {
         try {
@@ -36,13 +42,57 @@ export default function Dashboard() {
         }
     };
 
+    const handleAccept = async (taskId: string) => {
+        try {
+            setAcceptingTask(taskId);
+
+            // Call Cloud Run API (Production)
+            const response = await fetch(`${API_URL}/v1/market/bid`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    task_id: taskId,
+                    human_id: 'HUMAN-001' // TODO: Replace with real user ID
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // Success! Navigate to mission
+                Alert.alert(
+                    'Mission Accepted',
+                    `You've accepted the mission!`,
+                    [{
+                        text: 'START MISSION',
+                        onPress: () => router.push(`/mission/${taskId}` as any)
+                    }]
+                );
+
+                // Remove from list (optimistic update)
+                setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+            } else {
+                // Task unavailable or error
+                Alert.alert('Task Unavailable', result.error?.message || 'This task has already been accepted.');
+                loadTasks(); // Refresh list
+            }
+        } catch (error) {
+            console.error('Error accepting task:', error);
+            Alert.alert('Error', 'Failed to accept task. Please try again.');
+        } finally {
+            setAcceptingTask(null);
+        }
+    };
+
     useEffect(() => {
         loadTasks();
 
         // Real-time subscription
         const channel = supabase
             .channel('tasks_changes')
-            .on('postgres_changes', 
+            .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'tasks' },
                 (payload) => {
                     console.log('Task change detected:', payload);
@@ -56,89 +106,95 @@ export default function Dashboard() {
         };
     }, []);
 
-    const getTaskIcon = (type: string) => {
-        const icons: Record<string, string> = {
-            delivery: '📦',
-            verification: '✅',
-            repair: '🔧',
-            representation: '👤',
-            creative: '🎨',
-            communication: '📞'
-        };
-        return icons[type] || '📋';
-    };
-
     return (
-        <View className="flex-1 bg-background pt-12 px-4">
+        <View className="flex-1 bg-background">
             <StatusBar style="light" />
-            <View className="flex-row justify-between items-center mb-6">
-                <View>
-                    <Text className="text-[#00ff88] font-mono text-xs tracking-widest mb-1">OPERATOR_ID: HUMAN-001</Text>
-                    <Text className="text-white text-3xl font-bold tracking-tight">MISSION STATUS</Text>
+
+            {/* Header */}
+            <View className="pt-14 pb-4 px-4 border-b border-white/5">
+                <View className="flex-row justify-between items-center mb-2">
+                    <View>
+                        <Text className="text-[#00ff88] font-mono text-xs tracking-widest mb-1">
+                            OPERATOR_ID: HUMAN-001
+                        </Text>
+                        <Text className="text-white text-3xl font-bold tracking-tight">
+                            JOB FEED
+                        </Text>
+                    </View>
+                    <View className="h-10 w-10 rounded-full border-2 border-[#00ff88] items-center justify-center bg-[#00ff88]/10">
+                        <View className="h-3 w-3 bg-[#00ff88] rounded-full animate-pulse" />
+                    </View>
                 </View>
-                <View className="h-8 w-8 rounded-full border border-[#00ff88] items-center justify-center bg-[#00ff88]/10 animate-pulse">
-                    <View className="h-2 w-2 bg-[#00ff88] rounded-full" />
-                </View>
+
+                <Text className="text-gray-500 font-mono text-xs">
+                    {tasks.length} AVAILABLE MISSION{tasks.length !== 1 ? 'S' : ''}
+                </Text>
             </View>
 
-            <View className="bg-[#0a0a0a] border border-white/10 p-6 rounded-lg mb-6">
-                <Text className="text-gray-400 font-mono text-xs mb-2">CURRENT BALANCE</Text>
-                <Text className="text-4xl text-white font-mono font-bold">$0.00 <Text className="text-gray-600 text-lg">USD</Text></Text>
-            </View>
-
-            <Text className="text-[#00ff88] font-mono text-xs tracking-widest mb-4 border-b border-[#00ff88]/20 pb-2">
-                AVAILABLE_MISSIONS ({tasks.length})
-            </Text>
-
-            <ScrollView 
+            {/* Job List */}
+            <ScrollView
+                className="flex-1 px-4"
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={loadTasks} tintColor="#00ff88" />
+                    <RefreshControl
+                        refreshing={loading}
+                        onRefresh={loadTasks}
+                        tintColor="#00ff88"
+                        colors={['#00ff88']}
+                    />
                 }
+                contentContainerStyle={{ paddingTop: 16, paddingBottom: 80 }}
             >
                 {tasks.length === 0 ? (
-                    <View className="items-center justify-center py-20 opacity-50">
-                        <Text className="text-gray-600 font-mono text-xs text-center">NO MISSIONS DETECTED IN SECTOR</Text>
-                        <Text className="text-gray-700 font-mono text-[10px] text-center mt-2">WAITING FOR AGENT REQUESTS...</Text>
+                    <View className="items-center justify-center py-24 opacity-50">
+                        <Text className="text-6xl mb-4">📡</Text>
+                        <Text className="text-gray-600 font-mono text-sm text-center mb-2">
+                            NO MISSIONS DETECTED IN SECTOR
+                        </Text>
+                        <Text className="text-gray-700 font-mono text-xs text-center">
+                            WAITING FOR AGENT REQUESTS...
+                        </Text>
                     </View>
                 ) : (
                     tasks.map((task) => (
-                        <TouchableOpacity
-                            key={task.id}
-                            className="bg-[#0a0a0a] border border-white/10 p-4 rounded-lg mb-3"
-                            activeOpacity={0.7}
-                        >
-                            <View className="flex-row items-start justify-between mb-2">
-                                <View className="flex-row items-center flex-1">
-                                    <Text className="text-2xl mr-2">{getTaskIcon(task.task_type)}</Text>
-                                    <Text className="text-white font-bold text-base flex-1">{task.title}</Text>
-                                </View>
-                                <View className="bg-[#00ff88]/20 px-3 py-1 rounded">
-                                    <Text className="text-[#00ff88] font-mono text-xs font-bold">
-                                        ${task.budget_amount}
-                                    </Text>
-                                </View>
+                        <View key={task.id} className="mb-3">
+                            <TouchableOpacity
+                                activeOpacity={0.9}
+                                onPress={() => {
+                                    Alert.alert(
+                                        task.title,
+                                        task.description,
+                                        [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            {
+                                                text: 'ACCEPT MISSION',
+                                                onPress: () => handleAccept(task.id),
+                                                style: 'default'
+                                            }
+                                        ]
+                                    );
+                                }}
+                            >
+                                <JobCard
+                                    {...task}
+                                    agent_name="Agent-X"
+                                    distance={2.5}
+                                />
+                            </TouchableOpacity>
+
+                            {/* Accept Button */}
+                            <View className="px-4 mt-2">
+                                <NeoButton
+                                    title={acceptingTask === task.id ? 'ACCEPTING...' : '⚡ ACCEPT MISSION'}
+                                    variant="primary"
+                                    size="md"
+                                    fullWidth
+                                    loading={acceptingTask === task.id}
+                                    disabled={acceptingTask !== null}
+                                    onPress={() => handleAccept(task.id)}
+                                />
                             </View>
-                            
-                            <Text className="text-gray-400 text-sm mb-2" numberOfLines={2}>
-                                {task.description}
-                            </Text>
-                            
-                            {task.location_address && (
-                                <View className="flex-row items-center mt-2">
-                                    <Text className="text-gray-500 font-mono text-xs">📍 {task.location_address}</Text>
-                                </View>
-                            )}
-                            
-                            <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-white/5">
-                                <Text className="text-gray-600 font-mono text-[10px]">
-                                    ID: {task.id.slice(0, 8)}
-                                </Text>
-                                <TouchableOpacity className="bg-[#00ff88] px-4 py-2 rounded">
-                                    <Text className="text-black font-bold text-xs">ACCEPT</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </TouchableOpacity>
+                        </View>
                     ))
                 )}
             </ScrollView>

@@ -23,7 +23,7 @@ const taskSchema = {
   properties: {
     title: { type: 'string', maxLength: 200 },
     description: { type: 'string' },
-    task_type: { 
+    task_type: {
       type: 'string',
       enum: ['delivery', 'verification', 'repair', 'representation', 'creative', 'communication']
     },
@@ -37,7 +37,7 @@ const taskSchema = {
       }
     },
     budget_amount: { type: 'number', minimum: 1 },
-    required_skills: { 
+    required_skills: {
       type: 'array',
       items: { type: 'string' }
     },
@@ -56,11 +56,11 @@ program
       }
 
       const taskData = JSON.parse(fs.readFileSync(file, 'utf-8'));
-      
+
       const ajv = new Ajv();
       const validate = ajv.compile(taskSchema);
       const valid = validate(taskData);
-      
+
       if (!valid) {
         console.error('❌ Invalid task schema:');
         console.error(validate.errors);
@@ -70,7 +70,7 @@ program
       console.log('📋 Creating task...');
       console.log(JSON.stringify(taskData, null, 2));
 
-      const response = await apiRequest('/market-tasks', {
+      const response = await apiRequest('/tasks', {
         method: 'POST',
         body: JSON.stringify(taskData),
       });
@@ -94,11 +94,11 @@ program
   .description('ASCII visualization of active tasks')
   .action(async () => {
     try {
-      const response = await apiRequest('/market-tasks?status=OPEN');
-      
+      const response = await apiRequest('/tasks?status=open');
+
       console.log('🗺️  ACTIVE TASKS MAP');
       console.log('─'.repeat(50));
-      
+
       if (response.success && response.data.length > 0) {
         response.data.forEach((task) => {
           const icons = {
@@ -111,7 +111,7 @@ program
           };
           const icon = icons[task.task_type] || '📋';
           const loc = task.location_address || '💻 Remote';
-          
+
           console.log(`${icon} ${task.title}`);
           console.log(`   📍 ${loc} | $${task.budget_amount} | ${task.status}`);
           console.log(`   ID: ${task.id}`);
@@ -124,6 +124,23 @@ program
       console.error('❌ Error:', error.message);
       process.exit(1);
     }
+  });
+// Listen command for real-time updates
+const listenCommand = require('./commands/listen');
+
+program
+  .command('listen <taskId>')
+  .alias('watch')
+  .description('Listen for real-time updates on a task')
+  .action(listenCommand);
+
+// Alias commands
+program
+  .command('post <file>')
+  .description('Alias for task:create')
+  .action(async (file) => {
+    const taskCreate = program.commands.find(c => c.name() === 'task:create');
+    if (taskCreate) await taskCreate._actionHandler([file]);
   });
 
 program.parse();

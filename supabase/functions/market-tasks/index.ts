@@ -42,8 +42,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    const url = new URL(req.url)
+    const pathParts = url.pathname.split('/').filter(Boolean)
+    
+    console.log('Path:', url.pathname, 'Parts:', pathParts)
+    
+    // GET /market-tasks?status=OPEN
     if (req.method === 'GET') {
-      const url = new URL(req.url)
       const status = url.searchParams.get('status') || 'OPEN'
       
       const { data: tasks, error } = await supabase
@@ -61,6 +66,7 @@ serve(async (req) => {
       })
     }
 
+    // POST /market-tasks
     if (req.method === 'POST') {
       const taskData = await req.json()
       
@@ -85,6 +91,47 @@ serve(async (req) => {
         data: task,
         meta: { request_id: requestId, timestamp: new Date().toISOString(), version }
       }, 201)
+    }
+
+    // PUT /market-tasks/:id/accept
+    if (req.method === 'PUT' && pathParts.includes('accept')) {
+      const taskId = pathParts[pathParts.length - 2]
+      const { human_id } = await req.json()
+
+      // Check if task is still available
+      const { data: existingTask } = await supabase
+        .from('tasks')
+        .select('status')
+        .eq('id', taskId)
+        .single()
+
+      if (existingTask?.status !== 'OPEN') {
+        return jsonResponse({
+          success: false,
+          error: { code: 'TASK_UNAVAILABLE', message: 'Task is no longer available' },
+          meta: { request_id: requestId, timestamp: new Date().toISOString(), version }
+        }, 409)
+      }
+
+      // Update task status
+      const { data: task, error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: 'ASSIGNED',
+          human_id: human_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      return jsonResponse({
+        success: true,
+        data: task,
+        meta: { request_id: requestId, timestamp: new Date().toISOString(), version }
+      })
     }
 
     return jsonResponse({

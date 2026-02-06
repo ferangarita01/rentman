@@ -12,7 +12,13 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'DASHBOARD',
+                    title: 'MISSIONS',
+                }}
+            />
+            <Tabs.Screen
+                name="wallet"
+                options={{
+                    title: 'WALLET',
                 }}
             />
             <Tabs.Screen

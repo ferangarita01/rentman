@@ -1,0 +1,23 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/agent-gen-1/rentman-api', '.']
+
+  # Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/agent-gen-1/rentman-api']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'rentman-api'
+      - '--image=gcr.io/agent-gen-1/rentman-api'
+      - '--region=us-central1'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=SUPABASE_URL=https://uoekolfgbbmvhzsfkjef.supabase.co'
+
+images:
+  - 'gcr.io/agent-gen-1/rentman-api'
