@@ -1,0 +1,52 @@
+{
+  "name": "rentman-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:https": "next dev --experimental-https",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android",
+    "cap:build": "npm run build && npx cap sync && npx cap copy",
+    "android:build": "npm run build && npx cap sync && cd android && .\\gradlew assembleDebug",
+    "android:install": "npm run android:build && adb install -r android/app/build/outputs/apk/debug/app-debug.apk",
+    "android:run": "npm run android:install && adb shell am start -n com.rentman.app/.MainActivity",
+    "android:clean": "cd android && .\\gradlew clean",
+    "android:logcat": "adb logcat | grep -i capacitor",
+    "android:release": "npm run build && npx cap sync && cd android && .\\gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/local-notifications": "^8.0.0",
+    "@google-cloud/vertexai": "^1.10.0",
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.89.0",
+    "canvas-confetti": "^1.9.4",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.27.0",
+    "lucide-react": "^0.562.0",
+    "next": "16.1.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-hot-toast": "^2.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,81 @@
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { SarahProvider } from "@/contexts/SarahContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import BottomNav from "@/components/BottomNav";
+import SarahStatusBar from "@/components/SarahStatusBar";
+import PageTransition from "@/components/PageTransition";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+export const metadata: Metadata = {
+  title: "Sarah - Your Habit Coach",
+  description: "The brutally honest friend who won't let you quit",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Sarah",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FF3D00",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased bg-[var(--sarah-bg)] text-[var(--sarah-text-primary)]`}>
+        <ThemeProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <SarahProvider>
+                <PageTransition>
+                  {children}
+                </PageTransition>
+                <SarahStatusBar /> {/* Shows when Sarah is active */}
+
+                <BottomNav />
+              </SarahProvider>
+            </LanguageProvider>
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 3000,
+                className: 'dark:bg-gray-800 dark:text-white',
+                style: {
+                  background: 'var(--sarah-surface)',
+                  color: 'var(--sarah-text-primary)',
+                  borderRadius: '12px',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#4CAF50',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rentman</string>
+    <string name="title_activity_main">Rentman</string>
+    <string name="package_name">com.rentman.app</string>
+    <string name="custom_url_scheme">com.rentman.app</string>
+</resources>
