@@ -26,7 +26,7 @@ const Landing: React.FC = () => {
                     </div>
                     <div className="hidden md:flex items-center gap-8 font-mono text-[10px] uppercase tracking-widest text-slate-400">
                         <a href="#demo" className="hover:text-white transition-colors">Documentation</a>
-                        <a href="#features" className="hover:text-white transition-colors">Pricing</a>
+                        <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
                         <a href="#" className="hover:text-white transition-colors">Status</a>
                     </div>
                     <div className="flex items-center gap-4">
@@ -239,6 +239,92 @@ const Landing: React.FC = () => {
                 </div>
             </section>
 
+            {/* Pricing Section */}
+            <section id="pricing" className="py-24 bg-[#050505] border-t border-white/5 relative overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00ff88] opacity-[0.03] blur-[120px] rounded-full pointer-events-none"></div>
+
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="text-center mb-16">
+                        <span className="font-mono text-[10px] text-[#00ff88] uppercase tracking-[0.4em]">Transparent Economics</span>
+                        <h2 className="font-mono text-2xl md:text-3xl text-white mt-2 tracking-tight">Execution Costs</h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {/* Standard Card */}
+                        <div className="group relative p-1 rounded-xl bg-gradient-to-b from-white/10 to-transparent hover:from-[#00ff88]/50 transition-all duration-500">
+                            <div className="bg-[#0a0a0a] rounded-[10px] p-8 h-full flex flex-col items-center text-center relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-50">
+                                    {/* Fix: Using IconifyIcon alias */}
+                                    <IconifyIcon icon="solar:bolt-circle-bold-duotone" className="text-white/20 text-6xl group-hover:text-[#00ff88]/20 transition-colors"></IconifyIcon>
+                                </div>
+
+                                <h3 className="font-mono text-lg text-white uppercase tracking-widest mb-4">On-Demand</h3>
+                                <div className="flex items-baseline justify-center gap-1 mb-6">
+                                    <span className="text-5xl font-mono text-white font-bold">10%</span>
+                                    <span className="text-slate-500 font-mono text-xs uppercase">Fee</span>
+                                </div>
+
+                                <p className="text-slate-400 text-xs leading-relaxed mb-8 flex-1">
+                                    Pay only for successful task completions. No monthly fees. No setup costs. Instant access to the global agent network.
+                                </p>
+
+                                <ul className="text-left w-full space-y-3 mb-8 text-xs text-slate-300 font-mono">
+                                    <li className="flex items-center gap-3">
+                                        <IconifyIcon icon="solar:check-read-linear" className="text-[#00ff88]"></IconifyIcon>
+                                        <span>Global Coverage</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <IconifyIcon icon="solar:check-read-linear" className="text-[#00ff88]"></IconifyIcon>
+                                        <span>Real-time Tracking</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <IconifyIcon icon="solar:check-read-linear" className="text-[#00ff88]"></IconifyIcon>
+                                        <span>Basic API Access</span>
+                                    </li>
+                                </ul>
+
+                                <button onClick={() => document.getElementById('integrateWrapper')?.scrollIntoView({ behavior: 'smooth' })} className="w-full py-3 bg-white/5 border border-white/10 text-white font-mono text-[10px] font-bold uppercase rounded hover:bg-[#00ff88] hover:text-black hover:border-[#00ff88] transition-all">
+                                    Start Building
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Enterprise Card */}
+                        <div className="group relative p-1 rounded-xl bg-gradient-to-b from-white/5 to-transparent hover:border-white/20 transition-all duration-500">
+                            <div className="bg-[#0a0a0a] rounded-[10px] p-8 h-full flex flex-col items-center text-center">
+                                <h3 className="font-mono text-lg text-white uppercase tracking-widest mb-4">Enterprise</h3>
+                                <div className="flex items-baseline justify-center gap-1 mb-6">
+                                    <span className="text-4xl font-mono text-white font-bold tracking-tight">Contact Us</span>
+                                </div>
+
+                                <p className="text-slate-400 text-xs leading-relaxed mb-8 flex-1">
+                                    For high-volume orchestration, custom SLAs, and dedicated fleet management.
+                                </p>
+
+                                <ul className="text-left w-full space-y-3 mb-8 text-xs text-slate-300 font-mono">
+                                    <li className="flex items-center gap-3">
+                                        <IconifyIcon icon="solar:check-read-linear" className="text-white"></IconifyIcon>
+                                        <span>Volume Discounts</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <IconifyIcon icon="solar:check-read-linear" className="text-white"></IconifyIcon>
+                                        <span>Custom SLAs</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <IconifyIcon icon="solar:check-read-linear" className="text-white"></IconifyIcon>
+                                        <span>Dedicated Support</span>
+                                    </li>
+                                </ul>
+
+                                <a href="mailto:sales@rentman.io" className="w-full py-3 bg-transparent border border-white/10 text-white font-mono text-[10px] font-bold uppercase rounded hover:bg-white hover:text-black transition-all block">
+                                    Talk to Sales
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Trust Infrastructure */}
             <section className="py-24 border-y border-white/5 bg-[#080808]">
                 <div className="max-w-7xl mx-auto px-6">
@@ -279,6 +365,26 @@ const Landing: React.FC = () => {
             <section id="integrateWrapper" className="py-24 bg-[#050505] flex flex-col items-center">
                 <h2 className="font-mono text-2xl text-white tracking-tight mb-2">Built for Autonomous Systems</h2>
                 <p className="text-slate-500 mb-10 text-center text-xs uppercase tracking-widest">SDKs for AI agents, robotics platforms, and automation pipelines.</p>
+
+                {/* CLI Install Block */}
+                <div className="mb-16 w-full max-w-xl mx-auto">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-lg p-4 flex items-center justify-between group hover:border-[#00ff88]/50 transition-all shadow-2xl">
+                        <div className="flex items-center gap-4 font-mono text-sm text-slate-300">
+                            <span className="text-[#00ff88]">$</span>
+                            <span className="typing-effect">npx rentman init</span>
+                        </div>
+                        <button
+                            onClick={() => { navigator.clipboard.writeText('npx rentman init'); alert('Copied to clipboard!'); }}
+                            className="p-2 hover:bg-white/5 rounded text-slate-500 hover:text-white transition-colors"
+                            title="Copy to clipboard"
+                        >
+                            <IconifyIcon icon="solar:copy-linear" width="16"></IconifyIcon>
+                        </button>
+                    </div>
+                    <p className="text-center text-[9px] font-mono text-slate-600 mt-2 uppercase tracking-widest">
+                        Instant Setup • No Config Required
+                    </p>
+                </div>
 
                 <div className="flex flex-wrap justify-center gap-12 opacity-60 mb-16 grayscale hover:grayscale-0 transition-all duration-700">
                     {/* Fix: Using IconifyIcon alias */}
