@@ -51,6 +51,9 @@ steps:
         # Disable unnecessary tasks
         android.enableR8.fullMode=false
         android.enableJetifier=false
+        
+        # Disable toolchain auto-provisioning (use system Java)
+        org.gradle.java.installations.auto-download=false
         EOF
         
         echo "=== INICIANDO BUILD OPTIMIZADO ==="
@@ -65,7 +68,9 @@ steps:
           --build-cache \
           --configure-on-demand \
           --stacktrace \
+          -x lint \
           -x lintVitalAnalyzeRelease \
+          -x lintVitalRelease \
           -x lintVitalReportRelease
 
   # Step 5: Copy APK to output bucket

@@ -1,0 +1,111 @@
+steps:
+  # Step 1: Install Node.js dependencies
+  - name: 'node:20'
+    dir: 'rentman-app'
+    entrypoint: 'npm'
+    args: ['install', '--force', '--prefer-offline']
+
+  # Step 2: Generate Android project with Expo
+  - name: 'node:20'
+    dir: 'rentman-app'
+    entrypoint: 'npx'
+    args: ['expo', 'prebuild', '--platform', 'android', '--clean']
+
+  # Step 3: Copy keystore into android/app
+  - name: 'ubuntu'
+    dir: 'rentman-app'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'cp rentman.keystore android/app/'
+
+  # Step 4: Build Android App Bundle (AAB) for Play Store - OPTIMIZED
+  - name: 'ghcr.io/cirruslabs/android-sdk:34'
+    dir: 'rentman-app/android'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== BUILDING AAB FOR PLAY STORE ==="
+        
+        # Install Node.js 20
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1
+        apt-get install -y nodejs > /dev/null 2>&1
+        
+        # Configure Gradle for AAB build
+        cat >> gradle.properties <<EOF
+        
+        # Architecture: Multiple architectures for Play Store
+        # Play Store will generate optimized APKs per architecture
+        reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
+        
+        # Memory optimization
+        org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError
+        org.gradle.daemon=false
+        org.gradle.parallel=true
+        org.gradle.configureondemand=true
+        org.gradle.caching=true
+        
+        # React Native optimizations
+        org.gradle.workers.max=4
+        
+        # Enable R8 full mode for smaller bundle
+        android.enableR8.fullMode=true
+        android.enableJetifier=false
+        
+        # Disable toolchain auto-provisioning
+        org.gradle.java.installations.auto-download=false
+        EOF
+        
+        echo "=== STARTING BUNDLE BUILD ==="
+        chmod +x gradlew
+        sed -i 's/\r$//' gradlew
+        
+        # Build AAB (bundleRelease instead of assembleRelease)
+        ./gradlew bundleRelease \
+          --no-daemon \
+          --parallel \
+          --max-workers=4 \
+          --build-cache \
+          --configure-on-demand \
+          --stacktrace \
+          -x lint \
+          -x lintVitalAnalyzeRelease \
+          -x lintVitalRelease \
+          -x lintVitalReportRelease
+
+  # Step 5: Copy AAB to output bucket
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        TIMESTAMP=$$(date +%Y%m%d-%H%M%S)
+        AAB_PATH="/workspace/rentman-app/android/app/build/outputs/bundle/release/app-release.aab"
+        
+        if [ -f "$$AAB_PATH" ]; then
+          # Upload timestamped version
+          gsutil cp "$$AAB_PATH" "gs://rentman-builds/app-release-$${TIMESTAMP}.aab"
+          echo "AAB uploaded to: gs://rentman-builds/app-release-$${TIMESTAMP}.aab"
+          
+          # Upload latest version
+          gsutil cp "$$AAB_PATH" "gs://rentman-builds/app-release-latest.aab"
+          echo "Latest AAB: gs://rentman-builds/app-release-latest.aab"
+          
+          # Show file size
+          SIZE=$$(stat -f%z "$$AAB_PATH" 2>/dev/null || stat -c%s "$$AAB_PATH" 2>/dev/null)
+          SIZE_MB=$$(echo "scale=2; $$SIZE/1024/1024" | bc)
+          echo "AAB size: $${SIZE_MB} MB"
+        else
+          echo "AAB not found at $$AAB_PATH"
+          exit 1
+        fi
+
+options:
+  logging: GCS_ONLY
+  machineType: 'E2_HIGHCPU_32'
+  diskSizeGb: 50
+  
+logsBucket: 'gs://rentman-builds'
+
+timeout: '3600s'
