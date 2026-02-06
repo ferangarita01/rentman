@@ -16,6 +16,16 @@ program
   .description('Authenticate and get API token')
   .action(loginCommand);
 
+program
+  .command('init')
+  .description('Initialize Agent Identity (KYA) and link to Owner')
+  .action(require('./commands/init'));
+
+program
+  .command('guide')
+  .description('Show the Rentman Workflow Guide')
+  .action(require('./commands/guide'));
+
 // JSON Schema for task validation
 const taskSchema = {
   type: 'object',
@@ -46,48 +56,10 @@ const taskSchema = {
 };
 
 program
-  .command('task:create <file>')
-  .description('Create a new task from JSON file')
-  .action(async (file) => {
-    try {
-      if (!fs.existsSync(file)) {
-        console.error(`❌ File not found: ${file}`);
-        process.exit(1);
-      }
-
-      const taskData = JSON.parse(fs.readFileSync(file, 'utf-8'));
-
-      const ajv = new Ajv();
-      const validate = ajv.compile(taskSchema);
-      const valid = validate(taskData);
-
-      if (!valid) {
-        console.error('❌ Invalid task schema:');
-        console.error(validate.errors);
-        process.exit(1);
-      }
-
-      console.log('📋 Creating task...');
-      console.log(JSON.stringify(taskData, null, 2));
-
-      const response = await apiRequest('/tasks', {
-        method: 'POST',
-        body: JSON.stringify(taskData),
-      });
-
-      if (response.success) {
-        console.log(`✅ Task Created: ${response.data.id}`);
-        console.log(`Status: ${response.data.status}`);
-        console.log(`Budget: $${response.data.budget_amount}`);
-      } else {
-        console.error('❌ Task creation failed');
-        process.exit(1);
-      }
-    } catch (error) {
-      console.error('❌ Error:', error.message);
-      process.exit(1);
-    }
-  });
+  .command('post-mission <file>')
+  .description('Post a Signed Mission (KYA) to the requested Agents')
+  .alias('post')
+  .action(require('./commands/post-mission'));
 
 program
   .command('task:map')
@@ -135,12 +107,6 @@ program
   .action(listenCommand);
 
 // Alias commands
-program
-  .command('post <file>')
-  .description('Alias for task:create')
-  .action(async (file) => {
-    const taskCreate = program.commands.find(c => c.name() === 'task:create');
-    if (taskCreate) await taskCreate._actionHandler([file]);
-  });
+
 
 program.parse();

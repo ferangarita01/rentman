@@ -59,7 +59,7 @@ const Dashboard: React.FC = () => {
                 const formattedAgents = agentsData.map(a => ({
                     id: a.id.substring(0, 8).toUpperCase(), // Short ID for UI
                     name: a.name,
-                    status: (a.metadata?.status || 'OFFLINE').toUpperCase(), // Assuming metadata holds realtime status or fallback
+                    status: (a.status || 'OFFLINE').toUpperCase(),
                     tasks: a.total_tasks_posted || 0
                 }));
                 if (formattedAgents.length > 0) setAgents(formattedAgents);

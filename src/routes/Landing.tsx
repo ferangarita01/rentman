@@ -582,8 +582,7 @@ const OperatorRegistrationForm: React.FC<{ onClose: () => void }> = ({ onClose }
         </form>
     );
 
-        </div >
-    );
+
 };
 
 export default Landing;
