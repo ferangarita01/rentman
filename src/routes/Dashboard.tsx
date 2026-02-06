@@ -6,22 +6,31 @@ import { supabase } from '../lib/supabase';
 
 type View = 'overview' | 'wallet' | 'agents' | 'missions';
 
+// Real Data Interfaces
+interface Task {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    budget_amount: number;
+    created_at: string;
+}
+
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [currentView, setCurrentView] = useState<View>('overview');
-    const [credits, setCredits] = useState(1250.50);
-    // Mock data for initial render, will replace with Realtime Supabase data later
-    const [agents, setAgents] = useState([
-        { id: 'RM-001', name: 'Alpha_Bot', status: 'ONLINE', tasks: 124 },
-        { id: 'RM-042', name: 'Scout_IA', status: 'ON_MISSION', tasks: 89 },
-        { id: 'RM-099', name: 'Heavy_Loader', status: 'OFFLINE', tasks: 12 }
-    ]);
-    const [dashLogs, setDashLogs] = useState<string[]>([]);
+    const [credits, setCredits] = useState(0);
+    const [agents, setAgents] = useState<any[]>([]);
+    const [missions, setMissions] = useState<Task[]>([]);
+
+    // Loading state
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         let mounted = true;
 
         async function loadDashboardData() {
+            setLoading(true);
             // 1. Check Session
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -55,19 +64,25 @@ const Dashboard: React.FC = () => {
                 }));
                 if (formattedAgents.length > 0) setAgents(formattedAgents);
             }
+
+            // 4. Fetch Missions (Real)
+            const { data: tasksData } = await supabase
+                .from('tasks')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (mounted && tasksData) {
+                setMissions(tasksData);
+            }
+
+            if (mounted) setLoading(false);
         }
 
         loadDashboardData();
 
-        // Cyberpunk logs generator (Keep for atmosphere)
-        const messages = ["CREDIT_CHECK: OK", "AGENT_SYNC: 3 ACTIVE", "PHYSICAL_NODE: TOKYO", "ENCRYPTION: ARMORED"];
-        const interval = setInterval(() => {
-            setDashLogs(prev => [...prev.slice(-4), `[${new Date().toLocaleTimeString()}] ${messages[Math.floor(Math.random() * messages.length)]}`]);
-        }, 3000);
-
         return () => {
             mounted = false;
-            clearInterval(interval);
         };
     }, [navigate]);
 
@@ -100,7 +115,7 @@ const Dashboard: React.FC = () => {
                 <header className="h-16 border-b border-[#00ff88]/10 bg-[#050505]/50 backdrop-blur-md flex items-center justify-between px-8 z-10">
                     <div className="flex items-center gap-6">
                         <span className="text-[10px] text-slate-500 uppercase tracking-widest">CENTER: ALPHA-01</span>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Status: STABLE</span>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Status: REALTIME</span>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="text-right">
@@ -117,17 +132,34 @@ const Dashboard: React.FC = () => {
                     {currentView === 'overview' && (
                         <div className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <StatCard label="Tasks_Executed" value="1,248" delta="+12%" />
-                                <StatCard label="Avg_Latency" value="42ms" delta="-5ms" />
-                                <StatCard label="Human_Nodes" value="8,401" delta="ACTIVE" />
+                                <StatCard label="Live_Missions" value={missions.length.toString()} delta="ACTIVE" />
+                                <StatCard label="Avg_Latency" value="120ms" delta="REALTIME" />
+                                <StatCard label="Active_Agents" value={agents.length.toString()} delta="ONLINE" />
                             </div>
+
                             <div className="bg-[#0a0a0a] border border-[#00ff88]/10 p-6 rounded-lg">
-                                <h3 className="text-white text-xs mb-4 uppercase tracking-widest border-l-2 border-[#00ff88] pl-3">Operational_Feed</h3>
-                                <div className="space-y-2">
-                                    {dashLogs.map((log, i) => (
-                                        <div key={i} className="text-[11px] text-[#00ff88]/60 pb-2 border-b border-white/5">{log}</div>
-                                    ))}
-                                </div>
+                                <h3 className="text-white text-xs mb-4 uppercase tracking-widest border-l-2 border-[#00ff88] pl-3">Live_Mission_Feed</h3>
+                                {loading ? (
+                                    <div className="text-[10px] text-slate-500 animate-pulse">CONNECTING_TO_SATELLITE...</div>
+                                ) : (
+                                    <div className="space-y-0">
+                                        {missions.length === 0 ? (
+                                            <div className="text-[10px] text-slate-500">NO_ACTIVE_MISSIONS_DETECTED</div>
+                                        ) : (
+                                            missions.slice(0, 5).map((task) => (
+                                                <div key={task.id} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 hover:bg-white/5 px-2 transition-colors">
+                                                    <div>
+                                                        <div className="text-[11px] text-[#00ff88] font-mono mb-1">{task.title}</div>
+                                                        <div className="text-[9px] text-slate-500 uppercase">{task.status} • {new Date(task.created_at).toLocaleTimeString()}</div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-white font-mono text-xs">${Number(task.budget_amount).toFixed(2)}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -139,23 +171,47 @@ const Dashboard: React.FC = () => {
                                     <div className="text-6xl font-extrabold text-[#00ff88] tracking-tighter">${credits.toLocaleString()}</div>
                                 </div>
                                 <div className="flex gap-4">
-                                    <button onClick={() => setCredits(c => c + 100)} className="bg-[#00ff88] text-black px-6 py-3 font-bold text-sm uppercase">Recharge_$100</button>
+                                    <button className="bg-[#00ff88] text-black px-6 py-3 font-bold text-sm uppercase opacity-50 cursor-not-allowed">Top Up (Soon)</button>
                                 </div>
                             </div>
                         </div>
                     )}
                     {currentView === 'agents' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {agents.map(agent => (
-                                <AgentCard key={agent.id} agent={agent} />
-                            ))}
+                            {agents.length === 0 ? (
+                                <div className="col-span-3 text-center text-slate-500 text-xs p-10">NO AGENTS ONLINE</div>
+                            ) : (
+                                agents.map(agent => (
+                                    <AgentCard key={agent.id} agent={agent} />
+                                ))
+                            )}
                         </div>
                     )}
                     {currentView === 'missions' && (
-                        <div className="h-full flex items-center justify-center text-center opacity-40">
-                            <div>
-                                <span className="material-symbols-outlined text-6xl mb-4">satellite_alt</span>
-                                <p className="mono-text uppercase tracking-widest text-xs">Awaiting_Remote_Task_Insertion</p>
+                        <div className="h-full">
+                            <h2 className="text-white text-xs uppercase tracking-widest mb-6 sticky top-0 bg-[#050505] py-2 z-10">Global_Mission_Log</h2>
+                            <div className="grid grid-cols-1 gap-4">
+                                {missions.map((task) => (
+                                    <div key={task.id} className="bg-[#0a0a0a] border border-white/10 p-4 rounded hover:border-[#00ff88]/50 transition-all flex justify-between items-center">
+                                        <div>
+                                            <div className="text-[#00ff88] font-mono text-xs mb-1">{task.title}</div>
+                                            <p className="text-slate-400 text-[10px] mb-2 max-w-xl truncate">{task.description}</p>
+                                            <div className="flex gap-2">
+                                                <span className="text-[9px] bg-white/5 px-2 py-0.5 rounded text-slate-500 uppercase">{task.status}</span>
+                                                <span className="text-[9px] text-slate-600 uppercase">{new Date(task.created_at).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-xl font-bold text-white mb-1">${Number(task.budget_amount).toFixed(2)}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {missions.length === 0 && (
+                                    <div className="text-center opacity-40 p-10">
+                                        <span className="material-symbols-outlined text-4xl mb-4">satellite_alt</span>
+                                        <p className="mono-text uppercase tracking-widest text-xs">No Missions Found</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
