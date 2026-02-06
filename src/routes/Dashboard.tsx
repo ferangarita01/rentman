@@ -19,18 +19,56 @@ const Dashboard: React.FC = () => {
     const [dashLogs, setDashLogs] = useState<string[]>([]);
 
     useEffect(() => {
-        // Check session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        let mounted = true;
+
+        async function loadDashboardData() {
+            // 1. Check Session
+            const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 navigate('/login');
+                return;
             }
-        });
 
+            // 2. Fetch Profile (Credits)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('credits')
+                .eq('id', session.user.id)
+                .single();
+
+            if (mounted && profile) {
+                setCredits(Number(profile.credits) || 0);
+            }
+
+            // 3. Fetch Agents (Real)
+            const { data: agentsData } = await supabase
+                .from('agents')
+                .select('id, name, type, status, total_tasks_posted')
+                .limit(10);
+
+            if (mounted && agentsData) {
+                const formattedAgents = agentsData.map(a => ({
+                    id: a.id.substring(0, 8).toUpperCase(), // Short ID for UI
+                    name: a.name,
+                    status: (a.metadata?.status || 'OFFLINE').toUpperCase(), // Assuming metadata holds realtime status or fallback
+                    tasks: a.total_tasks_posted || 0
+                }));
+                if (formattedAgents.length > 0) setAgents(formattedAgents);
+            }
+        }
+
+        loadDashboardData();
+
+        // Cyberpunk logs generator (Keep for atmosphere)
         const messages = ["CREDIT_CHECK: OK", "AGENT_SYNC: 3 ACTIVE", "PHYSICAL_NODE: TOKYO", "ENCRYPTION: ARMORED"];
         const interval = setInterval(() => {
             setDashLogs(prev => [...prev.slice(-4), `[${new Date().toLocaleTimeString()}] ${messages[Math.floor(Math.random() * messages.length)]}`]);
         }, 3000);
-        return () => clearInterval(interval);
+
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
     }, [navigate]);
 
     const handleLogout = async () => {
