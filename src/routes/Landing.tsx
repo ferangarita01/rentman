@@ -317,7 +317,8 @@ const Landing: React.FC = () => {
                     <div className="flex gap-8">
                         <a href="#" className="hover:text-[#00ff88] transition-colors">Docs</a>
                         <a href="#" className="hover:text-[#00ff88] transition-colors">GitHub</a>
-                        <a href="#" className="hover:text-[#00ff88] transition-colors">Terms</a>
+                        <a href="/privacy-policy.html" className="hover:text-[#00ff88] transition-colors">Privacy</a>
+                        <a href="/terms-and-conditions.html" className="hover:text-[#00ff88] transition-colors">Terms</a>
                     </div>
                 </div>
             </footer>
