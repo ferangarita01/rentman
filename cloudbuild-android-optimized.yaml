@@ -1,9 +1,17 @@
 steps:
-  # Step 1: Install Node.js dependencies (with cache)
+  # Step 1: Install Node.js dependencies (CLEAN INSTALL)
   - name: 'node:20'
     dir: 'rentman-app'
-    entrypoint: 'npm'
-    args: ['install', '--force', '--prefer-offline']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== CLEAN INSTALL ==="
+        rm -rf node_modules
+        rm -rf .expo
+        rm -rf android
+        npm cache clean --force
+        npm install --force
 
   # Step 2: Generate Android project with Expo
   - name: 'node:20'
@@ -32,29 +40,19 @@ steps:
         curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1
         apt-get install -y nodejs > /dev/null 2>&1
         
-        # Configure Gradle for speed
-        cat >> gradle.properties <<EOF
-        
-        # Architecture: Solo ARM64 (reduce 75% del tiempo de compilación)
-        reactNativeArchitectures=arm64-v8a
-        
-        # Memory optimization
-        org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError
-        org.gradle.daemon=false
-        org.gradle.parallel=true
-        org.gradle.configureondemand=true
-        org.gradle.caching=true
-        
-        # React Native optimizations
-        org.gradle.workers.max=4
-        
-        # Disable unnecessary tasks
-        android.enableR8.fullMode=false
-        android.enableJetifier=false
-        
-        # Disable toolchain auto-provisioning (use system Java)
-        org.gradle.java.installations.auto-download=false
-        EOF
+        # Configure Gradle for speed (APPEND to existing gradle.properties)
+        echo "" >> gradle.properties
+        echo "# Build optimizations" >> gradle.properties
+        echo "reactNativeArchitectures=arm64-v8a" >> gradle.properties
+        echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
+        echo "org.gradle.daemon=false" >> gradle.properties
+        echo "org.gradle.parallel=true" >> gradle.properties
+        echo "org.gradle.configureondemand=true" >> gradle.properties
+        echo "org.gradle.caching=true" >> gradle.properties
+        echo "org.gradle.workers.max=4" >> gradle.properties
+        echo "android.enableR8.fullMode=false" >> gradle.properties
+        echo "android.enableJetifier=false" >> gradle.properties
+        echo "org.gradle.java.installations.auto-download=false" >> gradle.properties
         
         echo "=== INICIANDO BUILD OPTIMIZADO ==="
         chmod +x gradlew

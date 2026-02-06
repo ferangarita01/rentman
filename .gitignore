@@ -1,49 +1,9 @@
-.vercel
-.env*.local
 
-# Build logs
+client_secret_*.json
 *.log
-
-# Key output
-key_output.txt
-
-
-# Secrets
-client_secret*.json
-
-# Temporary Logs & Artifacts
-*.gstmp
-*_CHECKLIST.txt
-*_COMPLETE.md
-*_SUMMARY.txt
-FINAL_STATUS.txt
-DEPLOYMENT_COMPLETE.txt
-
-
-# Dependencies
-node_modules/
-
-# Expo
-.expo/
-dist/
-web-build/
-
-# Agent
-.agent/
-
-
-# Environment Variables
 .env
-.env.*
-
-# Scripts
-*.bat
-*.ps1
-
-# AI Documentation Debris
-*_CHECKLIST.md
-*_IMPLEMENTATION.md
-*_REPORT.md
-*_SUMMARY.md
-PROJECT_STATUS.md
-START_HERE.txt
+.env.local
+node_modules
+.DS_Store
+dist
+.vercel
