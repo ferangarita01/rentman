@@ -253,14 +253,12 @@
                     <iconify-icon icon="solar:user-hands-linear" class="text-lg"></iconify-icon>
                     Hire a Human
                 </button>
-                <a
-                    href="https://play.google.com/store/apps/details?id=com.rentman.app"
-                    target="_blank"
-                    onclick="trackButtonClick('Download App', 'Hero');"
+                <button
+                    onclick="document.getElementById('operatorModal').showModal(); trackButtonClick('Become an Operator', 'Hero');"
                     class="w-full sm:w-auto px-8 py-4 bg-transparent border border-white/10 text-white font-mono text-sm font-medium rounded hover:border-white/30 hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2">
-                    <iconify-icon icon="solar:smartphone-linear" class="text-lg"></iconify-icon>
-                    Download App
-                </a>
+                    <iconify-icon icon="solar:user-id-linear" class="text-lg"></iconify-icon>
+                    Become an Operator
+                </button>
             </div>
 
             <!-- Visualization: Code to Map -->
@@ -600,6 +598,56 @@
         </div>
     </section>
 
+    <!-- Operator Registration Modal -->
+    <dialog id="operatorModal" class="bg-[#0a0a0a] border border-white/10 rounded-xl p-0 backdrop:bg-black/80 w-full max-w-md shadow-2xl">
+        <div class="p-6 relative">
+            <button onclick="document.getElementById('operatorModal').close()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
+                <iconify-icon icon="solar:close-square-linear" width="24"></iconify-icon>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="size-12 rounded-full bg-[#00ff88]/10 flex items-center justify-center mx-auto mb-4 border border-[#00ff88]/20">
+                    <iconify-icon icon="solar:user-id-linear" class="text-[#00ff88] text-2xl"></iconify-icon>
+                </div>
+                <h3 class="text-white font-mono text-lg uppercase tracking-widest">Become an ApiHuman</h3>
+                <p class="text-slate-500 text-[9px] uppercase tracking-widest mt-2">Earn by completing tasks for AI Agents.</p>
+            </div>
+
+            <form id="operatorForm" class="space-y-4" onsubmit="handleOperatorSubmit(event)">
+                <div>
+                    <label class="block text-[8px] font-mono text-slate-500 uppercase mb-1">Full Name</label>
+                    <input type="text" id="opName" required class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block text-[8px] font-mono text-slate-500 uppercase mb-1">Email</label>
+                    <input type="email" id="opEmail" required class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block text-[8px] font-mono text-slate-500 uppercase mb-1">Password</label>
+                    <input type="password" id="opPassword" required minlength="6" class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs font-mono">
+                    <p class="text-[8px] text-slate-600 mt-1">Minimum 6 characters</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[8px] font-mono text-slate-500 uppercase mb-1">City</label>
+                        <input type="text" id="opCity" required class="w-full px-3 py-2 bg-black border border-white/10 rounded text-white focus:border-[#00ff88] outline-none text-xs font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[8px] font-mono text-slate-500 uppercase mb-1">Specialty</label>
+                        <select id="opSpecialty" class="w-full px-3 py-2 bg-black border border-white/10 rounded text-slate-400 focus:border-[#00ff88] outline-none text-xs font-mono appearance-none">
+                            <option>General Runner</option>
+                            <option>Photography</option>
+                            <option>Legal/Notary</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" id="operatorSubmitBtn" class="w-full py-3 bg-white text-black font-mono text-[10px] font-bold uppercase tracking-widest rounded hover:bg-[#00ff88] transition-colors mt-4">
+                    Submit Application
+                </button>
+            </form>
+        </div>
+    </dialog>
+
     <!-- Footer -->
     <footer class="border-t border-white/5 py-12 bg-[#050505] text-xs">
         <div class="max-w-7xl mx-auto px-6">
@@ -684,14 +732,15 @@
             }
         }
 
-        // --- ApiHuman Form (Operator) ---
+        // --- ApiHuman Form (Operator) with Supabase Auth ---
         async function handleOperatorSubmit(e) {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('operatorSubmitBtn');
             const originalText = btn.innerHTML;
 
-            const name = document.getElementById('opName').value;
+            const fullName = document.getElementById('opName').value;
             const email = document.getElementById('opEmail').value;
+            const password = document.getElementById('opPassword').value;
             const city = document.getElementById('opCity').value;
             const specialty = document.getElementById('opSpecialty').value;
 
@@ -699,29 +748,35 @@
             btn.innerHTML = '<iconify-icon icon="line-md:loading-loop"></iconify-icon> Processing...';
 
             try {
-                const { error } = await supabase.from('waitlist').insert({
-                    name: name,
+                // Sign up using Supabase Auth with email confirmation
+                const { data, error } = await supabase.auth.signUp({
                     email: email,
-                    type: 'api_human',
-                    metadata: {
-                        city: city,
-                        specialty: specialty,
-                        source: 'landing_operator_modal'
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                            city: city,
+                            specialty: specialty,
+                            role: 'operator_candidate'
+                        }
                     }
                 });
 
                 if (error) {
-                    if (error.code === '23505') throw new Error("Email already registered!");
                     throw error;
                 }
 
+                // Success!
                 document.getElementById('operatorModal').close();
-                alert("Application Received! Welcome to the API Human network.");
-                gtag('event', 'lead_operator', { 'event_category': 'conversion' });
+                alert('Application Received! Please check your email to confirm your identity.');
+                gtag('event', 'operator_signup', { 
+                    'event_category': 'conversion',
+                    'method': 'supabase_auth'
+                });
                 e.target.reset();
 
             } catch (err) {
-                alert("Error: " + err.message);
+                alert('Registration Failed: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
