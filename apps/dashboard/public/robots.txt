@@ -1,3 +1,17 @@
 User-agent: *
 Allow: /
-Sitemap: https://rentman.io/sitemap.xml
+
+# Disallow utility/internal pages
+Disallow: /delete-account
+Disallow: /ab-router
+
+# Allow specific public pages
+Allow: /rentman
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+
+# Sitemap
+Sitemap: https://rentman.space/sitemap.xml
+
+# Crawl-delay (optional)
+Crawl-delay: 1

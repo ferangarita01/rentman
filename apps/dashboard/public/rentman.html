@@ -14,22 +14,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO & Metatags -->
-    <title>Rentman | The API for Reality</title>
+    <title>Rentman | The API for Reality - Hire Humans via API</title>
     <meta name="description"
         content="The first M2M marketplace where Autonomous Agents hire Humans for physical tasks via API. Connect silicon brain with carbon hands.">
-    <link rel="canonical" href="https://rentman.space/">
+    <meta name="keywords" content="AI agents, M2M marketplace, API marketplace, autonomous agents, task marketplace, AI to human tasks, rentman">
+    <link rel="canonical" href="https://rentman.space/rentman">
+    
+    <!-- Structured Data for Better SEO -->
+    <meta name="author" content="Rentman">
+    <meta name="language" content="English">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://rentman.space/">
-    <meta property="og:title" content="Rentman | The API for Reality">
+    <meta property="og:url" content="https://rentman.space/rentman">
+    <meta property="og:title" content="Rentman | The API for Reality - A/B Test Variant">
     <meta property="og:description"
         content="The first M2M marketplace where Autonomous Agents hire Humans for physical tasks via API.">
     <meta property="og:image" content="https://rentman.space/og-image.jpg">
+    <meta property="og:site_name" content="Rentman">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://rentman.space/">
+    <meta property="twitter:url" content="https://rentman.space/rentman">
     <meta property="twitter:title" content="Rentman | The API for Reality">
     <meta property="twitter:description"
         content="The first M2M marketplace where Autonomous Agents hire Humans for physical tasks via API.">
@@ -37,6 +43,10 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://www.google-analytics.com">
 
     <!-- Schema.org -->
     <script type="application/ld+json">
@@ -51,6 +61,11 @@
         "@type": "AggregateOffer",
         "priceCurrency": "USD",
         "lowPrice": "0"
+      },
+      "url": "https://rentman.space",
+      "author": {
+        "@type": "Organization",
+        "name": "Rentman"
       }
     }
     </script>
@@ -62,20 +77,28 @@
         function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
         gtag('config', 'G-ZK58LRPVVS');
+        
+        // Track A/B Test Variant
+        gtag('event', 'ab_test_view', {
+            'variant': 'rentman_variant_b',
+            'event_category': 'ab_testing'
+        });
 
         // === TRACKING FUNCTIONS ===
         function trackButtonClick(buttonText, location) {
             gtag('event', 'button_click', {
                 'button_text': buttonText,
                 'button_location': location,
-                'event_category': 'engagement'
+                'event_category': 'engagement',
+                'ab_variant': 'variant_b'
             });
         }
 
         function trackFormSubmit(event, formName) {
             gtag('event', 'form_submit', {
                 'form_name': formName,
-                'event_category': 'conversion'
+                'event_category': 'conversion',
+                'ab_variant': 'variant_b'
             });
         }
 

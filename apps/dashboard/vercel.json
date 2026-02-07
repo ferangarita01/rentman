@@ -1,8 +1,49 @@
 {
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/",
             "destination": "/index.html"
         }
-    ]
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                }
+            ]
+        },
+        {
+            "source": "/delete-account",
+            "headers": [
+                {
+                    "key": "X-Robots-Tag",
+                    "value": "noindex, nofollow"
+                }
+            ]
+        }
+    ],
+    "redirects": [
+        {
+            "source": "/delete-account.html",
+            "destination": "/delete-account",
+            "permanent": true
+        },
+        {
+            "source": "/rentman.html",
+            "destination": "/rentman",
+            "permanent": false
+        }
+    ],
+    "cleanUrls": true
 }

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    
+    <!-- A/B Test Router -->
+    <script>
+        // A/B Test Configuration
+        const AB_TEST_CONFIG = {
+            variantA: '/index.html',      // Original version
+            variantB: '/rentman',          // Test variant
+            cookieName: 'rentman_ab_variant',
+            splitPercentage: 50,           // 50% each variant
+            enabled: true                  // Toggle A/B test on/off
+        };
+
+        function getOrSetVariant() {
+            // Check if A/B testing is enabled
+            if (!AB_TEST_CONFIG.enabled) {
+                return 'A';
+            }
+
+            // Check for existing cookie
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+
+            if (cookies[AB_TEST_CONFIG.cookieName]) {
+                return cookies[AB_TEST_CONFIG.cookieName];
+            }
+
+            // Assign new variant
+            const random = Math.random() * 100;
+            const variant = random < AB_TEST_CONFIG.splitPercentage ? 'A' : 'B';
+            
+            // Store in cookie (30 days)
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 30);
+            document.cookie = `${AB_TEST_CONFIG.cookieName}=${variant}; expires=${expires.toUTCString()}; path=/`;
+            
+            return variant;
+        }
+
+        function redirect() {
+            const variant = getOrSetVariant();
+            const destination = variant === 'A' ? AB_TEST_CONFIG.variantA : AB_TEST_CONFIG.variantB;
+            
+            // Track variant in Google Analytics if available
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'ab_test_assigned', {
+                    'variant': variant,
+                    'event_category': 'ab_testing'
+                });
+            }
+            
+            // Redirect
+            window.location.href = destination;
+        }
+
+        // Execute redirect immediately
+        redirect();
+    </script>
+</head>
+<body>
+    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; color: #666;">
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+            <p>Loading Rentman...</p>
+        </div>
+    </div>
+</body>
+</html>
