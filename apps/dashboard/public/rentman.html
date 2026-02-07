@@ -165,18 +165,52 @@
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md border-b border-white/5 bg-[#050505]/90">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <img src="/assets/logo.svg" alt="Rentman" class="h-8 w-auto">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+                <div class="w-8 h-8">
+                    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <filter id="neonGlowIcon" x="-40%" y="-40%" width="180%" height="180%">
+                                <feGaussianBlur stdDeviation="15" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                            <filter id="circleGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="5" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                            <style>
+                                .rentman-icon-text {
+                                    fill: #00ff88;
+                                    font-family: 'JetBrains Mono', 'Courier New', monospace;
+                                    font-weight: 800;
+                                    font-size: 240px;
+                                    filter: url(#neonGlowIcon);
+                                    dominant-baseline: central;
+                                }
+                                .rentman-icon-circle {
+                                    stroke: #00ff88;
+                                    stroke-width: 4;
+                                    stroke-opacity: 0.3;
+                                    fill: #00ff88;
+                                    fill-opacity: 0.05;
+                                    filter: url(#circleGlow);
+                                }
+                            </style>
+                        </defs>
+                        <circle cx="256" cy="256" r="200" class="rentman-icon-circle" />
+                        <text x="256" y="256" text-anchor="middle" class="rentman-icon-text">R_</text>
+                    </svg>
+                </div>
+                <span class="font-mono text-sm font-bold text-white tracking-widest hidden sm:block">RENTMAN_</span>
             </div>
             <div class="hidden md:flex items-center gap-8 font-mono text-xs text-slate-400">
-                <a href="#" class="hover:text-white transition-colors">Documentation</a>
-                <a href="#" class="hover:text-white transition-colors">Pricing</a>
-                <a href="#" class="hover:text-white transition-colors">Status</a>
+                <a href="https://docs.rentman.space" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">Documentation</a>
+                <a href="#integrateWrapper" onclick="document.getElementById('integrateWrapper')?.scrollIntoView({ behavior: 'smooth' }); return false;" class="hover:text-white transition-colors cursor-pointer">Get Started</a>
+                <a href="https://status.rentman.space" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">Status</a>
             </div>
             <div class="flex items-center gap-4">
-                <a href="#" class="hidden sm:block font-mono text-xs hover:text-white transition-colors">Login</a>
-                <a href="#" onclick="trackButtonClick('Start Integrating', 'Navbar')"
-                    class="group relative px-4 py-2 bg-[#00ff88] text-black font-mono text-xs font-semibold rounded hover:bg-[#00cc6a] transition-all duration-300">
+                <a href="/login" class="hidden sm:block font-mono text-xs hover:text-white transition-colors">Login</a>
+                <a href="#integrate" onclick="trackButtonClick('Start Integrating', 'Navbar'); document.getElementById('integrateWrapper')?.scrollIntoView({ behavior: 'smooth' }); return false;"
+                    class="group relative px-4 py-2 bg-[#00ff88] text-black font-mono text-xs font-semibold rounded hover:bg-[#00cc6a] transition-all duration-300 cursor-pointer">
                     Start Integrating
                     <span class="absolute inset-0 rounded ring-1 ring-inset ring-white/20"></span>
                 </a>
