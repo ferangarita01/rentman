@@ -15,6 +15,17 @@ const Landing: React.FC = () => {
         setIntegrateSuccess(true);
     };
 
+    // Close modal on Escape key
+    React.useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOperatorModalOpen) {
+                setIsOperatorModalOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isOperatorModalOpen]);
+
     return (
         <div className="min-h-screen bg-[#050505] text-slate-400 selection:bg-[#00ff88] selection:text-black relative">
             {/* Navigation */}
@@ -453,8 +464,14 @@ const Landing: React.FC = () => {
 
             {/* Operator Modal */}
             {isOperatorModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/80 animate-in fade-in duration-300">
-                    <div className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-xl p-8 shadow-2xl relative">
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/80 animate-in fade-in duration-300"
+                    onClick={() => setIsOperatorModalOpen(false)}
+                >
+                    <div 
+                        className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-xl p-8 shadow-2xl relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <button onClick={() => setIsOperatorModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
                             {/* Fix: Using IconifyIcon alias */}
                             <IconifyIcon icon="solar:close-square-linear" width="24"></IconifyIcon>

@@ -599,7 +599,7 @@
     </section>
 
     <!-- Operator Registration Modal -->
-    <dialog id="operatorModal" class="bg-[#0a0a0a] border border-white/10 rounded-xl p-0 backdrop:bg-black/80 w-full max-w-md shadow-2xl">
+    <dialog id="operatorModal" class="bg-[#0a0a0a] border border-white/10 rounded-xl p-0 backdrop:bg-black/80 w-full max-w-md shadow-2xl" onclick="if(event.target === this) this.close()">
         <div class="p-6 relative">
             <button onclick="document.getElementById('operatorModal').close()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
                 <iconify-icon icon="solar:close-square-linear" width="24"></iconify-icon>
@@ -782,6 +782,16 @@
                 btn.innerHTML = originalText;
             }
         }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('operatorModal');
+                if (modal && modal.open) {
+                    modal.close();
+                }
+            }
+        });
     </script>
 </body>
 
