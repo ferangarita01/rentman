@@ -1,0 +1,11 @@
+{
+    "title": "Verificar funcionamiento V6 (Verbose Logging)",
+    "description": "Prueba de depuracion con logs detallados.",
+    "task_type": "verification",
+    "budget_amount": 75,
+    "location": {
+        "address": "Cloud Run Server V6",
+        "lat": 40.7128,
+        "lng": -74.0060
+    }
+}

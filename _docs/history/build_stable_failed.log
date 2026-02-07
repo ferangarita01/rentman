@@ -1,0 +1,1326 @@
+starting build "0ec92813-2be7-47fd-a69e-e3137519f63b"
+
+FETCHSOURCE
+Fetching storage object: gs://agent-gen-1_cloudbuild/source/1770406975.221854-93a6ac27eb8f44409115cdc6b2106f05.tgz#1770407179750159
+Copying gs://agent-gen-1_cloudbuild/source/1770406975.221854-93a6ac27eb8f44409115cdc6b2106f05.tgz#1770407179750159...
+/ [0 files][    0.0 B/ 62.8 MiB]                                                -- [1 files][ 62.8 MiB/ 62.8 MiB]                                                
+Operation completed over 1 objects/62.8 MiB.                                     
+BUILD
+Starting Step #0
+Step #0: Pulling image: node:20
+Step #0: 20: Pulling from library/node
+Step #0: 6bc9f599b3ef: Already exists
+Step #0: 89edcaae7ec4: Already exists
+Step #0: bbceb0035429: Already exists
+Step #0: 6dc8224e38b6: Already exists
+Step #0: 55e17c71f6d6: Pulling fs layer
+Step #0: c68898eb6051: Pulling fs layer
+Step #0: 862f155b9bd2: Pulling fs layer
+Step #0: b0dbcd2457bf: Pulling fs layer
+Step #0: 55e17c71f6d6: Verifying Checksum
+Step #0: 55e17c71f6d6: Download complete
+Step #0: b0dbcd2457bf: Verifying Checksum
+Step #0: b0dbcd2457bf: Download complete
+Step #0: 862f155b9bd2: Verifying Checksum
+Step #0: 862f155b9bd2: Download complete
+Step #0: 55e17c71f6d6: Pull complete
+Step #0: c68898eb6051: Verifying Checksum
+Step #0: c68898eb6051: Download complete
+Step #0: c68898eb6051: Pull complete
+Step #0: 862f155b9bd2: Pull complete
+Step #0: b0dbcd2457bf: Pull complete
+Step #0: Digest: sha256:94a5714e6b243bf37a1767e637996302fadd9443327f5bdbf0179758fe70cacd
+Step #0: Status: Downloaded newer image for node:20
+Step #0: docker.io/library/node:20
+Step #0: === CLEAN INSTALL ===
+Step #0: npm warn using --force Recommended protections disabled.
+Step #0: npm warn using --force Recommended protections disabled.
+Step #0: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Step #0: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Step #0: npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+Step #0: 
+Step #0: added 828 packages, and audited 829 packages in 16s
+Step #0: 
+Step #0: 97 packages are looking for funding
+Step #0:   run `npm fund` for details
+Step #0: 
+Step #0: found 0 vulnerabilities
+Finished Step #0
+Starting Step #1
+Step #1: Already have image (with digest): node:20
+Step #1: ! No git repo found in current directory
+Step #1: › Use git to track file changes before running commands that modify project files.
+Step #1: Git status is dirty but the command will continue because the terminal is not interactive.
+Step #1: - Clearing android
+Step #1: ✔ Cleared android code
+Step #1: - Creating native directory (./android)
+Step #1: ✔ Created native directory
+Step #1: - Updating package.json
+Step #1: ✔ Updated package.json | no changes
+Step #1: - Running prebuild
+Step #1: » android: userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
+Step #1: - Running prebuild
+Step #1: ✔ Finished prebuild
+Finished Step #1
+Starting Step #2
+Step #2: Pulling image: ubuntu
+Step #2: Using default tag: latest
+Step #2: latest: Pulling from library/ubuntu
+Step #2: Digest: sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b
+Step #2: Status: Downloaded newer image for ubuntu:latest
+Step #2: docker.io/library/ubuntu:latest
+Finished Step #2
+Starting Step #3
+Step #3: Pulling image: ghcr.io/cirruslabs/android-sdk:34
+Step #3: 34: Pulling from cirruslabs/android-sdk
+Step #3: de44b265507a: Pulling fs layer
+Step #3: c55c985e5959: Pulling fs layer
+Step #3: 4f4fb700ef54: Pulling fs layer
+Step #3: 0e57d074af50: Pulling fs layer
+Step #3: 4f4fb700ef54: Download complete
+Step #3: de44b265507a: Verifying Checksum
+Step #3: de44b265507a: Download complete
+Step #3: 0e57d074af50: Verifying Checksum
+Step #3: 0e57d074af50: Download complete
+Step #3: de44b265507a: Pull complete
+Step #3: c55c985e5959: Verifying Checksum
+Step #3: c55c985e5959: Download complete
+Step #3: c55c985e5959: Pull complete
+Step #3: 4f4fb700ef54: Pull complete
+Step #3: 0e57d074af50: Pull complete
+Step #3: Digest: sha256:1c2e7e9c4490dbc1f85364556aa08e550945e6dffb29baab86d5fe2c7be0773a
+Step #3: Status: Downloaded newer image for ghcr.io/cirruslabs/android-sdk:34
+Step #3: ghcr.io/cirruslabs/android-sdk:34
+Step #3: === CONFIGURACIÓN OPTIMIZADA ===
+Step #3: === INICIANDO BUILD OPTIMIZADO ===
+Step #3: Downloading https://services.gradle.org/distributions/gradle-8.14.3-bin.zip
+Step #3: .............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%..............100%
+Step #3: 
+Step #3: Welcome to Gradle 8.14.3!
+Step #3: 
+Step #3: Here are the highlights of this release:
+Step #3:  - Java 24 support
+Step #3:  - GraalVM Native Image toolchain selection
+Step #3:  - Enhancements to test reporting
+Step #3:  - Build Authoring improvements
+Step #3: 
+Step #3: For more details see https://docs.gradle.org/8.14.3/release-notes.html
+Step #3: 
+Step #3: To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Step #3: Daemon will be stopped at the end of the build 
+Step #3: Configuration on demand is an incubating feature.
+Step #3: 
+Step #3: > Configure project :expo-gradle-plugin:expo-autolinking-plugin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin/build.gradle.kts:25:3: 'kotlinOptions(KotlinJvmOptionsDeprecated /* = KotlinJvmOptions */.() -> Unit): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln
+Step #3: 
+Step #3: > Configure project :expo-gradle-plugin:expo-autolinking-settings-plugin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-settings-plugin/build.gradle.kts:30:3: 'kotlinOptions(KotlinJvmOptionsDeprecated /* = KotlinJvmOptions */.() -> Unit): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln
+Step #3: 
+Step #3: > Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors
+Step #3: > Task :gradle-plugin:settings-plugin:pluginDescriptors
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources
+Step #3: > Task :gradle-plugin:settings-plugin:processResources
+Step #3: > Task :gradle-plugin:shared:processResources NO-SOURCE
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
+Step #3: > Task :gradle-plugin:shared:compileKotlin
+Step #3: > Task :gradle-plugin:shared:compileJava NO-SOURCE
+Step #3: > Task :gradle-plugin:shared:classes UP-TO-DATE
+Step #3: > Task :gradle-plugin:shared:jar
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar
+Step #3: > Task :gradle-plugin:settings-plugin:compileKotlin
+Step #3: > Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+Step #3: > Task :gradle-plugin:settings-plugin:classes
+Step #3: > Task :gradle-plugin:settings-plugin:jar
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar
+Step #3: 
+Step #3: > Configure project :expo-module-gradle-plugin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/expo-module-gradle-plugin/build.gradle.kts:58:3: 'kotlinOptions(KotlinJvmOptionsDeprecated /* = KotlinJvmOptions */.() -> Unit): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln
+Step #3: 
+Step #3: > Configure project :expo-updates-gradle-plugin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/expo-updates-gradle-plugin/build.gradle.kts:25:3: 'kotlinOptions(KotlinJvmOptionsDeprecated /* = KotlinJvmOptions */.() -> Unit): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln
+Step #3: 
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-updates-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-updates-gradle-plugin:pluginDescriptors
+Step #3: > Task :expo-module-gradle-plugin:pluginDescriptors
+Step #3: > Task :expo-module-gradle-plugin:processResources
+Step #3: > Task :expo-updates-gradle-plugin:processResources
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:processResources
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:classes
+Step #3: > Task :expo-gradle-plugin:expo-autolinking-plugin:jar
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:processResources
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:compileKotlin
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:classes
+Step #3: > Task :gradle-plugin:react-native-gradle-plugin:jar
+Step #3: 
+Step #3: > Task :expo-module-gradle-plugin:compileKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt:9:24 'var targetSdk: Int?' is deprecated. Will be removed from library DSL in v9.0. Use testOptions.targetSdk or/and lint.targetSdk instead.
+Step #3: 
+Step #3: > Task :expo-module-gradle-plugin:compileJava NO-SOURCE
+Step #3: > Task :expo-module-gradle-plugin:classes
+Step #3: > Task :expo-module-gradle-plugin:jar
+Step #3: > Task :expo-updates-gradle-plugin:compileKotlin
+Step #3: > Task :expo-updates-gradle-plugin:compileJava NO-SOURCE
+Step #3: > Task :expo-updates-gradle-plugin:classes
+Step #3: > Task :expo-updates-gradle-plugin:jar
+Step #3: 
+Step #3: > Configure project :
+Step #3: [32m[ExpoRootProject][0m Using the following versions:
+Step #3:   - buildTools:  [32m36.0.0[0m
+Step #3:   - minSdk:      [32m24[0m
+Step #3:   - compileSdk:  [32m36[0m
+Step #3:   - targetSdk:   [32m36[0m
+Step #3:   - ndk:         [32m27.1.12297006[0m
+Step #3:   - kotlin:      [32m2.1.20[0m
+Step #3:   - ksp:         [32m2.1.20-2.0.1[0m
+Step #3: 
+Step #3: > Configure project :app
+Step #3:  ℹ️  [33mApplying gradle plugin[0m '[32mexpo-updates-gradle-plugin[0m'
+Step #3: Checking the license for package NDK (Side by side) 27.1.12297006 in /opt/android-sdk-linux/licenses
+Step #3: License for package NDK (Side by side) 27.1.12297006 accepted.
+Step #3: Preparing "Install NDK (Side by side) 27.1.12297006 v.27.1.12297006".
+Step #3: "Install NDK (Side by side) 27.1.12297006 v.27.1.12297006" ready.
+Step #3: Installing NDK (Side by side) 27.1.12297006 in /opt/android-sdk-linux/ndk/27.1.12297006
+Step #3: "Install NDK (Side by side) 27.1.12297006 v.27.1.12297006" complete.
+Step #3: "Install NDK (Side by side) 27.1.12297006 v.27.1.12297006" finished.
+Step #3: 
+Step #3: > Configure project :expo
+Step #3: 
+Step #3: Using expo modules
+Step #3:   - [32mexpo-constants[0m (18.0.13)
+Step #3:   - [32mexpo-eas-client[0m (1.0.8)
+Step #3:   - [32mexpo-json-utils[0m (0.15.0)
+Step #3:   - [32mexpo-manifests[0m (1.0.10)
+Step #3:   - [32mexpo-modules-core[0m (3.0.29)
+Step #3:   - [32mexpo-structured-headers[0m (5.0.0)
+Step #3:   - [32mexpo-updates[0m (29.0.16)
+Step #3:   - [32mexpo-updates-interface[0m (2.0.0)
+Step #3:   - [33m[📦][0m [32mexpo-application[0m (7.0.8)
+Step #3:   - [33m[📦][0m [32mexpo-asset[0m (12.0.12)
+Step #3:   - [33m[📦][0m [32mexpo-camera[0m (17.0.10)
+Step #3:   - [33m[📦][0m [32mexpo-crypto[0m (15.0.8)
+Step #3:   - [33m[📦][0m [32mexpo-device[0m (8.0.10)
+Step #3:   - [33m[📦][0m [32mexpo-file-system[0m (19.0.21)
+Step #3:   - [33m[📦][0m [32mexpo-font[0m (14.0.11)
+Step #3:   - [33m[📦][0m [32mexpo-image-loader[0m (6.0.0)
+Step #3:   - [33m[📦][0m [32mexpo-image-picker[0m (17.0.10)
+Step #3:   - [33m[📦][0m [32mexpo-keep-awake[0m (15.0.8)
+Step #3:   - [33m[📦][0m [32mexpo-linking[0m (8.0.11)
+Step #3:   - [33m[📦][0m [32mexpo-location[0m (19.0.8)
+Step #3:   - [33m[📦][0m [32mexpo-notifications[0m (0.32.16)
+Step #3:   - [33m[📦][0m [32mexpo-secure-store[0m (15.0.8)
+Step #3:   - [33m[📦][0m [32mexpo-splash-screen[0m (31.0.13)
+Step #3:   - [33m[📦][0m [32mexpo-task-manager[0m (14.0.9)
+Step #3:   - [33m[📦][0m [32mexpo-web-browser[0m (15.0.10)
+Step #3:   - [33m[📦][0m [32munimodules-app-loader[0m (6.0.8)
+Step #3: 
+Step #3: Checking the license for package Android SDK Build-Tools 35 in /opt/android-sdk-linux/licenses
+Step #3: License for package Android SDK Build-Tools 35 accepted.
+Step #3: Preparing "Install Android SDK Build-Tools 35 v.35.0.0".
+Step #3: "Install Android SDK Build-Tools 35 v.35.0.0" ready.
+Step #3: Installing Android SDK Build-Tools 35 in /opt/android-sdk-linux/build-tools/35.0.0
+Step #3: "Install Android SDK Build-Tools 35 v.35.0.0" complete.
+Step #3: "Install Android SDK Build-Tools 35 v.35.0.0" finished.
+Step #3: Checking the license for package Android SDK Platform 36 in /opt/android-sdk-linux/licenses
+Step #3: License for package Android SDK Platform 36 accepted.
+Step #3: Preparing "Install Android SDK Platform 36 (revision 2)".
+Step #3: "Install Android SDK Platform 36 (revision 2)" ready.
+Step #3: Installing Android SDK Platform 36 in /opt/android-sdk-linux/platforms/android-36
+Step #3: "Install Android SDK Platform 36 (revision 2)" complete.
+Step #3: "Install Android SDK Platform 36 (revision 2)" finished.
+Step #3: [=========                              ] 25%                                   [=========                              ] 25% Fetch remote repository...        [=======================================] 100% Fetch remote repository...       
+Step #3: Checking the license for package Android SDK Build-Tools 36 in /opt/android-sdk-linux/licenses
+Step #3: License for package Android SDK Build-Tools 36 accepted.
+Step #3: Preparing "Install Android SDK Build-Tools 36 v.36.0.0".
+Step #3: "Install Android SDK Build-Tools 36 v.36.0.0" ready.
+Step #3: Installing Android SDK Build-Tools 36 in /opt/android-sdk-linux/build-tools/36.0.0
+Step #3: "Install Android SDK Build-Tools 36 v.36.0.0" complete.
+Step #3: "Install Android SDK Build-Tools 36 v.36.0.0" finished.
+Step #3: [=========                              ] 25%                                   [=========                              ] 25% Fetch remote repository...        [=======================================] 100% Fetch remote repository...       
+Step #3: 
+Step #3: > Task :app:generateAutolinkingNewArchitectureFiles
+Step #3: > Task :app:generateAutolinkingPackageList
+Step #3: > Task :app:generateCodegenSchemaFromJavaScript SKIPPED
+Step #3: > Task :app:generateCodegenArtifactsFromSchema SKIPPED
+Step #3: > Task :app:generateReactNativeEntryPoint
+Step #3: > Task :app:preBuild
+Step #3: > Task :app:preReleaseBuild
+Step #3: > Task :react-native-worklets:assertMinimalReactNativeVersionTask
+Step #3: > Task :react-native-worklets:assertNewArchitectureEnabledTask SKIPPED
+Step #3: > Task :react-native-reanimated:assertMinimalReactNativeVersionTask
+Step #3: > Task :react-native-reanimated:assertNewArchitectureEnabledTask SKIPPED
+Step #3: > Task :react-native-reanimated:assertWorkletsVersionTask
+Step #3: > Task :app:mergeReleaseJniLibFolders
+Step #3: > Task :react-native-worklets:generateCodegenSchemaFromJavaScript
+Step #3: > Task :react-native-reanimated:generateCodegenSchemaFromJavaScript
+Step #3: 
+Step #3: > Task :expo-constants:createExpoConfig
+Step #3: 
+Step #3: > Task :expo-constants:preBuild
+Step #3: The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
+Step #3: > Task :expo-constants:preReleaseBuild
+Step #3: > Task :expo-constants:mergeReleaseJniLibFolders
+Step #3: > Task :expo-constants:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-constants:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-eas-client:preBuild UP-TO-DATE
+Step #3: > Task :expo-eas-client:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo-eas-client:mergeReleaseJniLibFolders
+Step #3: > Task :expo-eas-client:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-eas-client:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-json-utils:preBuild UP-TO-DATE
+Step #3: > Task :expo-json-utils:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo-json-utils:mergeReleaseJniLibFolders
+Step #3: > Task :expo-json-utils:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-json-utils:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-manifests:preBuild UP-TO-DATE
+Step #3: > Task :expo-manifests:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo-manifests:mergeReleaseJniLibFolders
+Step #3: > Task :expo-manifests:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-manifests:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-modules-core:preBuild UP-TO-DATE
+Step #3: > Task :expo-modules-core:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo:generatePackagesList
+Step #3: > Task :expo:preBuild
+Step #3: > Task :expo:preReleaseBuild
+Step #3: > Task :expo:mergeReleaseJniLibFolders
+Step #3: > Task :expo:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-structured-headers:preBuild UP-TO-DATE
+Step #3: > Task :expo-structured-headers:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo-structured-headers:mergeReleaseJniLibFolders
+Step #3: > Task :expo-structured-headers:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-structured-headers:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-updates:preBuild UP-TO-DATE
+Step #3: > Task :expo-updates:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo-updates:mergeReleaseJniLibFolders
+Step #3: > Task :expo-updates:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-updates:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-worklets:generateCodegenArtifactsFromSchema
+Step #3: > Task :expo-updates-interface:preBuild UP-TO-DATE
+Step #3: > Task :expo-updates-interface:preReleaseBuild UP-TO-DATE
+Step #3: > Task :expo-updates-interface:mergeReleaseJniLibFolders
+Step #3: > Task :expo-updates-interface:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :expo-updates-interface:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-worklets:prepareWorkletsHeadersForPrefabs
+Step #3: > Task :react-native-worklets:preBuild
+Step #3: > Task :react-native-worklets:preReleaseBuild
+Step #3: > Task :react-native-reanimated:generateCodegenArtifactsFromSchema
+Step #3: > Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs
+Step #3: > Task :react-native-reanimated:preBuild
+Step #3: > Task :react-native-reanimated:preReleaseBuild
+Step #3: > Task :react-native-reanimated:mergeReleaseJniLibFolders
+Step #3: > Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript
+Step #3: > Task :react-native-screens:generateCodegenSchemaFromJavaScript
+Step #3: > Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema
+Step #3: > Task :react-native-safe-area-context:preBuild
+Step #3: > Task :react-native-safe-area-context:preReleaseBuild
+Step #3: > Task :react-native-safe-area-context:mergeReleaseJniLibFolders
+Step #3: > Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-screens:generateCodegenArtifactsFromSchema
+Step #3: > Task :react-native-screens:preBuild
+Step #3: > Task :react-native-screens:preReleaseBuild
+Step #3: > Task :react-native-svg:generateCodegenSchemaFromJavaScript
+Step #3: > Task :react-native-svg:generateCodegenArtifactsFromSchema
+Step #3: > Task :react-native-svg:preBuild
+Step #3: > Task :react-native-svg:preReleaseBuild
+Step #3: > Task :react-native-svg:mergeReleaseJniLibFolders
+Step #3: > Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+Step #3: > Task :react-native-svg:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :react-native-safe-area-context:generateReleaseBuildConfig
+Step #3: > Task :react-native-safe-area-context:generateReleaseResValues
+Step #3: > Task :react-native-safe-area-context:generateReleaseResources
+Step #3: > Task :react-native-safe-area-context:packageReleaseResources
+Step #3: 
+Step #3: > Task :expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]
+Step #3: Checking the license for package CMake 3.22.1 in /opt/android-sdk-linux/licenses
+Step #3: License for package CMake 3.22.1 accepted.
+Step #3: Preparing "Install CMake 3.22.1 v.3.22.1".
+Step #3: "Install CMake 3.22.1 v.3.22.1" ready.
+Step #3: Installing CMake 3.22.1 in /opt/android-sdk-linux/cmake/3.22.1
+Step #3: "Install CMake 3.22.1 v.3.22.1" complete.
+Step #3: "Install CMake 3.22.1 v.3.22.1" finished.
+Step #3: 
+Step #3: > Task :react-native-safe-area-context:parseReleaseLocalResources
+Step #3: > Task :react-native-safe-area-context:generateReleaseRFile
+Step #3: > Task :react-native-screens:configureCMakeRelWithDebInfo[arm64-v8a]
+Step #3: > Task :react-native-worklets:configureCMakeRelWithDebInfo[arm64-v8a]
+Step #3: 
+Step #3: > Task :react-native-safe-area-context:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+Step #3: 
+Step #3: > Task :react-native-safe-area-context:javaPreCompileRelease
+Step #3: 
+Step #3: > Task :react-native-screens:buildCMakeRelWithDebInfo[arm64-v8a]
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-screens/android/build/intermediates/cxx/RelWithDebInfo/3h562g5d/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-screens/android/build/intermediates/cxx/RelWithDebInfo/3h562g5d/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :react-native-screens:mergeReleaseJniLibFolders
+Step #3: > Task :react-native-screens:mergeReleaseNativeLibs
+Step #3: > Task :react-native-screens:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :react-native-screens:generateReleaseBuildConfig
+Step #3: > Task :react-native-screens:generateReleaseResValues FROM-CACHE
+Step #3: > Task :react-native-screens:generateReleaseResources
+Step #3: > Task :react-native-screens:packageReleaseResources
+Step #3: > Task :react-native-screens:parseReleaseLocalResources
+Step #3: > Task :react-native-screens:generateReleaseRFile
+Step #3: 
+Step #3: > Task :expo-modules-core:buildCMakeRelWithDebInfo[arm64-v8a]
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/expo-modules-core/android/build/intermediates/cxx/RelWithDebInfo/6l5u3g61/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/expo-modules-core/android/build/intermediates/cxx/RelWithDebInfo/6l5u3g61/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :expo-modules-core:mergeReleaseJniLibFolders
+Step #3: 
+Step #3: > Task :react-native-worklets:buildCMakeRelWithDebInfo[arm64-v8a][worklets]
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-worklets/android/build/intermediates/cxx/RelWithDebInfo/2t503u3r/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-worklets/android/build/intermediates/cxx/RelWithDebInfo/2t503u3r/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :expo-modules-core:mergeReleaseNativeLibs
+Step #3: > Task :expo-modules-core:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-screens:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo:generateReleaseBuildConfig
+Step #3: > Task :expo:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo:packageReleaseResources
+Step #3: > Task :expo:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo:generateReleaseRFile
+Step #3: > Task :expo-constants:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-constants:generateReleaseBuildConfig
+Step #3: > Task :expo-constants:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-constants:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-constants:packageReleaseResources
+Step #3: > Task :expo-constants:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-constants:generateReleaseRFile
+Step #3: > Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-modules-core:generateReleaseBuildConfig
+Step #3: > Task :expo-modules-core:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-modules-core:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-modules-core:packageReleaseResources
+Step #3: > Task :expo-modules-core:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-modules-core:generateReleaseRFile
+Step #3: > Task :react-native-safe-area-context:compileReleaseJavaWithJavac
+Step #3: > Task :react-native-safe-area-context:bundleLibRuntimeToDirRelease
+Step #3: 
+Step #3: > Task :react-native-worklets:externalNativeBuildRelease
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-worklets/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-worklets/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :react-native-worklets:generateJsonModelRelease
+Step #3: > Task :react-native-worklets:prefabReleaseConfigurePackage
+Step #3: > Task :react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]
+Step #3: > Task :react-native-reanimated:generateJsonModelRelease
+Step #3: > Task :react-native-reanimated:prefabReleaseConfigurePackage
+Step #3: > Task :react-native-worklets:prefabReleasePackage
+Step #3: > Task :app:configureCMakeRelWithDebInfo[arm64-v8a]
+Step #3: > Task :react-native-worklets:mergeReleaseJniLibFolders
+Step #3: > Task :react-native-worklets:mergeReleaseNativeLibs
+Step #3: > Task :react-native-screens:compileReleaseKotlin
+Step #3: > Task :react-native-worklets:copyReleaseJniLibsProjectOnly
+Step #3: > Task :expo-modules-core:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-constants:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-eas-client:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-eas-client:generateReleaseBuildConfig
+Step #3: > Task :expo-eas-client:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-eas-client:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-eas-client:packageReleaseResources
+Step #3: > Task :expo-eas-client:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-eas-client:generateReleaseRFile
+Step #3: > Task :expo-eas-client:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-json-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-json-utils:generateReleaseBuildConfig
+Step #3: > Task :expo-json-utils:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-json-utils:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-json-utils:packageReleaseResources
+Step #3: > Task :expo-json-utils:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-json-utils:generateReleaseRFile
+Step #3: > Task :expo-json-utils:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-manifests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-manifests:generateReleaseBuildConfig
+Step #3: > Task :expo-manifests:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-manifests:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-manifests:packageReleaseResources
+Step #3: > Task :expo-manifests:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-manifests:generateReleaseRFile
+Step #3: > Task :expo-manifests:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-structured-headers:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-structured-headers:generateReleaseBuildConfig
+Step #3: > Task :expo-structured-headers:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-structured-headers:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-structured-headers:packageReleaseResources
+Step #3: > Task :expo-structured-headers:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-structured-headers:generateReleaseRFile
+Step #3: > Task :expo-structured-headers:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-updates:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-updates:generateReleaseBuildConfig
+Step #3: > Task :expo-updates:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-updates:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-updates:packageReleaseResources
+Step #3: > Task :expo-updates:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-updates:generateReleaseRFile
+Step #3: > Task :expo-updates-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :expo-updates-interface:generateReleaseBuildConfig
+Step #3: > Task :expo-updates-interface:generateReleaseResValues FROM-CACHE
+Step #3: > Task :expo-updates-interface:generateReleaseResources FROM-CACHE
+Step #3: > Task :expo-updates-interface:packageReleaseResources
+Step #3: > Task :expo-updates-interface:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :expo-updates-interface:generateReleaseRFile
+Step #3: > Task :expo-updates-interface:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-modules-core:compileReleaseKotlin
+Step #3: > Task :expo-updates:javaPreCompileRelease
+Step #3: > Task :expo:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :react-native-worklets:generateReleaseBuildConfig
+Step #3: > Task :react-native-worklets:generateReleaseResValues FROM-CACHE
+Step #3: > Task :react-native-worklets:generateReleaseResources FROM-CACHE
+Step #3: > Task :react-native-worklets:packageReleaseResources
+Step #3: > Task :react-native-worklets:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :react-native-worklets:generateReleaseRFile
+Step #3: > Task :react-native-worklets:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a][reanimated]
+Step #3: 
+Step #3: > Task :react-native-screens:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:56:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'name'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:57:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'reactContext'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:70:17 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:48:77 Unchecked cast of '(CoordinatorLayout.Behavior<View!>?..CoordinatorLayout.Behavior<*>?)' to 'BottomSheetBehavior<Screen>'.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:383:36 'fun setTranslucent(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:402:36 'fun setColor(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:420:36 'fun setNavigationBarColor(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:437:36 'fun setNavigationBarTranslucent(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:217:31 'var targetElevation: Float' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:220:13 'fun setHasOptionsMenu(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:397:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:404:22 'fun onPrepareOptionsMenu(p0: Menu): Unit' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:407:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:412:22 'fun onCreateOptionsMenu(p0: Menu, p1: MenuInflater): Unit' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:435:18 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:203:14 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:220:14 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:237:14 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:246:14 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:55:42 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): WindowInsetsCompat' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:56:39 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:58:39 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:59:39 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:102:53 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:106:37 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:113:48 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:116:32 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:162:49 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:218:43 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:218:72 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:224:16 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:241:55 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:283:13 'fun setColor(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:285:13 'fun setTranslucent(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:289:13 'fun setNavigationBarColor(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:290:13 'fun setNavigationBarTranslucent(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:354:42 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:356:48 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:359:57 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:360:63 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:7:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:25:13 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:32:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:33:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:34:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:35:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:71:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:72:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:79:46 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:83:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:84:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:95:34 The corresponding parameter in the supertype 'RootView' is named 't'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:63:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchX'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:64:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchY'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:68:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchX'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:69:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchY'. This may cause problems when calling this function with named arguments.
+Step #3: w: file:///workspace/rentman-app/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/TabsHostViewManager.kt:37:9 The corresponding parameter in the supertype 'TabsHostViewManager' is named 'view'. This may cause problems when calling this function with named arguments.
+Step #3: 
+Step #3: > Task :react-native-worklets:compileReleaseJavaWithJavac
+Step #3: Note: /workspace/rentman-app/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/WorkletsPackage.java uses unchecked or unsafe operations.
+Step #3: Note: Recompile with -Xlint:unchecked for details.
+Step #3: 
+Step #3: > Task :react-native-worklets:bundleLibCompileToJarRelease
+Step #3: > Task :react-native-svg:generateReleaseBuildConfig
+Step #3: > Task :react-native-svg:generateReleaseResValues FROM-CACHE
+Step #3: > Task :react-native-svg:generateReleaseResources FROM-CACHE
+Step #3: > Task :react-native-svg:packageReleaseResources
+Step #3: > Task :react-native-svg:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :react-native-svg:generateReleaseRFile
+Step #3: > Task :react-native-svg:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :react-native-screens:compileReleaseJavaWithJavac
+Step #3: > Task :react-native-screens:bundleLibRuntimeToDirRelease
+Step #3: 
+Step #3: > Task :react-native-svg:compileReleaseJavaWithJavac
+Step #3: Note: Some input files use or override a deprecated API.
+Step #3: Note: Recompile with -Xlint:deprecation for details.
+Step #3: Note: Some input files use unchecked or unsafe operations.
+Step #3: Note: Recompile with -Xlint:unchecked for details.
+Step #3: 
+Step #3: > Task :react-native-svg:bundleLibRuntimeToDirRelease
+Step #3: > Task :react-native-worklets:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo:writeReleaseAarMetadata
+Step #3: 
+Step #3: > Task :expo-modules-core:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:48:87 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:91:85 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:120:83 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/apploader/AppLoaderProvider.kt:34:52 Unchecked cast of 'Class<*>!' to 'Class<out HeadlessAppLoader>'.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:30:8 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:253:21 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:343:21 'val DEFAULT: Int' is deprecated. UIManagerType.DEFAULT will be deleted in the next release of React Native. Use [LEGACY] instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/defaultmodules/NativeModulesProxyModule.kt:16:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:65:51 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:69:22 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+Step #3: Note: Some input files use or override a deprecated API.
+Step #3: Note: Recompile with -Xlint:deprecation for details.
+Step #3: 
+Step #3: > Task :expo-modules-core:compileReleaseJavaWithJavac
+Step #3: 
+Step #3: > Task :expo-constants:writeReleaseAarMetadata
+Step #3: > Task :expo-eas-client:writeReleaseAarMetadata
+Step #3: > Task :expo-json-utils:writeReleaseAarMetadata
+Step #3: > Task :expo-manifests:writeReleaseAarMetadata
+Step #3: > Task :expo-structured-headers:writeReleaseAarMetadata
+Step #3: > Task :expo-modules-core:bundleLibCompileToJarRelease
+Step #3: > Task :expo-modules-core:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-eas-client:compileReleaseKotlin
+Step #3: 
+Step #3: > Task :expo-constants:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-constants/android/src/main/java/expo/modules/constants/ConstantsModule.kt:12:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+Step #3: 
+Step #3: > Task :expo-eas-client:compileReleaseJavaWithJavac
+Step #3: > Task :expo-eas-client:bundleLibCompileToJarRelease
+Step #3: > Task :expo-json-utils:compileReleaseKotlin
+Step #3: > Task :expo-constants:compileReleaseJavaWithJavac
+Step #3: > Task :expo-constants:bundleLibCompileToJarRelease
+Step #3: > Task :expo-structured-headers:compileReleaseKotlin NO-SOURCE
+Step #3: > Task :expo-json-utils:compileReleaseJavaWithJavac
+Step #3: > Task :expo-json-utils:bundleLibCompileToJarRelease
+Step #3: > Task :app:checkReleaseDuplicateClasses
+Step #3: 
+Step #3: > Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a][reanimated]
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-reanimated/android/build/intermediates/cxx/RelWithDebInfo/101e22i3/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-reanimated/android/build/intermediates/cxx/RelWithDebInfo/101e22i3/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :expo-updates-interface:compileReleaseKotlin
+Step #3: 
+Step #3: > Task :expo-manifests:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/EmbeddedManifest.kt:19:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/EmbeddedManifest.kt:19:86 'fun getLegacyID(): String' is deprecated. Prefer scopeKey or projectId depending on use case.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/ExpoUpdatesManifest.kt:16:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/Manifest.kt:13:3 Deprecations and opt-ins on a method overridden from 'Any' may not be reported.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/Manifest.kt:15:12 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: 
+Step #3: > Task :expo-manifests:compileReleaseJavaWithJavac
+Step #3: > Task :expo-manifests:bundleLibCompileToJarRelease
+Step #3: > Task :expo-structured-headers:compileReleaseJavaWithJavac
+Step #3: > Task :expo-structured-headers:bundleLibCompileToJarRelease
+Step #3: 
+Step #3: > Task :react-native-reanimated:externalNativeBuildRelease
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-reanimated/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/node_modules/react-native-reanimated/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :expo-constants:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-eas-client:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-manifests:bundleLibRuntimeToDirRelease
+Step #3: > Task :react-native-reanimated:prefabReleasePackage
+Step #3: > Task :react-native-reanimated:mergeReleaseNativeLibs
+Step #3: > Task :react-native-reanimated:copyReleaseJniLibsProjectOnly
+Step #3: > Task :react-native-reanimated:generateReleaseBuildConfig
+Step #3: > Task :react-native-reanimated:generateReleaseResValues FROM-CACHE
+Step #3: > Task :react-native-reanimated:generateReleaseResources FROM-CACHE
+Step #3: > Task :react-native-reanimated:packageReleaseResources
+Step #3: > Task :react-native-reanimated:parseReleaseLocalResources FROM-CACHE
+Step #3: > Task :react-native-reanimated:generateReleaseRFile
+Step #3: > Task :react-native-reanimated:javaPreCompileRelease FROM-CACHE
+Step #3: > Task :expo-updates-interface:compileReleaseJavaWithJavac
+Step #3: > Task :expo-updates-interface:bundleLibCompileToJarRelease
+Step #3: 
+Step #3: > Task :react-native-reanimated:compileReleaseJavaWithJavac
+Step #3: Note: Some input files use or override a deprecated API.
+Step #3: Note: Recompile with -Xlint:deprecation for details.
+Step #3: Note: Some input files use unchecked or unsafe operations.
+Step #3: Note: Recompile with -Xlint:unchecked for details.
+Step #3: 
+Step #3: > Task :react-native-reanimated:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-json-utils:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-structured-headers:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-updates-interface:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-modules-core:writeReleaseAarMetadata
+Step #3: > Task :expo-updates-interface:writeReleaseAarMetadata
+Step #3: > Task :react-native-reanimated:writeReleaseAarMetadata
+Step #3: > Task :react-native-safe-area-context:writeReleaseAarMetadata
+Step #3: > Task :react-native-screens:writeReleaseAarMetadata
+Step #3: > Task :react-native-svg:writeReleaseAarMetadata
+Step #3: > Task :react-native-worklets:writeReleaseAarMetadata
+Step #3: > Task :expo:extractDeepLinksRelease
+Step #3: > Task :expo:processReleaseManifest
+Step #3: > Task :expo-constants:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-constants:processReleaseManifest
+Step #3: > Task :expo-eas-client:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-eas-client:processReleaseManifest
+Step #3: > Task :expo-json-utils:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-json-utils:processReleaseManifest
+Step #3: > Task :expo-manifests:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-manifests:processReleaseManifest
+Step #3: > Task :expo-modules-core:extractDeepLinksRelease FROM-CACHE
+Step #3: 
+Step #3: > Task :expo-modules-core:processReleaseManifest
+Step #3: /workspace/rentman-app/node_modules/expo-modules-core/android/src/main/AndroidManifest.xml:8:9-11:45 Warning:
+Step #3: 	meta-data#com.facebook.soloader.enabled@android:value was tagged at AndroidManifest.xml:8 to replace other declarations but no other declaration present
+Step #3: 
+Step #3: > Task :expo-structured-headers:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-structured-headers:processReleaseManifest
+Step #3: > Task :expo-updates-interface:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-updates-interface:processReleaseManifest
+Step #3: > Task :react-native-reanimated:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :react-native-reanimated:processReleaseManifest
+Step #3: > Task :react-native-safe-area-context:extractDeepLinksRelease FROM-CACHE
+Step #3: 
+Step #3: > Task :react-native-safe-area-context:processReleaseManifest
+Step #3: package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /workspace/rentman-app/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+Step #3: Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Step #3: Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /workspace/rentman-app/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+Step #3: 
+Step #3: > Task :react-native-screens:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :react-native-screens:processReleaseManifest
+Step #3: > Task :react-native-svg:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :react-native-svg:processReleaseManifest
+Step #3: > Task :react-native-worklets:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :react-native-worklets:processReleaseManifest
+Step #3: > Task :expo:compileReleaseLibraryResources
+Step #3: > Task :expo-constants:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-eas-client:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-json-utils:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-manifests:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-modules-core:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-structured-headers:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-updates-interface:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :react-native-reanimated:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :react-native-safe-area-context:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :react-native-screens:compileReleaseLibraryResources
+Step #3: > Task :react-native-svg:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :react-native-worklets:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :react-native-reanimated:bundleLibCompileToJarRelease
+Step #3: > Task :react-native-safe-area-context:bundleLibCompileToJarRelease
+Step #3: > Task :react-native-screens:bundleLibCompileToJarRelease
+Step #3: > Task :react-native-svg:bundleLibCompileToJarRelease
+Step #3: > Task :expo:prepareReleaseArtProfile
+Step #3: > Task :expo-constants:prepareReleaseArtProfile
+Step #3: > Task :expo-eas-client:prepareReleaseArtProfile
+Step #3: > Task :expo-json-utils:prepareReleaseArtProfile
+Step #3: > Task :expo-manifests:prepareReleaseArtProfile
+Step #3: > Task :expo-modules-core:prepareReleaseArtProfile
+Step #3: > Task :expo-structured-headers:prepareReleaseArtProfile
+Step #3: > Task :expo-updates-interface:prepareReleaseArtProfile
+Step #3: > Task :react-native-reanimated:prepareReleaseArtProfile
+Step #3: > Task :react-native-safe-area-context:prepareReleaseArtProfile
+Step #3: > Task :react-native-screens:prepareReleaseArtProfile
+Step #3: > Task :react-native-svg:prepareReleaseArtProfile
+Step #3: > Task :react-native-worklets:prepareReleaseArtProfile
+Step #3: > Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
+Step #3: > Task :react-native-screens:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-updates:writeReleaseAarMetadata
+Step #3: > Task :expo-updates:extractDeepLinksRelease FROM-CACHE
+Step #3: > Task :expo-updates:processReleaseManifest
+Step #3: > Task :expo-updates:compileReleaseLibraryResources FROM-CACHE
+Step #3: > Task :expo-updates:prepareReleaseArtProfile
+Step #3: > Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+Step #3: > Task :react-native-svg:bundleLibRuntimeToJarRelease
+Step #3: > Task :react-native-worklets:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-modules-core:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-constants:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-eas-client:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-manifests:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-json-utils:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-structured-headers:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo-updates-interface:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo:mergeReleaseShaders
+Step #3: > Task :expo:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo:mergeReleaseAssets
+Step #3: > Task :expo-constants:mergeReleaseShaders
+Step #3: > Task :expo-constants:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-constants:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-constants:mergeReleaseAssets
+Step #3: > Task :expo-eas-client:mergeReleaseShaders
+Step #3: > Task :expo-eas-client:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-eas-client:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-eas-client:mergeReleaseAssets
+Step #3: > Task :expo-json-utils:mergeReleaseShaders
+Step #3: > Task :expo-json-utils:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-json-utils:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-json-utils:mergeReleaseAssets
+Step #3: > Task :expo-manifests:mergeReleaseShaders
+Step #3: > Task :expo-manifests:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-manifests:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-manifests:mergeReleaseAssets
+Step #3: > Task :expo-modules-core:mergeReleaseShaders
+Step #3: > Task :expo-modules-core:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-modules-core:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-modules-core:mergeReleaseAssets
+Step #3: > Task :expo-structured-headers:mergeReleaseShaders
+Step #3: > Task :expo-structured-headers:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-structured-headers:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-structured-headers:mergeReleaseAssets
+Step #3: > Task :expo-updates:mergeReleaseShaders
+Step #3: > Task :expo-updates:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-updates:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-updates:mergeReleaseAssets
+Step #3: > Task :expo-updates-interface:mergeReleaseShaders
+Step #3: > Task :expo-updates-interface:compileReleaseShaders NO-SOURCE
+Step #3: > Task :expo-updates-interface:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :expo-updates-interface:mergeReleaseAssets
+Step #3: > Task :react-native-reanimated:mergeReleaseShaders
+Step #3: > Task :react-native-reanimated:compileReleaseShaders NO-SOURCE
+Step #3: > Task :react-native-reanimated:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :react-native-reanimated:mergeReleaseAssets
+Step #3: > Task :react-native-safe-area-context:mergeReleaseShaders
+Step #3: > Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
+Step #3: > Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :react-native-safe-area-context:mergeReleaseAssets
+Step #3: > Task :react-native-screens:mergeReleaseShaders
+Step #3: > Task :react-native-screens:compileReleaseShaders NO-SOURCE
+Step #3: > Task :react-native-screens:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :react-native-screens:mergeReleaseAssets
+Step #3: > Task :react-native-svg:mergeReleaseShaders
+Step #3: > Task :react-native-svg:compileReleaseShaders NO-SOURCE
+Step #3: > Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :react-native-svg:mergeReleaseAssets
+Step #3: > Task :react-native-worklets:mergeReleaseShaders
+Step #3: > Task :react-native-worklets:compileReleaseShaders NO-SOURCE
+Step #3: > Task :react-native-worklets:generateReleaseAssets UP-TO-DATE
+Step #3: > Task :react-native-worklets:mergeReleaseAssets
+Step #3: > Task :expo-constants:processReleaseJavaRes
+Step #3: > Task :expo-eas-client:processReleaseJavaRes
+Step #3: > Task :expo-json-utils:processReleaseJavaRes
+Step #3: > Task :expo-manifests:processReleaseJavaRes
+Step #3: > Task :expo-modules-core:processReleaseJavaRes
+Step #3: > Task :expo-structured-headers:processReleaseJavaRes NO-SOURCE
+Step #3: > Task :expo-updates-interface:processReleaseJavaRes
+Step #3: > Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
+Step #3: > Task :react-native-safe-area-context:processReleaseJavaRes
+Step #3: > Task :react-native-screens:processReleaseJavaRes
+Step #3: > Task :react-native-svg:processReleaseJavaRes NO-SOURCE
+Step #3: > Task :react-native-worklets:processReleaseJavaRes NO-SOURCE
+Step #3: > Task :expo:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo:extractDeepLinksForAarRelease
+Step #3: > Task :expo:prepareLintJarForPublish
+Step #3: > Task :expo-constants:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-constants:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-constants:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-updates:kspReleaseKotlin
+Step #3: > Task :app:buildCMakeRelWithDebInfo[arm64-v8a]
+Step #3: > Task :expo:mapReleaseSourceSetPaths
+Step #3: > Task :expo:mergeReleaseResources
+Step #3: > Task :expo:verifyReleaseResources
+Step #3: > Task :expo-eas-client:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-eas-client:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-eas-client:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: 
+Step #3: > Task :expo-updates:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesConfiguration.kt:317:13 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesController.kt:40:39 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesDevLauncherController.kt:195:133 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesModule.kt:49:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesModule.kt:98:38 'fun toString(): String' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesPackage.kt:7:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/UpdatesPackage.kt:56:85 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/db/Converters.kt:56:30 Java type mismatch: inferred type is 'ByteArray?', but 'ByteArray' was expected.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/db/DatabaseIntegrityCheck.kt:38:39 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/db/Reaper.kt:50:41 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/db/Reaper.kt:68:41 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/loader/Loader.kt:246:63 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/loader/LoaderTask.kt:360:101 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/manifest/EmbeddedUpdate.kt:33:89 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/manifest/ExpoUpdatesUpdate.kt:37:92 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/CheckForUpdateProcedure.kt:141:100 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/CheckForUpdateProcedure.kt:174:100 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/RelaunchProcedure.kt:137:44 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/RestartReactAppExtensions.kt:25:3 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/StartupProcedure.kt:158:36 'fun getCurrentState(): UpdatesStateValue' is deprecated. Avoid needing to access current state to know how to transition to next state.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/StartupProcedure.kt:192:34 'fun getCurrentState(): UpdatesStateValue' is deprecated. Avoid needing to access current state to know how to transition to next state.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo-updates/android/src/main/java/expo/modules/updates/procedures/StateMachineSerialExecutorQueue.kt:64:45 'fun getCurrentState(): UpdatesStateValue' is deprecated. Avoid needing to access current state to know how to transition to next state.
+Step #3: 
+Step #3: > Task :app:buildCMakeRelWithDebInfo[arm64-v8a]
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/android/app/build/intermediates/cxx/RelWithDebInfo/6c681zx6/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: C/C++: Hard link from '/root/.gradle/caches/8.14.3/transforms/847e9553a8824efa3787686540972f6b/transformed/react-android-0.81.5-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/workspace/rentman-app/android/app/build/intermediates/cxx/RelWithDebInfo/6c681zx6/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+Step #3: 
+Step #3: > Task :expo-updates:compileReleaseJavaWithJavac
+Step #3: > Task :expo-updates:bundleLibCompileToJarRelease
+Step #3: > Task :app:mergeReleaseNativeLibs
+Step #3: > Task :expo-constants:extractReleaseAnnotations
+Step #3: > Task :expo-eas-client:extractReleaseAnnotations
+Step #3: > Task :app:buildKotlinToolingMetadata
+Step #3: > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Step #3: > Task :app:generateReleaseBuildConfig
+Step #3: > Task :app:checkReleaseAarMetadata
+Step #3: > Task :expo-updates:bundleLibRuntimeToDirRelease
+Step #3: > Task :app:stripReleaseDebugSymbols
+Step #3: > Task :expo-updates:bundleLibRuntimeToJarRelease
+Step #3: 
+Step #3: > Task :expo:compileReleaseKotlin
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ExpoModulesPackage.kt:34:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ExpoReactHostFactory.kt:8:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ExpoReactHostFactory.kt:80:22 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:24:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:58:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:105:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:105:38 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:113:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:114:21 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:168:36 'constructor(activity: Activity, reactNativeHost: ReactNativeHost?, appKey: String?, launchOptions: Bundle?, fabricEnabled: Boolean): ReactDelegate' is deprecated. Deprecated since 0.81.0, use one of the other constructors instead.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:279:77 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:282:22 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:286:54 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:6:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:15:9 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:47:60 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:7:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:16:23 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:89:16 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:101:38 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/fetch/ExpoFetchModule.kt:30:39 'constructor(reactContext: ReactContext): ForwardingCookieHandler' is deprecated. Use the default constructor.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/fetch/NativeResponse.kt:42:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Step #3: w: file:///workspace/rentman-app/node_modules/expo/android/src/main/java/expo/modules/fetch/NativeResponse.kt:44:11 'fun deallocate(): Unit' is deprecated. Use sharedObjectDidRelease() instead.
+Step #3: 
+Step #3: > Task :app:createBundleReleaseJsAndAssets
+Step #3: Starting Metro Bundler
+Step #3: warning: Bundler cache is empty, rebuilding (this may take a minute)
+Step #3: 
+Step #3: > Task :expo-updates:processReleaseJavaRes
+Step #3: > Task :expo-constants:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-constants:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-constants:prepareLintJarForPublish
+Step #3: > Task :expo:compileReleaseJavaWithJavac
+Step #3: > Task :expo:bundleLibRuntimeToDirRelease
+Step #3: > Task :expo-constants:mergeReleaseJavaResource
+Step #3: > Task :expo:bundleLibCompileToJarRelease
+Step #3: > Task :expo:bundleLibRuntimeToJarRelease
+Step #3: > Task :expo:processReleaseJavaRes
+Step #3: > Task :expo:extractReleaseAnnotations
+Step #3: > Task :expo:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo:mergeReleaseJavaResource
+Step #3: > Task :expo:syncReleaseLibJars
+Step #3: > Task :expo:bundleReleaseAar
+Step #3: > Task :expo:assembleRelease
+Step #3: > Task :expo-constants:syncReleaseLibJars
+Step #3: > Task :expo-constants:bundleReleaseAar
+Step #3: > Task :expo-constants:mapReleaseSourceSetPaths
+Step #3: > Task :expo-constants:mergeReleaseResources
+Step #3: > Task :expo-constants:verifyReleaseResources
+Step #3: > Task :expo-constants:assembleRelease
+Step #3: > Task :expo-eas-client:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-eas-client:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-eas-client:prepareLintJarForPublish
+Step #3: > Task :expo-eas-client:mergeReleaseJavaResource
+Step #3: > Task :expo-eas-client:syncReleaseLibJars
+Step #3: > Task :expo-eas-client:bundleReleaseAar
+Step #3: > Task :expo-eas-client:mapReleaseSourceSetPaths
+Step #3: > Task :expo-json-utils:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-eas-client:mergeReleaseResources
+Step #3: > Task :expo-json-utils:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-json-utils:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-json-utils:extractReleaseAnnotations
+Step #3: > Task :expo-json-utils:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-manifests:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-json-utils:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-manifests:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-json-utils:prepareLintJarForPublish
+Step #3: > Task :expo-manifests:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-json-utils:mapReleaseSourceSetPaths
+Step #3: > Task :expo-json-utils:mergeReleaseJavaResource
+Step #3: > Task :expo-json-utils:syncReleaseLibJars
+Step #3: > Task :expo-manifests:extractReleaseAnnotations
+Step #3: > Task :expo-manifests:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-manifests:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-json-utils:bundleReleaseAar
+Step #3: > Task :expo-manifests:prepareLintJarForPublish
+Step #3: > Task :expo-json-utils:mergeReleaseResources
+Step #3: > Task :expo-manifests:mergeReleaseJavaResource
+Step #3: > Task :expo-manifests:syncReleaseLibJars
+Step #3: > Task :expo-manifests:bundleReleaseAar
+Step #3: > Task :expo-manifests:mapReleaseSourceSetPaths
+Step #3: > Task :expo-manifests:mergeReleaseResources
+Step #3: > Task :expo-eas-client:verifyReleaseResources
+Step #3: > Task :expo-eas-client:assembleRelease
+Step #3: > Task :expo-modules-core:stripReleaseDebugSymbols
+Step #3: > Task :expo-modules-core:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-modules-core:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-json-utils:verifyReleaseResources
+Step #3: > Task :expo-json-utils:assembleRelease
+Step #3: > Task :expo-structured-headers:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-modules-core:extractReleaseAnnotations
+Step #3: > Task :expo-structured-headers:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-modules-core:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-structured-headers:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-modules-core:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-modules-core:prepareLintJarForPublish
+Step #3: > Task :expo-structured-headers:extractReleaseAnnotations
+Step #3: > Task :expo-modules-core:mergeReleaseJavaResource
+Step #3: > Task :expo-structured-headers:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-structured-headers:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-structured-headers:prepareLintJarForPublish
+Step #3: > Task :expo-structured-headers:mergeReleaseJavaResource
+Step #3: > Task :expo-manifests:verifyReleaseResources
+Step #3: > Task :expo-manifests:assembleRelease
+Step #3: > Task :expo-updates:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-structured-headers:syncReleaseLibJars
+Step #3: > Task :expo-updates:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-updates:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-structured-headers:bundleReleaseAar
+Step #3: > Task :expo-updates:extractReleaseAnnotations
+Step #3: > Task :expo-updates:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-updates:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-modules-core:mapReleaseSourceSetPaths
+Step #3: > Task :expo-updates:prepareLintJarForPublish
+Step #3: > Task :expo-updates:mergeReleaseJavaResource
+Step #3: > Task :expo-structured-headers:mapReleaseSourceSetPaths
+Step #3: > Task :expo-updates:syncReleaseLibJars
+Step #3: > Task :expo-updates:bundleReleaseAar
+Step #3: > Task :expo-updates:mapReleaseSourceSetPaths
+Step #3: > Task :expo-modules-core:syncReleaseLibJars
+Step #3: > Task :expo-modules-core:bundleReleaseAar
+Step #3: > Task :expo-structured-headers:mergeReleaseResources
+Step #3: > Task :expo-updates:mergeReleaseResources
+Step #3: > Task :expo-modules-core:mergeReleaseResources
+Step #3: 
+Step #3: > Task :app:createBundleReleaseJsAndAssets
+Step #3: Android node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Step #3: 
+Step #3: > Task :expo-structured-headers:verifyReleaseResources
+Step #3: > Task :expo-structured-headers:assembleRelease
+Step #3: > Task :expo-updates-interface:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :expo-updates-interface:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :expo-updates-interface:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-updates-interface:extractReleaseAnnotations
+Step #3: > Task :expo-updates-interface:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :expo-updates-interface:mergeReleaseConsumerProguardFiles
+Step #3: > Task :expo-updates-interface:prepareLintJarForPublish
+Step #3: > Task :expo-updates-interface:mergeReleaseJavaResource
+Step #3: > Task :expo-updates-interface:syncReleaseLibJars
+Step #3: > Task :expo-updates-interface:bundleReleaseAar
+Step #3: > Task :expo-updates-interface:mapReleaseSourceSetPaths
+Step #3: > Task :expo-updates-interface:mergeReleaseResources
+Step #3: > Task :expo-updates:verifyReleaseResources
+Step #3: > Task :expo-updates:assembleRelease
+Step #3: > Task :expo-updates-interface:verifyReleaseResources
+Step #3: > Task :expo-updates-interface:assembleRelease
+Step #3: > Task :react-native-reanimated:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :expo-modules-core:verifyReleaseResources
+Step #3: > Task :expo-modules-core:assembleRelease
+Step #3: > Task :react-native-safe-area-context:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :react-native-reanimated:extractReleaseAnnotations
+Step #3: > Task :react-native-reanimated:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :react-native-reanimated:mergeReleaseConsumerProguardFiles
+Step #3: > Task :react-native-safe-area-context:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :react-native-reanimated:prepareLintJarForPublish
+Step #3: > Task :react-native-reanimated:mergeReleaseJavaResource
+Step #3: > Task :react-native-safe-area-context:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :react-native-reanimated:mapReleaseSourceSetPaths
+Step #3: > Task :react-native-safe-area-context:extractReleaseAnnotations
+Step #3: > Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :react-native-safe-area-context:mergeReleaseConsumerProguardFiles
+Step #3: > Task :react-native-reanimated:syncReleaseLibJars
+Step #3: > Task :react-native-safe-area-context:prepareLintJarForPublish
+Step #3: > Task :react-native-safe-area-context:mergeReleaseJavaResource
+Step #3: > Task :react-native-safe-area-context:syncReleaseLibJars
+Step #3: > Task :react-native-safe-area-context:bundleReleaseAar
+Step #3: > Task :react-native-reanimated:stripReleaseDebugSymbols
+Step #3: > Task :react-native-safe-area-context:mapReleaseSourceSetPaths
+Step #3: > Task :react-native-screens:stripReleaseDebugSymbols
+Step #3: > Task :react-native-screens:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :react-native-screens:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :react-native-screens:extractReleaseAnnotations
+Step #3: > Task :react-native-screens:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :react-native-screens:mergeReleaseConsumerProguardFiles
+Step #3: > Task :react-native-screens:prepareLintJarForPublish
+Step #3: > Task :react-native-screens:mergeReleaseJavaResource
+Step #3: > Task :react-native-screens:syncReleaseLibJars
+Step #3: > Task :react-native-screens:bundleReleaseAar
+Step #3: > Task :react-native-reanimated:mergeReleaseResources
+Step #3: > Task :react-native-safe-area-context:mergeReleaseResources
+Step #3: > Task :react-native-screens:mapReleaseSourceSetPaths
+Step #3: > Task :react-native-reanimated:copyReleaseJniLibsProjectAndLocalJars
+Step #3: 
+Step #3: > Task :app:createBundleReleaseJsAndAssets
+Step #3: Android node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.1% (206/369)
+Step #3: 
+Step #3: > Task :react-native-safe-area-context:verifyReleaseResources
+Step #3: > Task :react-native-safe-area-context:assembleRelease
+Step #3: > Task :react-native-reanimated:verifyReleaseResources
+Step #3: > Task :react-native-svg:stripReleaseDebugSymbols NO-SOURCE
+Step #3: > Task :react-native-svg:copyReleaseJniLibsProjectAndLocalJars
+Step #3: > Task :react-native-svg:extractDeepLinksForAarRelease FROM-CACHE
+Step #3: > Task :react-native-svg:extractReleaseAnnotations
+Step #3: > Task :react-native-svg:mergeReleaseGeneratedProguardFiles
+Step #3: > Task :react-native-svg:mergeReleaseConsumerProguardFiles
+Step #3: > Task :react-native-svg:prepareLintJarForPublish
+Step #3: > Task :react-native-svg:mergeReleaseJavaResource
+Step #3: > Task :react-native-svg:syncReleaseLibJars
+Step #3: > Task :react-native-svg:bundleReleaseAar
+Step #3: > Task :react-native-svg:mapReleaseSourceSetPaths
+Step #3: > Task :react-native-svg:mergeReleaseResources
+Step #3: > Task :react-native-screens:mergeReleaseResources
+Step #3: 
+Step #3: > Task :app:createBundleReleaseJsAndAssets FAILED
+Step #3: Android Bundling failed 8064ms node_modules/expo-router/entry.js (953 modules)
+Step #3: SyntaxError: app/(tabs)/_layout.tsx: /workspace/rentman-app/app/(tabs)/_layout.tsx: Use process(css).then(cb) to work with async plugins
+Step #3: Error: /workspace/rentman-app/app/(tabs)/_layout.tsx: Use process(css).then(cb) to work with async plugins
+Step #3:     at LazyResult.getAsyncError (/workspace/rentman-app/node_modules/postcss/lib/lazy-result.js:174:11)
+Step #3:     at LazyResult.sync (/workspace/rentman-app/node_modules/postcss/lib/lazy-result.js:369:20)
+Step #3:     at LazyResult.stringify (/workspace/rentman-app/node_modules/postcss/lib/lazy-result.js:341:10)
+Step #3:     at get css [as css] (/workspace/rentman-app/node_modules/postcss/lib/lazy-result.js:514:17)
+Step #3:     at extractStyles (/workspace/rentman-app/node_modules/nativewind/dist/postcss/extract-styles.js:32:54)
+Step #3:     at PluginPass.enter (/workspace/rentman-app/node_modules/nativewind/dist/babel/index.js:100:67)
+Step #3:     at newFn (/workspace/rentman-app/node_modules/@babel/traverse/lib/visitors.js:168:14)
+Step #3:     at NodePath._call (/workspace/rentman-app/node_modules/@babel/traverse/lib/path/context.js:50:20)
+Step #3:     at NodePath.call (/workspace/rentman-app/node_modules/@babel/traverse/lib/path/context.js:40:18)
+Step #3:     at NodePath.visit (/workspace/rentman-app/node_modules/@babel/traverse/lib/path/context.js:87:31)
+Step #3:     at TraversalContext.visitQueue (/workspace/rentman-app/node_modules/@babel/traverse/lib/context.js:96:16)
+Step #3:     at TraversalContext.visitSingle (/workspace/rentman-app/node_modules/@babel/traverse/lib/context.js:72:19)
+Step #3:     at TraversalContext.visit (/workspace/rentman-app/node_modules/@babel/traverse/lib/context.js:119:19)
+Step #3:     at traverseNode (/workspace/rentman-app/node_modules/@babel/traverse/lib/traverse-node.js:130:17)
+Step #3:     at traverse (/workspace/rentman-app/node_modules/@babel/traverse/lib/index.js:53:34)
+Step #3:     at transformFile (/workspace/rentman-app/node_modules/@babel/core/lib/transformation/index.js:79:29)
+Step #3:     at transformFile.next (<anonymous>)
+Step #3:     at run (/workspace/rentman-app/node_modules/@babel/core/lib/transformation/index.js:25:12)
+Step #3:     at run.next (<anonymous>)
+Step #3:     at transform (/workspace/rentman-app/node_modules/@babel/core/lib/transform.js:22:33)
+Step #3:     at transform.next (<anonymous>)
+Step #3:     at evaluateSync (/workspace/rentman-app/node_modules/gensync/index.js:251:28)
+Step #3:     at sync (/workspace/rentman-app/node_modules/gensync/index.js:89:14)
+Step #3:     at stopHiding - secret - don't use this - v1 (/workspace/rentman-app/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+Step #3:     at Object.transformSync (/workspace/rentman-app/node_modules/@babel/core/lib/transform.js:40:76)
+Step #3:     at parseWithBabel (/workspace/rentman-app/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+Step #3:     at transformSync (/workspace/rentman-app/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+Step #3:     at Object.transform (/workspace/rentman-app/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+Step #3:     at transformJSWithBabel (/workspace/rentman-app/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+Step #3:     at Object.transform (/workspace/rentman-app/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+Step #3:     at Object.transform (/workspace/rentman-app/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+Step #3:     at transformFile (/workspace/rentman-app/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+Step #3:     at Object.transform (/workspace/rentman-app/node_modules/metro/src/DeltaBundler/Worker.flow.js:42:10)
+Step #3:     at execFunction (/workspace/rentman-app/node_modules/jest-worker/build/workers/processChild.js:149:17)
+Step #3:     at execHelper (/workspace/rentman-app/node_modules/jest-worker/build/workers/processChild.js:137:5)
+Step #3:     at execMethod (/workspace/rentman-app/node_modules/jest-worker/build/workers/processChild.js:140:5)
+Step #3:     at process.messageListener (/workspace/rentman-app/node_modules/jest-worker/build/workers/processChild.js:44:7)
+Step #3:     at process.emit (node:events:524:28)
+Step #3:     at emit (node:internal/child_process:950:14)
+Step #3: 
+Step #3: > Task :react-native-svg:verifyReleaseResources
+Step #3: > Task :react-native-reanimated:bundleReleaseAar
+Step #3: > Task :react-native-screens:verifyReleaseResources
+Step #3: 
+Step #3: [Incubating] Problems report is available at: file:///workspace/rentman-app/android/build/reports/problems/problems-report.html
+Step #3: 
+Step #3: FAILURE: Build failed with an exception.
+Step #3: 
+Step #3: * What went wrong:
+Step #3: Execution failed for task ':app:createBundleReleaseJsAndAssets'.
+Step #3: > Process 'command 'node'' finished with non-zero exit value 1
+Step #3: 
+Step #3: * Try:
+Step #3: > Run with --info or --debug option to get more log output.
+Step #3: > Run with --scan to get full insights.
+Step #3: > Get more help at https://help.gradle.org.
+Step #3: 
+Step #3: * Exception is:
+Step #3: org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:createBundleReleaseJsAndAssets'.
+Step #3: 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
+Step #3: 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+Step #3: 	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+Step #3: 	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+Step #3: 	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+Step #3: 	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+Step #3: 	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+Step #3: 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+Step #3: 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+Step #3: 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+Step #3: 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+Step #3: 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+Step #3: Caused by: org.gradle.process.internal.ExecException: Process 'command 'node'' finished with non-zero exit value 1
+Step #3: 	at org.gradle.process.internal.DefaultExecHandle$ExecResultImpl.assertNormalExitValue(DefaultExecHandle.java:442)
+Step #3: 	at org.gradle.process.internal.DefaultExecAction.execute(DefaultExecAction.java:49)
+Step #3: 	at org.gradle.process.internal.DefaultExecActionFactory.exec(DefaultExecActionFactory.java:216)
+Step #3: 	at org.gradle.process.internal.DefaultExecOperations.exec(DefaultExecOperations.java:37)
+Step #3: 	at com.facebook.react.tasks.BundleHermesCTask.runCommand(BundleHermesCTask.kt:134)
+Step #3: 	at com.facebook.react.tasks.BundleHermesCTask.run(BundleHermesCTask.kt:94)
+Step #3: 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+Step #3: 	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+Step #3: 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
+Step #3: 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+Step #3: 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+Step #3: 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:244)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+Step #3: 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:229)
+Step #3: 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:212)
+Step #3: 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:195)
+Step #3: 	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:162)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
+Step #3: 	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+Step #3: 	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+Step #3: 	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+Step #3: 	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:50)
+Step #3: 	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:28)
+Step #3: 	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
+Step #3: 	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
+Step #3: 	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:61)
+Step #3: 	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:26)
+Step #3: 	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+Step #3: 	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+Step #3: 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
+Step #3: 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
+Step #3: 	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+Step #3: 	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:75)
+Step #3: 	at org.gradle.internal.Either$Right.fold(Either.java:175)
+Step #3: 	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+Step #3: 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:73)
+Step #3: 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:48)
+Step #3: 	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:46)
+Step #3: 	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:35)
+Step #3: 	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+Step #3: 	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+Step #3: 	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+Step #3: 	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+Step #3: 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+Step #3: 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+Step #3: 	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:49)
+Step #3: 	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:27)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:71)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:39)
+Step #3: 	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
+Step #3: 	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
+Step #3: 	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:107)
+Step #3: 	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:56)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:64)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:43)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.executeWithNonEmptySources(AbstractSkipEmptyWorkStep.java:125)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:56)
+Step #3: 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:36)
+Step #3: 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+Step #3: 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
+Step #3: 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
+Step #3: 	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:75)
+Step #3: 	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:41)
+Step #3: 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$execute$0(AssignMutableWorkspaceStep.java:35)
+Step #3: 	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:289)
+Step #3: 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:31)
+Step #3: 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:22)
+Step #3: 	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+Step #3: 	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+Step #3: 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+Step #3: 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+Step #3: 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+Step #3: 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:48)
+Step #3: 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:35)
+Step #3: 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:64)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:127)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+Step #3: 	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+Step #3: 	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+Step #3: 	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+Step #3: 	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+Step #3: 	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+Step #3: 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+Step #3: 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+Step #3: 	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+Step #3: 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+Step #3: 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+Step #3: 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+Step #3: 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+Step #3: 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+Step #3: 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+Step #3: 
+Step #3: 
+Step #3: BUILD FAILED in 12m 19s
+Step #3: 
+Step #3: Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+Step #3: 
+Step #3: You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+Step #3: 
+Step #3: For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+Step #3: 536 actionable tasks: 450 executed, 86 from cache
+Finished Step #3
+ERROR
+ERROR: build step 3 "ghcr.io/cirruslabs/android-sdk:34" failed: step exited with non-zero status: 1

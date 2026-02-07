@@ -1,20 +1,35 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Rentman Project (Monorepo)
 
-# Run and deploy your AI Studio app
+Welcome to the Rentman project. This repository is organized as a monorepo containing the following applications:
 
-This contains everything you need to run your app locally.
+## 📂 Project Structure
 
-View your app in AI Studio: https://ai.studio/apps/drive/1mMRVx3RbJwqVsmCWbDQQJnkRCu88AcqY
+### `apps/` (Active Projects)
 
-## Run Locally
+- **[mobile](apps/mobile)**: The Android functionality (Capacitor + Next.js).
+  - *Command*: `cd apps/mobile && npm run android:run`
+  
+- **[dashboard](apps/dashboard)**: The Web Dashboard (Vite + React).
+  - *Command*: `cd apps/dashboard && npm run dev`
+  - *Deploy*: Vercel (Root Directory: `apps/dashboard`)
 
-**Prerequisites:**  Node.js
+- **[cli](apps/cli)**: Backend CLI tool for M2M tasks.
+  - *Command*: `cd apps/cli && npm link`
 
+- **[backend](apps/backend)**: Internal API for Vertex AI and validation.
+  - *Deploy*: Cloud Run
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### `_archive/` (Legacy Code)
+
+- **legacy_mobile_expo**: Old Expo-based mobile app (`rentman-app`).
+- **legacy_mobile_v2**: Old React Native test app (`rentman-v2`).
+
+## 🚀 Getting Started
+
+To work on a specific app, navigate to its directory:
+
+```bash
+cd apps/mobile
+npm install
+npm run dev
+```

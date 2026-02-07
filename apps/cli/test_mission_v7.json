@@ -1,0 +1,11 @@
+{
+    "title": "Verificar funcionamiento V7 (Stderr Logging)",
+    "description": "Prueba de depuracion con logs de stderr.",
+    "task_type": "verification",
+    "budget_amount": 80,
+    "location": {
+        "address": "Cloud Run Server V7",
+        "lat": 40.7128,
+        "lng": -74.0060
+    }
+}
