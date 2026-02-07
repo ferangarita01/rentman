@@ -2,6 +2,13 @@
 
 import React, { useState } from 'react';
 import { X, CreditCard, Wallet } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import StripeCardForm from './StripeCardForm';
+import { connectWallet } from '../lib/solana';
+
+// Initialize Stripe with Public Key (Env Var)
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -13,33 +20,29 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
   const [amount, setAmount] = useState(100);
   const [loading, setLoading] = useState(false);
+  const [walletAddr, setWalletAddr] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleCardPayment = async () => {
-    setLoading(true);
-    // TODO: Integrate Stripe Elements
-    setTimeout(() => {
-      setLoading(false);
-      alert('Stripe integration coming soon!');
-    }, 1000);
-  };
-
   const handleCryptoPayment = async () => {
     setLoading(true);
-    // TODO: Integrate Phantom Wallet
-    setTimeout(() => {
+    try {
+      const address = await connectWallet();
+      if (address) {
+        setWalletAddr(address);
+        // Simulate transaction
+        setTimeout(() => {
+          setLoading(false);
+          alert(`Connected: ${address}\n\nTransfer request sent! (Mocked)`);
+          onSuccess?.();
+        }, 1000);
+      } else {
+        setLoading(false);
+      }
+    } catch (e) {
+      console.error(e);
       setLoading(false);
-      alert('Phantom integration coming soon!');
-    }, 1000);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (paymentMethod === 'card') {
-      handleCardPayment();
-    } else {
-      handleCryptoPayment();
+      alert('Failed to connect wallet');
     }
   };
 
@@ -66,92 +69,72 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setPaymentMethod('card')}
-              className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${
-                paymentMethod === 'card'
+              className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${paymentMethod === 'card'
                   ? 'bg-[#00ff88] text-black border-[#00ff88]'
                   : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
-              }`}
+                }`}
             >
               <CreditCard className="w-4 h-4 inline mr-2" />
               Card
             </button>
             <button
               onClick={() => setPaymentMethod('crypto')}
-              className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${
-                paymentMethod === 'crypto'
+              className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${paymentMethod === 'crypto'
                   ? 'bg-[#00ff88] text-black border-[#00ff88]'
                   : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
-              }`}
+                }`}
             >
               <Wallet className="w-4 h-4 inline mr-2" />
               Crypto
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Amount Selection */}
-            <div>
-              <label className="block text-xs font-mono text-slate-500 uppercase mb-2">Amount (USD)</label>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {[50, 100, 250].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setAmount(val)}
-                    className={`py-3 rounded-lg border transition-all font-mono text-sm ${
-                      amount === val
-                        ? 'bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]'
-                        : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
+          {/* Amount Selection */}
+          <div className="mb-6">
+            <label className="block text-xs font-mono text-slate-500 uppercase mb-2">Amount (USD)</label>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {[50, 100, 250].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setAmount(val)}
+                  className={`py-3 rounded-lg border transition-all font-mono text-sm ${amount === val
+                      ? 'bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]'
+                      : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
                     }`}
-                  >
-                    ${val}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
-                min="10"
-                max="10000"
-                className="w-full bg-black border border-white/10 text-white py-3 px-4 rounded-lg focus:border-[#00ff88] focus:outline-none font-mono"
-                placeholder="Custom amount"
-              />
+                >
+                  ${val}
+                </button>
+              ))}
             </div>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
+              min="10"
+              max="10000"
+              className="w-full bg-black border border-white/10 text-white py-3 px-4 rounded-lg focus:border-[#00ff88] focus:outline-none font-mono"
+              placeholder="Custom amount"
+            />
+          </div>
 
-            {/* Card Payment Form */}
-            {paymentMethod === 'card' && (
-              <div className="space-y-4">
-                <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
-                  <p className="text-xs text-slate-400 font-mono mb-2">CARD DETAILS</p>
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="Card Number"
-                      className="w-full bg-black border border-white/10 text-white py-2 px-3 rounded text-sm focus:border-[#00ff88] focus:outline-none font-mono"
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        className="w-full bg-black border border-white/10 text-white py-2 px-3 rounded text-sm focus:border-[#00ff88] focus:outline-none font-mono"
-                      />
-                      <input
-                        type="text"
-                        placeholder="CVV"
-                        className="w-full bg-black border border-white/10 text-white py-2 px-3 rounded text-sm focus:border-[#00ff88] focus:outline-none font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-600 font-mono">
-                  🔒 Secured by Stripe. We never store your card details.
-                </p>
-              </div>
-            )}
+          {/* Card Payment Form (Stripe) */}
+          {paymentMethod === 'card' && (
+            <Elements stripe={stripePromise}>
+              <StripeCardForm
+                amount={amount}
+                onSuccess={() => {
+                  alert('Payment Successful! (Mocked)');
+                  onSuccess?.();
+                }}
+                onError={(msg) => alert('Error: ' + msg)}
+              />
+            </Elements>
+          )}
 
-            {/* Crypto Payment Info */}
-            {paymentMethod === 'crypto' && (
+          {/* Crypto Payment Info */}
+          {paymentMethod === 'crypto' && (
+            <div className="space-y-4">
               <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
                 <p className="text-xs text-slate-400 font-mono mb-2">PAYMENT METHOD</p>
                 <div className="flex items-center gap-3 mb-3">
@@ -164,36 +147,19 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
                   </div>
                 </div>
                 <p className="text-xs text-slate-600 font-mono">
-                  You'll be prompted to connect your wallet and approve the transaction.
+                  Connect your wallet to deposit SOL directly.
                 </p>
               </div>
-            )}
 
-            {/* Summary */}
-            <div className="bg-black border border-white/10 rounded-lg p-4">
-              <div className="flex justify-between items-center text-sm font-mono">
-                <span className="text-slate-400">You'll receive:</span>
-                <span className="text-white font-bold">${amount} Credits</span>
-              </div>
-              <div className="flex justify-between items-center text-xs font-mono mt-2 text-slate-600">
-                <span>Fee (3%):</span>
-                <span>${(amount * 0.03).toFixed(2)}</span>
-              </div>
-              <div className="border-t border-white/10 mt-3 pt-3 flex justify-between items-center font-mono">
-                <span className="text-slate-400 text-sm">Total:</span>
-                <span className="text-[#00ff88] text-lg font-bold">${(amount * 1.03).toFixed(2)}</span>
-              </div>
+              <button
+                onClick={handleCryptoPayment}
+                disabled={loading}
+                className="w-full py-4 bg-[#00ff88] text-black font-mono text-sm font-bold uppercase rounded-lg hover:bg-[#33ff99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? 'Connecting...' : 'Connect Phantom & Pay'}
+              </button>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading || amount < 10}
-              className="w-full py-4 bg-[#00ff88] text-black font-mono text-sm font-bold uppercase rounded-lg hover:bg-[#33ff99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Processing...' : `Deposit $${amount}`}
-            </button>
-          </form>
+          )}
         </div>
       </div>
     </div>

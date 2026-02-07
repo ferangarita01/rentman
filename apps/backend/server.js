@@ -3,9 +3,14 @@ const bodyParser = require('body-parser');
 const nacl = require('tweetnacl');
 const naclUtil = require('tweetnacl-util');
 const { createClient } = require('@supabase/supabase-js');
+const cors = require('cors');
 require('dotenv').config();
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
+app.use(cors());
+
 const PORT = process.env.PORT || 8080;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
@@ -20,6 +25,98 @@ app.use(bodyParser.json());
 // Health Check
 app.get('/', (req, res) => {
     res.status(200).send('Rentman Backend is Active 🧠');
+});
+
+// --- STRIPE ENDPOINTS ---
+
+// 1. Create Payment Intent (For Dashboard "Buy Credits")
+app.post('/api/create-payment-intent', async (req, res) => {
+    try {
+        const { amount, currency = 'usd' } = req.body;
+
+        if (!amount) return res.status(400).send({ error: 'Amount required' });
+
+        // Create a PaymentIntent with the order amount and currency
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount * 100, // Convert to cents
+            currency: currency,
+            automatic_payment_methods: {
+                enabled: true,
+            },
+            metadata: {
+                service: 'rentman_credits'
+            }
+        });
+
+        res.send({
+            clientSecret: paymentIntent.client_secret,
+        });
+    } catch (e) {
+        console.error('Stripe Error:', e.message);
+        res.status(400).send({ error: e.message });
+    }
+});
+
+// 2. Stripe Connect Onboarding (For Agents/Workers)
+app.post('/api/stripe/onboard', async (req, res) => {
+    try {
+        const { userId, email } = req.body; // metadata from our DB
+
+        // A. Create Express Account
+        const account = await stripe.accounts.create({
+            type: 'express',
+            country: 'US', // Default to US for this MVP (or parameterized)
+            email: email,
+            capabilities: {
+                card_payments: { requested: true },
+                transfers: { requested: true },
+            },
+            metadata: {
+                rentman_user_id: userId
+            }
+        });
+
+        // B. Create Account Link (for the UI)
+        const accountLink = await stripe.accountLinks.create({
+            account: account.id,
+            refresh_url: 'https://rentman.app/wallet?refresh=true', // TODO: Update with real URL
+            return_url: 'https://rentman.app/wallet?success=true',
+            type: 'account_onboarding',
+        });
+
+        res.json({ url: accountLink.url, accountId: account.id });
+
+    } catch (e) {
+        console.error('Connect Error:', e.message);
+        res.status(500).send({ error: e.message });
+    }
+});
+
+// 3. Payout/Transfer (Pay the Agent)
+app.post('/api/stripe/transfer', async (req, res) => {
+    try {
+        const { amount, destinationAccountId } = req.body;
+
+        if (!amount || !destinationAccountId) {
+            return res.status(400).send({ error: 'Missing amount or destination' });
+        }
+
+        // Create a Transfer to the connected account
+        const transfer = await stripe.transfers.create({
+            amount: amount * 100, // cents
+            currency: 'usd',
+            destination: destinationAccountId,
+            metadata: {
+                reason: 'task_payout'
+            }
+        });
+
+        res.json({ transferId: transfer.id, status: 'success' });
+
+    } catch (e) {
+        console.error('Transfer Error:', e.message);
+        res.status(500).send({ error: e.message });
+    }
 });
 
 // Database Webhook Endpoint

@@ -1,2 +1,9 @@
-
 apps/mobile/client_secret_*.json
+node_modules/
+.env
+.DS_Store
+dist/
+.next/
+out/
+build/
+.vercel

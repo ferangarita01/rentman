@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import WalletConnect from '@/components/WalletConnect';
-import { ArrowUpRight, ArrowDownLeft, History, Wallet, CreditCard, DollarSign } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, History, Wallet, CreditCard, DollarSign, Building } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
+import { Browser } from '@capacitor/browser';
+import toast from 'react-hot-toast';
 
 export default function ProgressPage() {
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -17,6 +19,37 @@ export default function ProgressPage() {
         { id: 2, type: 'WITHDRAW', amount: -600, task: 'To Phantom', date: '1 day ago', status: 'COMPLETED' },
         { id: 3, type: 'EARNED', amount: 150, task: 'Drone Surveillance', date: '2 days ago', status: 'CONFIRMED' },
     ];
+
+    const handleLinkBank = async () => {
+        const loadingToast = toast.loading('Taking you to Stripe...');
+        try {
+            // TODO: Use real Env Var for Cloud Run URL
+            const BACKEND_URL = 'https://rentman-backend-346436028870.us-east1.run.app';
+            // Fallback to local if needed: 'http://10.0.2.2:8080'
+
+            const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: 'agt_007', // Mock ID
+                    email: 'agent007@rentman.io'
+                })
+            });
+
+            if (!res.ok) throw new Error('Backend error');
+
+            const data = await res.json();
+            if (data.url) {
+                await Browser.open({ url: data.url });
+                toast.dismiss(loadingToast);
+            } else {
+                throw new Error('No URL returned');
+            }
+        } catch (e: any) {
+            toast.dismiss(loadingToast);
+            toast.error('Connect failed: ' + e.message);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-black text-white pb-24 font-sans">
@@ -46,13 +79,13 @@ export default function ProgressPage() {
                     </div>
 
                     <div className="mt-6 flex gap-3">
-                        <button 
-                            onClick={() => alert('Deposit feature coming soon! Use Phantom wallet to deposit SOL.')}
+                        <button
+                            onClick={handleLinkBank}
                             className="flex-1 bg-white text-black py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                         >
-                            <ArrowDownLeft size={16} /> DEPOSIT
+                            <Building size={16} /> LINK BANK
                         </button>
-                        <button 
+                        <button
                             onClick={() => {
                                 if (!walletAddress) {
                                     alert('Please connect your Phantom wallet first!');
