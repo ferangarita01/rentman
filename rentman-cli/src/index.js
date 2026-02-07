@@ -3,6 +3,7 @@ const loginCommand = require('./commands/login');
 const fs = require('fs');
 const Ajv = require('ajv');
 const { apiRequest } = require('./lib/api');
+const chalk = require('chalk');
 
 const program = new Command();
 
@@ -14,7 +15,14 @@ program
 program
   .command('login <email>')
   .description('Authenticate and get API token')
+  .description('Authenticate and get API token')
   .action(loginCommand);
+
+program
+  .command('login-v2')
+  .description('Authenticate via Supabase (Modern Standard)')
+  .action(require('./commands/login-v2'));
+
 
 program
   .command('init')
@@ -56,22 +64,33 @@ const taskSchema = {
 };
 
 program
-  .command('post-mission <file>')
+  .command('post-mission [file]')
   .description('Post a Signed Mission (KYA) to the requested Agents')
   .alias('post')
   .action(require('./commands/post-mission'));
 
 program
+  .command('config [key] [value]')
+  .description('Get/Set configuration (agent_id, secret_key, api_url)')
+  .action(require('./commands/config'));
+
+program
   .command('task:map')
-  .description('ASCII visualization of active tasks')
+  .description('Visual table of active tasks')
   .action(async () => {
     try {
-      const response = await apiRequest('/tasks?status=open');
+      const ora = (await import('ora')).default;
+      const spinner = ora('Fetching tasks...').start();
 
-      console.log('🗺️  ACTIVE TASKS MAP');
-      console.log('─'.repeat(50));
+      const response = await apiRequest('/tasks?status=open');
+      spinner.stop();
 
       if (response.success && response.data.length > 0) {
+        const Table = require('cli-table3');
+        const table = new Table({
+          head: [chalk.cyan('ID'), chalk.cyan('Type'), chalk.cyan('Title'), chalk.cyan('Budget'), chalk.cyan('Location')]
+        });
+
         response.data.forEach((task) => {
           const icons = {
             delivery: '📦',
@@ -82,18 +101,22 @@ program
             communication: '📞'
           };
           const icon = icons[task.task_type] || '📋';
-          const loc = task.location_address || '💻 Remote';
 
-          console.log(`${icon} ${task.title}`);
-          console.log(`   📍 ${loc} | $${task.budget_amount} | ${task.status}`);
-          console.log(`   ID: ${task.id}`);
-          console.log('');
+          table.push([
+            task.id.substring(0, 8),
+            `${icon} ${task.task_type}`,
+            task.title.substring(0, 30),
+            chalk.green(`$${task.budget_amount}`),
+            task.location_address || 'Remote'
+          ]);
         });
+
+        console.log(table.toString());
       } else {
-        console.log('No active tasks found.');
+        console.log(chalk.yellow('No active tasks found.'));
       }
     } catch (error) {
-      console.error('❌ Error:', error.message);
+      console.error(chalk.red('❌ Error:'), error.message);
       process.exit(1);
     }
   });

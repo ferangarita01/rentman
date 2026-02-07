@@ -201,7 +201,7 @@ export default function UsageTrackerWidget() {
       {interventionMessage && (
         <div className="mt-4 p-3 rounded-lg neubrutalist bg-orange-100 dark:bg-orange-900/30 border-2 border-orange-500">
           <p className="text-sm font-medium text-orange-900 dark:text-orange-200">
-            💬 Sarah says: {interventionMessage}
+            💬 AI says: {interventionMessage}
           </p>
         </div>
       )}

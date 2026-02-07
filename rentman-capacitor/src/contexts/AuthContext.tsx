@@ -15,7 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
     user: null,
     session: null,
-    loading: true,
+    loading: false, // NUCLEAR FIX: Start false. Never block.
     signOut: async () => { },
 });
 
@@ -24,54 +24,54 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // NUCLEAR FIX: Start false.
     const router = useRouter();
 
     useEffect(() => {
-        const setData = async () => {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (error) throw error;
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
+        let mounted = true;
+
+        const checkSession = async () => {
+            try {
+                console.log('🔍 AuthContext: Checking session...');
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (mounted) {
+                    if (session) {
+                        setSession(session);
+                        setUser(session.user);
+                        console.log('✅ AuthContext: Session restored - User:', session.user.email);
+                    } else {
+                        console.log('⚠️ AuthContext: No session found');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ AuthContext: Session check error:', error);
+            }
         };
 
-        const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-
-            // ✅ Token Persistence Logic
-            if (session?.provider_refresh_token && session?.user?.id) {
-                console.log('🔄 [Auth] Found provider refresh token, ensuring persistence...');
-                try {
-                    const { error } = await supabase
-                        .from('agently_users')
-                        .upsert({
-                            id: session.user.id,
-                            email: session.user.email,
-                            google_refresh_token: session.provider_refresh_token,
-                            updated_at: new Date().toISOString()
-                        });
-
-                    if (error) console.error('❌ Failed to persist refresh token:', error);
-                    else console.log('✅ Google Refresh Token persisted to agently_users');
-                } catch (err) {
-                    console.error('Error persisting token:', err);
+        const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔔 AuthContext: Auth state changed -', event, session?.user?.email || 'no user');
+            if (mounted) {
+                setSession(session);
+                setUser(session?.user ?? null);
+                
+                if (event === 'SIGNED_IN') {
+                    console.log('✅ AuthContext: User signed in -', session?.user?.email);
+                } else if (event === 'SIGNED_OUT') {
+                    console.log('👋 AuthContext: User signed out');
+                } else if (event === 'TOKEN_REFRESHED') {
+                    console.log('🔄 AuthContext: Token refreshed');
                 }
-            }
-
-            if (!session) {
-                // specific logic can go here if needed
             }
         });
 
-        setData();
+        checkSession();
 
         return () => {
+            mounted = false;
             listener.subscription.unsubscribe();
         };
-    }, [router]);
+    }, []);
 
     const signOut = async () => {
         await supabase.auth.signOut();

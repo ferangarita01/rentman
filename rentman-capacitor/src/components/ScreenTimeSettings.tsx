@@ -107,7 +107,7 @@ export default function ScreenTimeSettings() {
           </h2>
         </div>
         <p className="text-secondary-global">
-          Sarah will help you stay accountable to your app limits
+          Your AI assistant will help you stay accountable to your app limits
         </p>
       </div>
 
@@ -167,7 +167,7 @@ export default function ScreenTimeSettings() {
             No app limits set yet. Add one to get started!
           </p>
           <p className="text-sm text-muted-global">
-            Sarah will nudge you when you exceed your limits 📱
+            Rentman will nudge you when you exceed your limits 📱
           </p>
         </div>
       )}
@@ -258,7 +258,7 @@ export default function ScreenTimeSettings() {
             {/* Intervention Level */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-secondary-global mb-2">
-                Sarah's Intervention Style
+                AI Intervention Style
               </label>
               <div className="space-y-2">
                 {[

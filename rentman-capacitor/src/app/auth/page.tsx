@@ -4,69 +4,61 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Bot, Mail, Lock, Sparkles } from 'lucide-react';
 import { Browser } from '@capacitor/browser';
 import { App as CapacitorApp } from '@capacitor/app';
 
 export default function AuthPage() {
-    const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [operatorId, setOperatorId] = useState('');
+    const [accessKey, setAccessKey] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [mode, setMode] = useState<'signin' | 'signup'>('signin');
     const router = useRouter();
 
-    // ⚡ PROFESSIONAL FIX: Handle deep link OAuth callback
     useEffect(() => {
-        let listenerHandle: any;
+        // GLOBAL CLICK LOGGER (Kept for now)
+        console.log('DEBUG_SUPABASE_URL:', require('@/lib/supabase').debugUrl);
 
+        const handleClick = (e: any) => {
+            const target = e.target as HTMLElement;
+            const logData = {
+                tag: target.tagName,
+                text: target.textContent?.slice(0, 30).replace(/\s+/g, ' ').trim(), // Clean text
+                id: target.id,
+                classes: target.className,
+                timestamp: new Date().toISOString()
+            };
+            console.log('USER_INTERACTION:', JSON.stringify(logData));
+        };
+        window.addEventListener('click', handleClick);
+
+        let listenerHandle: any;
         const setupDeepLinkListener = async () => {
             listenerHandle = await CapacitorApp.addListener('appUrlOpen', async (data) => {
-                console.log('🔗 Deep link received:', data.url);
-
-                // Extract hash from URL (Supabase returns #access_token=...)
+                console.log('DEEP_LINK_OPEN:', data.url); // Log deep links too
                 const url = new URL(data.url);
                 const hash = url.hash;
-
                 if (hash && hash.includes('access_token')) {
-                    console.log('✅ OAuth token found in deep link');
-
-                    // Parse tokens from hash fragment
                     const hashParams = new URLSearchParams(hash.substring(1));
                     const accessToken = hashParams.get('access_token');
                     const refreshToken = hashParams.get('refresh_token');
-
                     if (accessToken && refreshToken) {
-                        // Set session with extracted tokens
                         const { data: { session }, error } = await supabase.auth.setSession({
                             access_token: accessToken,
                             refresh_token: refreshToken,
                         });
-
                         if (session) {
-                            console.log('✅ Session established from deep link');
-                            // Close the browser first
                             await Browser.close();
                             router.push('/');
-                        } else {
-                            console.error('❌ Failed to establish session:', error);
-                            toast.error('Failed to complete sign in');
-                            await Browser.close();
                         }
-                    } else {
-                        console.error('❌ Missing tokens in hash');
-                        toast.error('Failed to complete sign in');
-                        await Browser.close();
                     }
                 }
             });
         };
-
         setupDeepLinkListener();
-
         return () => {
-            if (listenerHandle) {
-                listenerHandle.remove();
-            }
+            window.removeEventListener('click', handleClick);
+            if (listenerHandle) listenerHandle.remove();
         };
     }, [router]);
 
@@ -74,242 +66,237 @@ export default function AuthPage() {
         setLoading(true);
         try {
             const isCapacitor = typeof (window as any).Capacitor !== 'undefined';
-
             if (isCapacitor) {
-                // ⚡ PROFESSIONAL: Use native browser (not WebView)
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: 'com.sarah.habitcoach://auth/callback',
-                        scopes: 'https://www.googleapis.com/auth/calendar',
-                        queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent',
-                        },
-                        skipBrowserRedirect: true, // Don't auto-redirect in WebView
+                        redirectTo: 'com.rentman.app://auth/callback',
+                        skipBrowserRedirect: true,
                     },
                 });
-
                 if (error) throw error;
-                if (!data.url) throw new Error('No OAuth URL returned');
-
-                // Open in NATIVE browser (not WebView)
-                await Browser.open({
-                    url: data.url,
-                    windowName: '_self',
-                    presentationStyle: 'popover',
-                });
+                if (data.url) await Browser.open({ url: data.url, windowName: '_self' });
             } else {
-                // Web browser flow
-                const { error } = await supabase.auth.signInWithOAuth({
+                await supabase.auth.signInWithOAuth({
                     provider: 'google',
-                    options: {
-                        redirectTo: `${window.location.origin}/auth/callback`,
-                        scopes: 'https://www.googleapis.com/auth/calendar',
-                        queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent',
-                        },
-                    },
+                    options: { redirectTo: `${window.location.origin}/auth/callback` },
                 });
-                if (error) throw error;
             }
         } catch (error: any) {
-            console.error('Google Auth Error:', error);
-            toast.error(error.message || 'Failed to sign in with Google');
+            console.error('GOOGLE_AUTH_ERROR:', error);
+            console.error('GOOGLE_AUTH_DETAILS:', JSON.stringify(error, null, 2));
+            toast.error(error.message);
             setLoading(false);
         }
     };
 
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleInitializeSession = async () => {
         setLoading(true);
-
+        console.log('🔑 AuthPage: Starting login with mode:', mode);
         try {
             if (mode === 'signup') {
+                console.log('📝 AuthPage: Attempting signup for:', operatorId);
                 const { error } = await supabase.auth.signUp({
-                    email,
-                    password,
+                    email: operatorId,
+                    password: accessKey,
+                    options: {
+                        emailRedirectTo: 'com.rentman.app://auth/callback'
+                    }
                 });
                 if (error) throw error;
-                toast.success('Account created! Check your email to confirm.');
+                console.log('✅ AuthPage: Signup successful');
+                toast.success('Operator registered. Check comms link (email).');
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
+                console.log('🔐 AuthPage: Attempting signin for:', operatorId);
+                const { error, data } = await supabase.auth.signInWithPassword({
+                    email: operatorId,
+                    password: accessKey,
                 });
                 if (error) throw error;
-                toast.success('Welcome back!');
-                router.push('/');
+                
+                console.log('✅ AuthPage: Login successful! User:', data.user?.email);
+                toast.success('Access Granted');
+                
+                // DO NOT REDIRECT - let AuthContext update and HomePage will re-render
+                setLoading(false);
             }
-        } catch (error) {
-            let message = 'An unexpected error occurred';
-            if (error instanceof Error) {
-                message = error.message;
-            }
-            toast.error(message);
+        } catch (error: any) {
+            console.error('❌ AuthPage: Login error:', error.message);
+            console.log('📧 AuthPage: Failed login attempt for:', operatorId);
+            toast.error(`Access Denied: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
 
+    // Constant Styles from user snippet
+    const PRIMARY_COLOR = '#00ff55';
+    const BG_DARK_COLOR = '#050505';
+    const TERMINAL_SLATE = '#94a3b8';
+    const TERMINAL_BORDER = '#1a2e21';
+    const SHADOW_NEON = '0 0 15px rgba(0, 255, 85, 0.4), 0 0 5px rgba(0, 255, 85, 0.2)';
+
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 selection:bg-purple-500 selection:text-white bg-gray-100 dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
+        // EXACT HTML STRUCTURE MAPPED TO JSX
+        <div className="font-display bg-background-dark overflow-hidden" style={{ backgroundColor: BG_DARK_COLOR, fontFamily: '"Space Grotesk", sans-serif', color: 'white', minHeight: '100vh', position: 'relative' }}>
 
-            <div className="w-full max-w-[380px] flex flex-col items-center">
+            {/* Scanline */}
+            <div className="scanline" style={{
+                width: '100%', height: '2px', background: 'rgba(0, 255, 85, 0.05)', position: 'fixed', top: 0, left: 0, zIndex: 50, pointerEvents: 'none', boxShadow: '0 0 10px rgba(0, 255, 85, 0.1)'
+            }}></div>
 
-                {/* Header Section */}
-                <div className="flex flex-col items-center mb-8">
-                    {/* Personalized Avatar */}
-                    <div className="relative group cursor-default">
-                        {/* Glow Effect */}
-                        <div className="absolute inset-0 bg-purple-500 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
+            {/* CRT Overlay */}
+            <div className="crt-overlay" style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02))',
+                backgroundSize: '100% 3px, 3px 100%', pointerEvents: 'none', zIndex: 40
+            }}></div>
 
-                        {/* Icon Container */}
-                        <div className="relative w-28 h-28 rounded-full bg-gradient-to-tr from-purple-600 via-purple-500 to-fuchsia-400 border-4 border-white dark:border-white shadow-2xl transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
-                            {/* Vector Icon */}
-                            <Bot className="w-14 h-14 text-white drop-shadow-md" />
+            <div className="relative flex h-screen w-full flex-col p-6 overflow-hidden" style={{ backgroundColor: BG_DARK_COLOR }}>
 
-                            {/* Status Indicator (Online) */}
-                            <div className="absolute bottom-1 right-1 w-7 h-7 bg-[#22c55e] border-[3px] border-white dark:border-black rounded-full flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white rounded-full opacity-50"></div>
-                            </div>
+                {/* Header Status Bar */}
+                <div className="flex items-start justify-between mb-12 pt-4">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2" style={{ color: PRIMARY_COLOR }}>
+                            <span className="material-symbols-outlined text-sm">terminal</span>
+                            <h2 className="text-[10px] font-bold tracking-[0.2em] uppercase">Rentman_</h2>
                         </div>
+                        <p className="text-[9px] mt-1 font-medium tracking-widest" style={{ color: TERMINAL_SLATE }}>KERNEL_HASH: 0x88AF22</p>
                     </div>
-
-                    {/* Titles */}
-                    <div className="text-center mt-6 space-y-1">
-                        <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">Sarah Coach</h1>
-                        <p className="text-gray-500 dark:text-gray-300 text-base font-medium">Your brutally honest friend.</p>
+                    <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-2">
+                            <div className="size-1.5 rounded-full" style={{ backgroundColor: PRIMARY_COLOR, boxShadow: '0 0 5px #00ff55', width: '6px', height: '6px' }}></div>
+                            <p className="text-[10px] font-bold tracking-widest" style={{ color: PRIMARY_COLOR }}>NODE_ONLINE</p>
+                        </div>
+                        <p className="text-[9px] mt-1 font-medium tracking-widest" style={{ color: TERMINAL_SLATE }}>LATENCY: 12ms</p>
                     </div>
                 </div>
 
-                {/* Main Card with Offset Shadow */}
-                <div className="w-full relative">
-                    {/* Offset Background (Shadow) */}
-                    <div className="absolute inset-0 bg-black dark:bg-white rounded-[1.5rem] translate-x-2 translate-y-2 transition-colors duration-300"></div>
-
-                    {/* Main Content Card */}
-                    <div className="relative bg-white dark:bg-[#0a0a0a] border-2 border-black dark:border-white rounded-[1.5rem] p-6 flex flex-col gap-6 transition-colors duration-300">
-
-                        {/* Toggle Switch */}
-                        <div className="flex p-1 border border-black dark:border-white rounded-xl bg-gray-100 dark:bg-black transition-colors">
-                            <button
-                                onClick={() => setMode('signin')}
-                                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-95 ${mode === 'signin'
-                                    ? 'bg-[#a855f7] text-white shadow-lg shadow-purple-900/20'
-                                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                                    }`}
-                            >
-                                Login
-                            </button>
-                            <button
-                                onClick={() => setMode('signup')}
-                                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-95 ${mode === 'signup'
-                                    ? 'bg-[#a855f7] text-white shadow-lg shadow-purple-900/20'
-                                    : 'text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                                    }`}
-                            >
-                                Register
-                            </button>
+                {/* Main Authentication Module */}
+                <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+                    <div className="mb-10 text-center">
+                        <h1 className="text-white text-xl font-bold tracking-[0.3em] uppercase mb-2">
+                            {mode === 'signin' ? 'System Authentication' : 'Operator Registration'}
+                        </h1>
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="h-[1px] w-8" style={{ backgroundColor: 'rgba(0, 255, 85, 0.3)' }}></span>
+                            <p className="text-[10px] tracking-[0.4em] font-medium" style={{ color: 'rgba(0, 255, 85, 0.7)' }}>IDENTIFY_PROMPT</p>
+                            <span className="h-[1px] w-8" style={{ backgroundColor: 'rgba(0, 255, 85, 0.3)' }}></span>
                         </div>
+                    </div>
 
-                        {/* Google Login Button */}
-                        <button
-                            onClick={handleGoogleLogin}
-                            disabled={loading}
-                            className="w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-semibold py-3.5 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path
-                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                    fill="#4285F4"
-                                />
-                                <path
-                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                    fill="#34A853"
-                                />
-                                <path
-                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                    fill="#FBBC05"
-                                />
-                                <path
-                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                    fill="#EA4335"
-                                />
-                            </svg>
-                            Continue with Google
-                        </button>
-
-                        <div className="flex items-center gap-4 w-full">
-                            <div className="h-px bg-gray-200 dark:bg-gray-800 flex-1"></div>
-                            <span className="text-xs text-gray-400 font-medium">OR EMAIL</span>
-                            <div className="h-px bg-gray-200 dark:bg-gray-800 flex-1"></div>
-                        </div>
-
-                        {/* Form */}
-                        <form className="flex flex-col gap-5" onSubmit={handleAuth}>
-                            {/* Email Input */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900 dark:text-white ml-1 flex items-center gap-2">
-                                    <Mail className="w-3.5 h-3.5 text-gray-400" /> Email
-                                </label>
+                    <div className="space-y-6">
+                        {/* Operator ID Input */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-bold tracking-[0.2em] uppercase px-1" style={{ color: TERMINAL_SLATE }}>Operator_ID</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg leading-none" style={{ color: PRIMARY_COLOR }}>&gt;</div>
                                 <input
+                                    className="w-full text-white pl-10 pr-4 h-14 rounded-sm transition-all focus:ring-0 outline-none"
+                                    placeholder="Email or ID"
                                     type="email"
-                                    placeholder="you@email.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full bg-transparent border border-black dark:border-white rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                                    value={operatorId}
+                                    onChange={(e) => setOperatorId(e.target.value)}
+                                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', borderColor: TERMINAL_BORDER, borderWidth: '1px' }}
                                 />
                             </div>
+                        </div>
 
-                            {/* Password Input */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-900 dark:text-white ml-1 flex items-center gap-2">
-                                    <Lock className="w-3.5 h-3.5 text-gray-400" /> Password
-                                </label>
+                        {/* Access Key Input */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-bold tracking-[0.2em] uppercase px-1" style={{ color: TERMINAL_SLATE }}>Access_Key</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg leading-none" style={{ color: PRIMARY_COLOR }}>&gt;</div>
                                 <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full bg-transparent border border-black dark:border-white rounded-xl px-4 py-3 text-gray-900 dark:text-white tracking-widest focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                                    className="w-full text-white pl-10 pr-12 h-14 rounded-sm transition-all focus:ring-0 outline-none"
+                                    placeholder="••••••••••••"
+                                    type={showPassword ? "text" : "password"}
+                                    value={accessKey}
+                                    onChange={(e) => setAccessKey(e.target.value)}
+                                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', borderColor: TERMINAL_BORDER, borderWidth: '1px' }}
                                 />
+                                <button
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+                                    style={{ color: TERMINAL_SLATE }}
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    <span className="material-symbols-outlined text-xl">{showPassword ? 'visibility' : 'visibility_off'}</span>
+                                </button>
                             </div>
+                        </div>
 
-                            {/* Action Button */}
+                        {/* Action Button */}
+                        <div className="pt-4">
                             <button
-                                type="submit"
+                                className="w-full font-bold text-sm tracking-[0.2em] h-14 rounded-sm active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                onClick={handleInitializeSession}
                                 disabled={loading}
-                                className="mt-4 w-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ backgroundColor: PRIMARY_COLOR, color: BG_DARK_COLOR, boxShadow: SHADOW_NEON }}
                             >
-                                {loading ? (
-                                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <>
-                                        <span>{mode === 'signin' ? 'Start Adventure' : 'Join the Challenge'}</span>
-                                        <Sparkles className="w-5 h-5" />
-                                    </>
-                                )}
+                                {loading ? 'INITIALIZING...' : 'INITIALIZE SESSION'}
+                                <span className="material-symbols-outlined text-sm">bolt</span>
                             </button>
-                        </form>
+                        </div>
 
-                        {/* Footer Quote */}
-                        {mode === 'signin' && (
-                            <div className="text-center px-2">
-                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
-                                    "Don't try to fool me with another new account." <span className="text-gray-700 dark:text-gray-500">— Sarah</span>
-                                </p>
-                            </div>
-                        )}
+                        <div className="flex justify-between items-center px-1">
+                            <button
+                                onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                                className="text-[10px] tracking-widest uppercase transition-colors"
+                                style={{ color: TERMINAL_SLATE }}
+                            >
+                                {mode === 'signin' ? 'Register_Operator' : 'Return_To_Login'}
+                            </button>
+                            <a className="text-[10px] tracking-widest uppercase transition-colors" href="#" style={{ color: TERMINAL_SLATE }}>Recover_Access</a>
+                        </div>
 
+                        {/* DEBUG: Network Test */}
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const start = Date.now();
+                                    const res = await fetch('https://zezzmppfqdbnbpggpivg.supabase.co/auth/v1/health');
+                                    const ms = Date.now() - start;
+                                    toast.success(`Ping: ${ms}ms | Status: ${res.status}`);
+                                } catch (e: any) {
+                                    toast.error(`Net Error: ${e.name} - ${e.message}`);
+                                }
+                            }}
+                            className="w-full mt-4 text-[8px] opacity-30 hover:opacity-100"
+                        >
+                            [ TEST NETWORK CONNECTIVITY ]
+                        </button>
                     </div>
                 </div>
 
+                {/* Boot Log Section */}
+                <div className="mt-auto pb-8">
+                    <div className="border-t pt-6 space-y-1.5" style={{ borderColor: 'rgba(26, 46, 33, 0.5)' }}>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold font-mono" style={{ color: PRIMARY_COLOR }}>08:22:11</span>
+                            <p className="text-[10px] font-medium tracking-wide" style={{ color: TERMINAL_SLATE }}>&gt; CONNECTING_TO_GLOBAL_NODE_7...</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold font-mono" style={{ color: PRIMARY_COLOR }}>08:22:12</span>
+                            <p className="text-[10px] font-medium tracking-wide" style={{ color: TERMINAL_SLATE }}>&gt; DECRYPTING_HANDSHAKE_LAYERS...</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold font-mono" style={{ color: PRIMARY_COLOR }}>08:22:14</span>
+                            <p className="text-[10px] font-medium tracking-wide" style={{ color: TERMINAL_SLATE }}>&gt; ESTABLISHING_SECURE_TUNNEL... [OK]</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold font-mono" style={{ color: PRIMARY_COLOR }}>08:22:15</span>
+                            <p className="text-[10px] text-white font-medium tracking-wide uppercase flex items-center">
+                                &gt; Waiting for operator input
+                                <span className="blinking-cursor" style={{ display: 'inline-block', width: '8px', height: '1.2em', backgroundColor: PRIMARY_COLOR, marginLeft: '4px', verticalAlign: 'middle' }}></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Decorative Background Element */}
+                <div className="absolute -bottom-24 -left-24 size-64 rounded-full blur-[100px] pointer-events-none" style={{ backgroundColor: 'rgba(0, 255, 85, 0.05)', width: '256px', height: '256px' }}></div>
+                <div className="absolute -top-24 -right-24 size-64 rounded-full blur-[100px] pointer-events-none" style={{ backgroundColor: 'rgba(0, 255, 85, 0.05)', width: '256px', height: '256px' }}></div>
             </div>
-        </div >
+        </div>
     );
 }
-

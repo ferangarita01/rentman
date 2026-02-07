@@ -21,7 +21,7 @@ export const translations = {
         // Navigation
         'nav.today': 'Today',
         'nav.progress': 'Progress',
-        'nav.sarah': 'Sarah',
+        'nav.assistant': 'Assistant',
         'nav.settings': 'Settings',
 
         // Home
@@ -38,7 +38,7 @@ export const translations = {
 
         // Settings
         'settings.title': 'Settings',
-        'settings.subtitle': 'Customize your experience with Sarah',
+        'settings.subtitle': 'Customize your Rentman experience',
         'settings.edit': 'Edit',
         'settings.intelligence': 'Intelligence',
         'settings.preferences': 'Preferences',
@@ -48,7 +48,7 @@ export const translations = {
         'settings.on': 'On',
         'settings.off': 'Off',
         'settings.language': 'Language',
-        'settings.about_sarah': 'About Sarah',
+        'settings.about': 'About Rentman',
         'settings.privacy_policy': 'Privacy Policy',
         'settings.sign_out': 'Sign Out',
         'settings.version': 'Version',
@@ -62,15 +62,15 @@ export const translations = {
         'progress.weekly_overview': 'Weekly Overview',
         'progress.recent_achievements': 'Recent Achievements',
 
-        // Sarah
-        'sarah.title': 'Chat with Sarah',
-        'sarah.subtitle': 'Your AI Habit Coach',
-        'sarah.listening': 'Listening...',
-        'sarah.processing': 'Thinking...',
-        'sarah.speak': 'Hold to Speak',
+        // AI Assistant
+        'assistant.title': 'Chat with Assistant',
+        'assistant.subtitle': 'Your AI Rental Assistant',
+        'assistant.listening': 'Listening...',
+        'assistant.processing': 'Thinking...',
+        'assistant.speak': 'Hold to Speak',
 
         // Auth
-        'auth.welcome': 'Welcome to Sarah',
+        'auth.welcome': 'Welcome to Rentman',
         'auth.signin': 'Sign In',
         'auth.signout': 'Sign Out',
 
@@ -94,7 +94,7 @@ export const translations = {
         'wellness.notes': '📝 Anything else? (optional)',
         'wellness.submit': '✨ Log Check-in',
         'wellness.saving': '⏳ Saving...',
-        'wellness.insight': "⚠️ Sarah's Early Insight",
+        'wellness.insight': "⚠️ AI Insight",
 
         // Goal Wizard
         'wizard.step1': 'Step 1: Identity',

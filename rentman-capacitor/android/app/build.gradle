@@ -7,10 +7,10 @@ android {
     // Release Signing Configuration
     signingConfigs {
         release {
-            storeFile file('../sarah-release-key.jks')
-            storePassword 'SarahCoach2026!'
-            keyAlias 'sarah'
-            keyPassword 'SarahCoach2026!'
+            storeFile file('../rentman-release-key.jks')
+            storePassword 'Rentman2026!'
+            keyAlias 'rentman'
+            keyPassword 'Rentman2026!'
         }
     }
     

@@ -27,7 +27,7 @@ export default function GoalsDashboard() {
                 <TargetIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                 <h3 className="font-bold text-lg mb-1">No Goals Yet</h3>
                 <p className="text-sm opacity-60 mb-4">
-                    Talk to Sarah to create your first goal!
+                    Talk to your AI assistant to create your first goal!
                 </p>
                 <button
                     onClick={() => router.push('/sarah')}

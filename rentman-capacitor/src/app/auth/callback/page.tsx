@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { Capacitor } from '@capacitor/core';
 
 export default function AuthCallback() {
     const router = useRouter();
@@ -10,11 +11,13 @@ export default function AuthCallback() {
     useEffect(() => {
         const handleCallback = async () => {
             try {
+                console.log('🔄 Auth callback started...');
+                
                 // Supabase automatically handles the hash fragment
                 const { data: { session }, error } = await supabase.auth.getSession();
                 
                 if (error) {
-                    console.error('Auth callback error:', error);
+                    console.error('❌ Auth callback error:', error);
                     router.push('/auth?error=callback_failed');
                     return;
                 }
@@ -22,24 +25,28 @@ export default function AuthCallback() {
                 if (session) {
                     console.log('✅ Session established:', session.user.email);
                     
-                    // Check if user profile exists, if not redirect to onboarding
+                    // Check if user profile exists in Rentman
                     const { data: profile } = await supabase
-                        .from('sarah_user_profiles')
-                        .select('onboarding_completed')
-                        .eq('user_id', session.user.id)
+                        .from('profiles')
+                        .select('id, email')
+                        .eq('id', session.user.id)
                         .single();
 
-                    if (!profile || !profile.onboarding_completed) {
-                        router.push('/onboarding');
+                    console.log('📝 Profile check:', profile ? 'Found' : 'Not found');
+
+                    // Redirect to home - use window.location for Capacitor compatibility
+                    console.log('🏠 Redirecting to home...');
+                    if (Capacitor.isNativePlatform()) {
+                        window.location.href = '/';
                     } else {
                         router.push('/');
                     }
                 } else {
-                    console.warn('No session after callback');
+                    console.warn('⚠️ No session after callback');
                     router.push('/auth');
                 }
             } catch (err) {
-                console.error('Unexpected error in auth callback:', err);
+                console.error('💥 Unexpected error in auth callback:', err);
                 router.push('/auth?error=unknown');
             }
         };

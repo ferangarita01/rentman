@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarDaysIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
+import { apiGet, apiPost } from '@/lib/api-client';
 
 interface CalendarConnectProps {
     onConnectionChange?: (connected: boolean) => void;
@@ -17,7 +18,6 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Check connection status on mount
     useEffect(() => {
         checkCalendarStatus();
     }, []);
@@ -30,7 +30,6 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
                 return;
             }
 
-            // Check if user has google_refresh_token
             const { data: userData, error: dbError } = await supabase
                 .from('agently_users')
                 .select('google_refresh_token, google_calendar_connected')
@@ -38,7 +37,6 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
                 .single();
 
             if (dbError) {
-                // User might not exist in agently_users yet
                 setIsConnected(false);
             } else {
                 setIsConnected(!!userData?.google_refresh_token);
@@ -58,8 +56,8 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
             const { data: { user } } = await supabase.auth.getUser();
             const userId = user?.id || 'unknown';
 
-            // Get the OAuth URL from the backend
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sarah-backend-346436028870.us-central1.run.app'}/api/auth/google/url?userId=${userId}`);
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-api-mqadwgncoa-uc.a.run.app';
+            const response = await fetch(`${backendUrl}/api/auth/google/url?userId=${userId}`);
             const data = await response.json();
 
             if (data.authUrl) {
@@ -102,8 +100,8 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Call backend to disconnect
-            await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sarah-backend-346436028870.us-central1.run.app'}/api/auth/google/disconnect`, {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-central1.run.app';
+            await fetch(`${backendUrl}/api/auth/google/disconnect`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user.id })
@@ -162,7 +160,7 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
                     </h3>
                     <p className="text-sm text-[var(--sarah-text-secondary)]">
                         {isConnected
-                            ? 'Connected - Sarah can see your free time'
+                            ? 'Connected - AI can see your free time'
                             : 'Connect for smarter habit reminders'
                         }
                     </p>
@@ -194,7 +192,7 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
             {isConnected && (
                 <div className="mt-3 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                     <CheckCircleIcon className="w-4 h-4" />
-                    <span>Sarah will check your calendar before suggesting habits</span>
+                    <span>Rentman will check your calendar before suggesting habits</span>
                 </div>
             )}
 
@@ -208,7 +206,7 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
             {/* Privacy Note */}
             {!isConnected && (
                 <p className="mt-3 text-xs text-[var(--sarah-text-muted)]">
-                    🔒 Sarah only sees if you're free or busy, never meeting details
+                    🔒 We only see if you're free or busy, never meeting details
                 </p>
             )}
         </div>

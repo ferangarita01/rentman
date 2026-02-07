@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { apiGet, apiPost } from '@/lib/api-client';
 
 interface AppUsage {
   appName: string;
@@ -32,7 +33,6 @@ export function useScreenTime(userId: string) {
   }, [userId]);
 
   async function checkPermission() {
-    // Check if device supports Screen Time API
     if ('screenTime' in navigator) {
       try {
         const status = await (navigator as any).screenTime.requestPermission();
@@ -66,8 +66,8 @@ export function useScreenTime(userId: string) {
     try {
       setLoading(true);
       const [usageRes, goalsRes] = await Promise.all([
-        fetch(`/api/screen-time/today/${userId}`),
-        fetch(`/api/screen-time/goals/${userId}`)
+        apiGet(`/api/screen-time/today/${userId}`),
+        apiGet(`/api/screen-time/goals/${userId}`)
       ]);
 
       const usageData = await usageRes.json();
@@ -88,16 +88,12 @@ export function useScreenTime(userId: string) {
 
   async function setAppGoal(appName: string, bundleId: string, dailyLimitMinutes: number, enableBlocking: boolean) {
     try {
-      const res = await fetch('/api/screen-time/goals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          appName,
-          bundleId,
-          dailyLimitMinutes,
-          enableBlocking
-        })
+      const res = await apiPost('/api/screen-time/goals', {
+        userId,
+        appName,
+        bundleId,
+        dailyLimitMinutes,
+        enableBlocking
       });
 
       const data = await res.json();
@@ -114,17 +110,13 @@ export function useScreenTime(userId: string) {
 
   async function logAppUsage(appName: string, bundleId: string, durationMinutes: number) {
     try {
-      const res = await fetch('/api/screen-time/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          appName,
-          bundleId,
-          durationMinutes,
-          sessionStart: new Date(Date.now() - durationMinutes * 60000).toISOString(),
-          sessionEnd: new Date().toISOString()
-        })
+      const res = await apiPost('/api/screen-time/log', {
+        userId,
+        appName,
+        bundleId,
+        durationMinutes,
+        sessionStart: new Date(Date.now() - durationMinutes * 60000).toISOString(),
+        sessionEnd: new Date().toISOString()
       });
 
       const data = await res.json();

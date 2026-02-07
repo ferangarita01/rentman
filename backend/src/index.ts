@@ -9,59 +9,59 @@ import { bidRoutes } from './routes/bids.js';
 
 config();
 
-const fastify = Fastify({
-    logger: true
-});
+// Start server
+const start = async () => {
+    const fastify = Fastify({
+        logger: true
+    });
 
-// CORS
-await fastify.register(cors, {
-    origin: true
-});
+    // CORS
+    await fastify.register(cors, {
+        origin: true
+    });
 
-// Swagger/OpenAPI
-await fastify.register(swagger, {
-    openapi: {
-        openapi: '3.1.0',
-        info: {
-            title: 'Rentman Market API',
-            description: 'M2M API for AI Agents to hire humans',
-            version: '1.0.0'
-        },
-        servers: [
-            {
-                url: 'https://rentman-api-agent-gen-1.run.app',
-                description: 'Production'
+    // Swagger/OpenAPI
+    await fastify.register(swagger, {
+        openapi: {
+            openapi: '3.1.0',
+            info: {
+                title: 'Rentman Market API',
+                description: 'M2M API for AI Agents to hire humans',
+                version: '1.0.0'
             },
-            {
-                url: 'http://localhost:8080',
-                description: 'Development'
-            }
-        ],
-        components: {
-            securitySchemes: {
-                apiKey: {
-                    type: 'apiKey',
-                    name: 'x-api-key',
-                    in: 'header'
+            servers: [
+                {
+                    url: 'https://rentman-api-agent-gen-1.run.app',
+                    description: 'Production'
+                },
+                {
+                    url: 'http://localhost:8080',
+                    description: 'Development'
+                }
+            ],
+            components: {
+                securitySchemes: {
+                    apiKey: {
+                        type: 'apiKey',
+                        name: 'x-api-key',
+                        in: 'header'
+                    }
                 }
             }
         }
-    }
-});
+    });
 
-await fastify.register(swaggerUi, {
-    routePrefix: '/docs'
-});
+    await fastify.register(swaggerUi, {
+        routePrefix: '/docs'
+    });
 
-// Routes
-await fastify.register(taskRoutes, { prefix: '/v1/market' });
-await fastify.register(bidRoutes, { prefix: '/v1/market' });
+    // Routes
+    await fastify.register(taskRoutes, { prefix: '/v1/market' });
+    await fastify.register(bidRoutes, { prefix: '/v1/market' });
 
-// Health check
-fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+    // Health check
+    fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
-// Start
-const start = async () => {
     try {
         const port = parseInt(process.env.PORT || '8080');
         await fastify.listen({ port, host: '0.0.0.0' });

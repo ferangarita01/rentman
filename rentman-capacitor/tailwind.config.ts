@@ -19,6 +19,14 @@ const config: Config = {
                 "card-bg": "var(--card-bg)",
                 "card-border": "var(--card-border)",
 
+                // Rentman OS Theme
+                rentman: {
+                    neon: "#00ff55",
+                    dark: "#050505",
+                    slate: "#94a3b8",
+                    border: "#1a2e21"
+                },
+
                 // Legacy Sarah Token Compat
                 sarah: {
                     bg: "var(--sarah-bg)",

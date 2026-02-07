@@ -1,11 +1,11 @@
 {
-  "name": "Sarah - Your Habit Coach",
-  "short_name": "Sarah",
+  "name": "Rentman - Property Management",
+  "short_name": "Rentman",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#1a1a1a",
   "theme_color": "#FF3D00",
-  "description": "Your AI-powered habit coach tailored for Gen Z and Alpha.",
+  "description": "AI-powered property and rental management assistant.",
   "icons": [
     {
       "src": "../icons/icon-48.webp",

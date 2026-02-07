@@ -530,7 +530,7 @@ export default function WellnessInsights({ days = 7 }: WellnessInsightsProps) {
                 </div>
             </div>
 
-            {/* Correlations - Sarah's Insights - Más compacta */}
+            {/* Correlations - AI Insights */}
             {correlations.length > 0 && (
                 <div className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 border ${isDark
                         ? 'bg-gradient-to-br from-purple-500/10 to-violet-500/10 border-purple-500/30'

@@ -5,8 +5,7 @@
  * para proporcionar un asistente inteligente de alquileres
  */
 
-// Para Next.js, usaremos API Routes en lugar de cliente directo
-// El cliente de Vertex AI solo funciona en Node.js backend
+import { apiPost } from './api-client';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -30,16 +29,10 @@ export async function chatWithRentman(
   conversationHistory: ChatMessage[] = []
 ): Promise<string> {
   try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        context,
-        history: conversationHistory.slice(-10), // Últimos 10 mensajes
-      }),
+    const response = await apiPost('/api/chat', {
+      message,
+      context,
+      history: conversationHistory.slice(-10),
     });
 
     if (!response.ok) {
@@ -59,13 +52,7 @@ export async function chatWithRentman(
  */
 export async function getSuggestions(context: RentmanContext): Promise<string[]> {
   try {
-    const response = await fetch('/api/suggestions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ context }),
-    });
+    const response = await apiPost('/api/suggestions', { context });
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
