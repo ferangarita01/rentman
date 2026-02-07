@@ -123,7 +123,10 @@ export default function HomePage() {
           tasks.map((task) => (
             <div
               key={task.id}
-              onClick={() => window.location.href = `/contract/${task.id}`}
+              onClick={() => {
+                console.log('👆 Card clicked for task:', task.id);
+                router.push(`/contract?id=${task.id}`);
+              }}
               className="p-4 flex flex-col gap-4 relative overflow-hidden group cursor-pointer active:scale-98 transition-transform"
               style={{ border: `1px solid ${COLORS.cardBorder}`, backgroundColor: COLORS.cardBg }}>
               <div className="flex justify-between items-start">
@@ -177,7 +180,7 @@ export default function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/contract/${task.id}`);
+                    router.push(`/contract?id=${task.id}`);
                   }}
                   className="px-4 py-2 text-[10px] font-bold uppercase tracking-tighter hover:bg-[#00cc6d] transition-colors"
                   style={{ backgroundColor: COLORS.primary, color: 'black', fontFamily: FONTS.mono }}>
@@ -190,35 +193,7 @@ export default function HomePage() {
 
       </main>
 
-      {/* Fixed Bottom Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 backdrop-blur-xl border-t pb-8 pt-2 px-6"
-        style={{ backgroundColor: 'rgba(5, 5, 5, 0.95)', borderColor: COLORS.cardBorder }}>
-        <div className="flex justify-between items-center max-w-md mx-auto">
-          <div className="flex flex-col items-center gap-1" style={{ color: COLORS.primary }}>
-            <span className="material-symbols-outlined">work</span>
-            <span className="text-[8px] uppercase font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>Tasks</span>
-          </div>
-          <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-white transition-colors">
-            <span className="material-symbols-outlined">explore</span>
-            <span className="text-[8px] uppercase font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>Explore</span>
-          </button>
-          <div className="relative -top-6">
-            <button className="p-4 rounded-full shadow-[0_0_20px_rgba(0,255,136,0.3)]" style={{ backgroundColor: COLORS.primary }}>
-              <span className="material-symbols-outlined text-black font-bold">add</span>
-            </button>
-          </div>
-          <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-white transition-colors">
-            <span className="material-symbols-outlined">account_balance_wallet</span>
-            <span className="text-[8px] uppercase font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>Wallet</span>
-          </button>
-          <button
-            onClick={() => window.location.href = '/profile'}
-            className="flex flex-col items-center gap-1 text-gray-600 hover:text-white transition-colors">
-            <span className="material-symbols-outlined">person</span>
-            <span className="text-[8px] uppercase font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>Profile</span>
-          </button>
-        </div>
-      </footer>
+      {/* Footer removed to use Global BottomNav */}
     </div>
   );
 }

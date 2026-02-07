@@ -30,26 +30,26 @@ export default function RentmanChat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-[#050505]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#333]">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-[#00ff88]/10 flex items-center justify-center border border-[#00ff88]/20">
+            <Sparkles className="w-5 h-5 text-[#00ff88]" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">Rentman Assistant</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isLoading ? 'Escribiendo...' : 'Listo para ayudarte'}
+            <h2 className="font-semibold text-white font-mono tracking-wide">RENTMAN_AI</h2>
+            <p className="text-xs text-[#00ff88]/80 font-mono uppercase">
+              {isLoading ? 'PROCESSING...' : 'SYSTEM ONLINE'}
             </p>
           </div>
         </div>
-        
+
         {messages.length > 0 && (
           <button
             onClick={clearMessages}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Limpiar conversación"
+            aria-label="Clear conversation"
           >
             <Trash2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
@@ -60,31 +60,30 @@ export default function RentmanChat() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-full bg-[#00ff88]/10 flex items-center justify-center mb-4 border border-[#00ff88]/20 animate-pulse">
+              <Sparkles className="w-8 h-8 text-[#00ff88]" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              ¡Hola! Soy Rentman
+            <h3 className="text-xl font-bold text-white mb-2 font-mono uppercase tracking-widest">
+              RENTMAN_OS v1.0
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 max-w-md">
-              Tu asistente inteligente para gestionar alquileres. Pregúntame sobre propiedades,
-              contratos, pagos o cualquier duda que tengas.
+            <p className="text-gray-400 max-w-md font-mono text-xs">
+              Your intelligent assistant for rental management.
             </p>
-            
+
             {/* Sugerencias iniciales */}
             <div className="mt-6 space-y-2 w-full max-w-md">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Prueba preguntando:</p>
+              <p className="text-[10px] text-[#00ff88] mb-2 font-mono uppercase tracking-widest text-left w-full pl-1">Suggested Commands:</p>
               {[
-                '¿Cómo puedo registrar un nuevo alquiler?',
-                '¿Qué documentos necesito para un contrato?',
-                'Muéstrame mis alquileres activos',
+                'How to register a rental?',
+                'Documents for contract',
+                'My active rentals',
               ].map((suggestion, i) => (
                 <button
                   key={i}
                   onClick={() => setInput(suggestion)}
-                  className="w-full text-left px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                  className="w-full text-left px-4 py-3 rounded-lg bg-[#1a1a1a] border border-[#333] hover:border-[#00ff88] text-sm text-gray-300 transition-all font-mono hover:text-[#00ff88] active:scale-[0.98]"
                 >
-                  {suggestion}
+                  <span className="text-[#00ff88] mr-2">{'>'}</span>{suggestion}
                 </button>
               ))}
             </div>
@@ -96,11 +95,10 @@ export default function RentmanChat() {
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                }`}
+                className={`max-w-[85%] rounded-2xl px-4 py-3 border ${message.role === 'user'
+                  ? 'bg-[#00ff88] text-black border-[#00ff88] rounded-br-none'
+                  : 'bg-[#1a1a1a] text-gray-200 border-[#333] rounded-bl-none'
+                  }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 <p className="text-xs opacity-70 mt-1">
@@ -113,39 +111,39 @@ export default function RentmanChat() {
             </div>
           ))
         )}
-        
+
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3">
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-2xl px-4 py-3 rounded-bl-none">
               <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex gap-2">
+      <form onSubmit={handleSubmit} className="p-4 border-t border-[#333] bg-[#050505]">
+        <div className="flex gap-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Escribe tu mensaje..."
+            placeholder="Command..."
             disabled={isLoading}
-            className="flex-1 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-3 rounded-xl border border-[#333] bg-[#0a0a0a] text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88] focus:ring-1 focus:ring-[#00ff88] transition-all font-mono text-sm"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Enviar mensaje"
+            className="px-4 py-3 rounded-xl bg-[#00ff88] text-black font-bold hover:bg-[#00cc6d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Send message"
           >
             <Send className="w-5 h-5" />
           </button>

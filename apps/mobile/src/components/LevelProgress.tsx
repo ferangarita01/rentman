@@ -18,11 +18,11 @@ interface ProgressData {
 }
 
 const LEVEL_COLORS = {
-  BEGINNER: 'from-blue-600 to-blue-800',
-  EASY: 'from-green-600 to-green-800',
-  MEDIUM: 'from-orange-600 to-orange-800',
-  HARD: 'from-red-600 to-red-800',
-  EXPERT: 'from-purple-600 to-purple-800'
+  BEGINNER: 'from-[#00ff88]/10 to-[#00ff88]/5 border-[#00ff88]/20',
+  EASY: 'from-[#00ff88]/20 to-[#00ff88]/10 border-[#00ff88]/30',
+  MEDIUM: 'from-[#00ff88]/30 to-[#00ff88]/20 border-[#00ff88]/40',
+  HARD: 'from-[#00ff88]/40 to-[#00ff88]/30 border-[#00ff88]/50',
+  EXPERT: 'from-[#00ff88]/50 to-[#00ff88]/40 border-[#00ff88]/60'
 };
 
 const LEVEL_ICONS = {
@@ -60,7 +60,7 @@ export default function LevelProgress({ userId }: LevelProgressProps) {
   if (loading || !progress) {
     return (
       <div className="rounded-2xl bg-gradient-to-br from-gray-700 to-gray-900 p-6 shadow-lg">
-        <p className="text-white text-center">Cargando progreso...</p>
+        <p className="text-white text-center">Loading progress...</p>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export default function LevelProgress({ userId }: LevelProgressProps) {
   const levelIcon = LEVEL_ICONS[progress.current_level as keyof typeof LEVEL_ICONS] || '🌱';
 
   return (
-    <div className={`rounded-2xl bg-gradient-to-br ${levelGradient} p-6 shadow-xl my-4`}>
+    <div className={`rounded-2xl bg-gradient-to-br ${levelGradient} p-6 shadow-[0_0_20px_rgba(0,255,136,0.1)] my-4 border active:scale-98 transition-transform`}>
       {/* Header */}
       <div className="flex items-center mb-6">
         <span className="text-5xl mr-3">{levelIcon}</span>
@@ -80,48 +80,48 @@ export default function LevelProgress({ userId }: LevelProgressProps) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-white/20 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-white mb-1">
-            ⭐ {progress.reputation_current.toFixed(1)}
+        <div className="bg-[#050505]/50 rounded-xl p-3 text-center border border-[#00ff88]/20">
+          <p className="text-2xl font-bold text-[#00ff88] mb-1 font-mono">
+            ⭐ {(progress?.reputation_current || 0).toFixed(1)}
           </p>
-          <p className="text-xs text-white/80">Reputación</p>
+          <p className="text-xs text-gray-400 font-mono tracking-widest uppercase">Reputation</p>
         </div>
-        <div className="bg-white/20 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-white mb-1">
-            📦 {progress.tasks_completed}
+        <div className="bg-[#050505]/50 rounded-xl p-3 text-center border border-[#00ff88]/20">
+          <p className="text-2xl font-bold text-[#00ff88] mb-1 font-mono">
+            📦 {progress?.tasks_completed || 0}
           </p>
-          <p className="text-xs text-white/80">Completadas</p>
+          <p className="text-xs text-gray-400 font-mono tracking-widest uppercase">Completed</p>
         </div>
       </div>
 
       {/* Progress Bar */}
-      {progress.next_level !== 'MAX_LEVEL' && (
+      {progress?.next_level !== 'MAX_LEVEL' && (
         <>
           <div className="mb-4">
-            <div className="h-3 bg-white/30 rounded-full overflow-hidden mb-2">
+            <div className="h-3 bg-[#050505]/50 rounded-full overflow-hidden mb-2 border border-[#00ff88]/20">
               <div
-                className="h-full bg-white rounded-full transition-all duration-500"
-                style={{ width: `${progress.progress_percentage}%` }}
+                className="h-full bg-[#00ff88] rounded-full transition-all duration-500 shadow-[0_0_10px_#00ff88]"
+                style={{ width: `${progress?.progress_percentage || 0}%` }}
               />
             </div>
-            <p className="text-white text-sm text-right font-bold">
-              {progress.progress_percentage}%
+            <p className="text-[#00ff88] text-sm text-right font-bold font-mono">
+              {progress?.progress_percentage || 0}%
             </p>
           </div>
 
           {/* Next Level Info */}
-          <div className="bg-white/15 rounded-xl p-4 mb-4">
-            <p className="text-lg font-bold text-white mb-2">
-              Próximo Nivel: {LEVEL_ICONS[progress.next_level as keyof typeof LEVEL_ICONS]} {progress.next_level}
+          <div className="bg-[#050505]/50 rounded-xl p-4 mb-4 border border-[#00ff88]/20">
+            <p className="text-lg font-bold text-white mb-2 font-mono uppercase">
+              Next Level: {LEVEL_ICONS[progress?.next_level as keyof typeof LEVEL_ICONS]} {progress?.next_level}
             </p>
-            <p className="text-sm text-white/90">
-              {progress.tasks_needed_for_next > 0
-                ? `${progress.tasks_needed_for_next} tareas más`
-                : '✅ Tareas completas'}
+            <p className="text-sm text-gray-400 font-mono">
+              {(progress?.tasks_needed_for_next || 0) > 0
+                ? `${progress?.tasks_needed_for_next} more tasks`
+                : '✅ Tasks Completed'}
             </p>
-            {progress.reputation_current < progress.reputation_needed && (
-              <p className="text-sm text-white/90 mt-1">
-                Necesitas {progress.reputation_needed}⭐ (tienes {progress.reputation_current.toFixed(1)}⭐)
+            {(progress?.reputation_current || 0) < (progress?.reputation_needed || 0) && (
+              <p className="text-sm text-gray-400 mt-1 font-mono">
+                Need {progress?.reputation_needed}⭐ (have {(progress?.reputation_current || 0).toFixed(1)}⭐)
               </p>
             )}
           </div>
@@ -131,15 +131,15 @@ export default function LevelProgress({ userId }: LevelProgressProps) {
       {progress.next_level === 'MAX_LEVEL' && (
         <div className="text-center py-6">
           <p className="text-2xl font-bold text-white mb-2">
-            🎉 ¡Nivel Máximo Alcanzado!
+            🎉 Max Level Reached!
           </p>
-          <p className="text-white/90">Eres un experto de Rentman</p>
+          <p className="text-white/90">You are a Rentman Expert</p>
         </div>
       )}
 
       {/* Motivational Message */}
-      <div className="bg-white/10 rounded-xl p-3 border-l-4 border-white">
-        <p className="text-white text-sm italic">
+      <div className="bg-[#050505]/50 rounded-xl p-3 border-l-4 border-[#00ff88]">
+        <p className="text-gray-300 text-sm italic font-mono">
           {getMotivationalMessage(progress.current_level, progress.tasks_completed)}
         </p>
       </div>
@@ -149,19 +149,19 @@ export default function LevelProgress({ userId }: LevelProgressProps) {
 
 function getMotivationalMessage(level: string, tasksCompleted: number): string {
   if (tasksCompleted === 0) {
-    return '🎉 ¡Bienvenido! Completa tu primera tarea para comenzar.';
+    return '🎉 Welcome! Complete your first task to begin.';
   }
   if (tasksCompleted < 5) {
-    return '💪 ¡Excelente inicio! Cada tarea te acerca al siguiente nivel.';
+    return '💪 Great start! Every task brings you closer to the next level.';
   }
   if (tasksCompleted < 10) {
-    return '⭐ Vas por buen camino. Tu reputación está creciendo.';
+    return '⭐ You are on the right track. Your reputation is growing.';
   }
   if (tasksCompleted < 25) {
-    return '🚀 ¡Ya eres parte activa de la comunidad!';
+    return '🚀 You are an active part of the community!';
   }
   if (tasksCompleted < 50) {
-    return '🔥 ¡Impresionante progreso! Casi llegas a EXPERT.';
+    return '🔥 Impressive progress! Almost at EXPERT.';
   }
-  return '👑 Gracias por ser un pilar de Rentman.';
+  return '👑 Thank you for being a Rentman pillar.';
 }

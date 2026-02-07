@@ -66,11 +66,11 @@ export default function BottomNav() {
           </div>
 
           {/* INBOX */}
-          <Link href="/assistant" className="flex flex-col items-center justify-center gap-1 w-16 group">
+          <Link href="/inbox" className="flex flex-col items-center justify-center gap-1 w-16 group">
             <MessageSquare
-              className={`w-6 h-6 transition-all duration-300 ${isActive('/assistant') ? 'text-[#00ff55] stroke-[2.5] drop-shadow-[0_0_8px_rgba(0,255,85,0.5)]' : 'text-gray-500 group-hover:text-gray-300'}`}
+              className={`w-6 h-6 transition-all duration-300 ${isActive('/inbox') || isActive('/assistant') ? 'text-[#00ff55] stroke-[2.5] drop-shadow-[0_0_8px_rgba(0,255,85,0.5)]' : 'text-gray-500 group-hover:text-gray-300'}`}
             />
-            <span className={`text-[9px] font-bold tracking-widest ${isActive('/assistant') ? 'text-[#00ff55]' : 'text-gray-600'}`}>
+            <span className={`text-[9px] font-bold tracking-widest ${isActive('/inbox') || isActive('/assistant') ? 'text-[#00ff55]' : 'text-gray-600'}`}>
               INBOX
             </span>
           </Link>
