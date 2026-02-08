@@ -16,6 +16,7 @@ import {
     Activity
 } from 'lucide-react';
 import { supabase, getSettings, updateSettings, UserSettings } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -42,7 +43,7 @@ export default function SettingsPage() {
     async function loadUserSettings() {
         try {
             const { data: { user }, error: userError } = await supabase.auth.getUser();
-            
+
             if (userError || !user) {
                 console.error('User not logged in');
                 setLoading(false);
@@ -53,7 +54,7 @@ export default function SettingsPage() {
 
             // Fetch settings
             const { data: settings, error: settingsError } = await getSettings(user.id);
-            
+
             if (settingsError) {
                 console.error('Error loading settings:', settingsError);
             } else if (settings) {
@@ -81,7 +82,7 @@ export default function SettingsPage() {
         if (!userId) return;
 
         const { error } = await updateSettings(userId, newSettings);
-        
+
         if (error) {
             console.error('Failed to save settings:', error);
             alert('Failed to save settings. Please try again.');
@@ -92,27 +93,27 @@ export default function SettingsPage() {
     const toggleHardware = async (key: keyof typeof hardware) => {
         const newValue = !hardware[key];
         setHardware(prev => ({ ...prev, [key]: newValue }));
-        
+
         // Map to DB field names
         const dbFieldMap = {
             camera: 'camera_enabled',
             gps: 'gps_enabled',
             biometric: 'biometrics_enabled'
         };
-        
+
         await saveSettingsToDb({ [dbFieldMap[key]]: newValue } as Partial<UserSettings>);
     };
 
     const toggleComms = async (key: keyof typeof comms) => {
         const newValue = !comms[key];
         setComms(prev => ({ ...prev, [key]: newValue }));
-        
+
         // Map to DB field names
         const dbFieldMap = {
             aiLink: 'ai_link_enabled',
             neural: 'neural_notifications'
         };
-        
+
         await saveSettingsToDb({ [dbFieldMap[key]]: newValue } as Partial<UserSettings>);
     };
 
@@ -160,7 +161,7 @@ export default function SettingsPage() {
                     />
                 </div>
                 <h2 className="font-mono text-sm tracking-widest text-[#00ff88] font-bold uppercase" style={styles.textGlow}>
-                    SYSTEM_CONFIG_V1.0.4
+                    SYSTEM_CONFIG_
                 </h2>
                 <div className="w-8"></div> {/* Spacer to balance the layout */}
             </div>

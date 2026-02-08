@@ -9,11 +9,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Task {
   id: string;
   agent_id?: string;
+  requester_id?: string;
   title: string;
   description: string;
   task_type: string;
   required_skills?: string[];
   location_address?: string;
+  geo_location?: { lat: number; lng: number } | { latitude: number; longitude: number } | any;
   budget_amount: number;
   budget_currency: string;
   payment_type: string;
@@ -184,7 +186,7 @@ export async function acceptTask(taskId: string, userId: string) {
  */
 export async function getThreads(userId: string) {
   try {
-    // Get all tasks where user is involved (as agent or requester)
+    // Get all tasks where user is involved (as agent or assigned human)
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
@@ -193,9 +195,10 @@ export async function getThreads(userId: string) {
         task_type,
         status,
         agent_id,
-        requester_id
+        assigned_human_id,
+        metadata
       `)
-      .or(`agent_id.eq.${userId},requester_id.eq.${userId}`)
+      .or(`agent_id.eq.${userId},assigned_human_id.eq.${userId}`)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -216,8 +219,32 @@ export async function getThreads(userId: string) {
       .in('task_id', taskIds)
       .order('created_at', { ascending: false });
 
+    // If messages table doesn't exist, still return threads with tasks
     if (messagesError) {
       console.error('Error fetching messages:', messagesError);
+      
+      // Check if it's a "table doesn't exist" error
+      const errorMessage = (messagesError as any).message || String(messagesError);
+      if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
+        console.warn('Messages table does not exist. Returning threads without messages.');
+        
+        // Return threads with placeholder messages
+        const threadsWithoutMessages: Thread[] = tasks.map(task => ({
+          id: `contract-${task.id}`,
+          task_id: task.id,
+          task_title: task.title,
+          task_type: task.task_type,
+          last_message: 'No messages yet',
+          last_message_at: new Date().toISOString(),
+          unread_count: 0,
+          sender_type: 'system',
+          task_status: task.status
+        }));
+        
+        return { data: threadsWithoutMessages, error: null };
+      }
+      
+      // For other errors, return the error
       return { data: null, error: messagesError };
     }
 
@@ -381,14 +408,59 @@ export async function updateSettings(userId: string, settings: Partial<UserSetti
  * Get agent profile with completed tasks for trust score calculation
  */
 export async function getAgentProfile(agentId: string) {
+  // Special case: system issuer
+  if (agentId === 'system') {
+    return {
+      data: {
+        profile: {
+          id: 'system',
+          email: 'system@rentman.ai',
+          full_name: 'RENTMAN_CORE_v2',
+          avatar_url: undefined,
+          credits: 0,
+          is_agent: true,
+          reputation: 100,
+          level: 99,
+          xp: 999999,
+          status: 'active',
+          uptime: 100
+        },
+        completedTasks: [],
+        trustScore: 100
+      },
+      error: null
+    };
+  }
+
   // Get profile data
   const { data: profile, error: profileError } = await getProfile(agentId);
   
+  // If profile doesn't exist, create a minimal one
   if (profileError || !profile) {
-    return { data: null, error: profileError };
+    console.error('Profile not found, returning minimal data:', profileError);
+    return {
+      data: {
+        profile: {
+          id: agentId,
+          email: 'Unknown User',
+          full_name: undefined,
+          avatar_url: undefined,
+          credits: 0,
+          is_agent: false,
+          reputation: 50,
+          level: 1,
+          xp: 0,
+          status: 'active',
+          uptime: 0
+        },
+        completedTasks: [],
+        trustScore: 50
+      },
+      error: null // Return success with minimal data
+    };
   }
 
-  // Get completed tasks by this agent
+  // Get completed tasks by this agent/user
   const { data: completedTasks, error: tasksError } = await supabase
     .from('task_assignments')
     .select(`

@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getAgentProfile, Profile } from '@/lib/supabase-client';
+import { ChevronLeft, Bot, ListFilter, ClipboardList, Zap, Mail } from 'lucide-react';
 
-export default function IssuerProfilePage() {
+function IssuerProfileContent() {
   const router = useRouter();
-  const params = useParams();
-  const agentId = params.id as string;
+  const searchParams = useSearchParams();
+  const agentId = searchParams.get('id');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,15 +20,16 @@ export default function IssuerProfilePage() {
   const FONTS = { display: "'Space Grotesk', sans-serif", mono: "'JetBrains Mono', monospace" };
 
   useEffect(() => {
-    loadIssuerData();
+    if (agentId) {
+      loadIssuerData();
+    } else {
+      setError('No agent ID provided');
+      setLoading(false);
+    }
   }, [agentId]);
 
   async function loadIssuerData() {
-    if (!agentId) {
-      setError('No agent ID provided');
-      setLoading(false);
-      return;
-    }
+    if (!agentId) return;
 
     try {
       const { data, error: profileError } = await getAgentProfile(agentId);
@@ -87,10 +89,12 @@ export default function IssuerProfilePage() {
       
       <div className="flex items-center backdrop-blur-md sticky top-0 z-50 p-4 border-b justify-between" style={{ backgroundColor: 'rgba(5,5,5,0.8)', borderColor: COLORS.borderDark }}>
         <button onClick={() => router.back()} className="text-white flex items-center justify-center" style={{ width: '40px', height: '40px' }}>
-          <span className="material-symbols-outlined">arrow_back</span>
+          <ChevronLeft className="w-6 h-6" />
         </button>
-        <h2 className="text-lg font-bold tracking-wider flex-1 text-center uppercase" style={{ color: 'white' }}>Agent Profile</h2>
-        <button className="text-white p-0"><span className="material-symbols-outlined">share</span></button>
+        <h2 className="text-lg font-bold tracking-wider flex-1 text-center uppercase" style={{ color: 'white' }}>
+          {agentId === 'system' ? 'System Core' : issuer.is_agent ? 'Agent Profile' : 'User Profile'}
+        </h2>
+        <div style={{ width: '40px' }}></div>
       </div>
 
       <div className="flex flex-col p-6 border-b" style={{ borderColor: COLORS.borderDark }}>
@@ -100,7 +104,7 @@ export default function IssuerProfilePage() {
               {issuer.avatar_url ? (
                 <img src={issuer.avatar_url} alt={issuer.full_name || 'Agent'} className="w-full h-full object-cover" />
               ) : (
-                <span className="material-symbols-outlined text-5xl" style={{ color: COLORS.primary }}>smart_toy</span>
+                <Bot className="w-12 h-12" style={{ color: COLORS.primary }} />
               )}
             </div>
             <div className="absolute -bottom-1 -right-1 text-[10px] font-bold px-1 uppercase py-0.5" style={{ backgroundColor: COLORS.primary, color: '#000' }}>
@@ -122,8 +126,10 @@ export default function IssuerProfilePage() {
 
       <div className="p-6 border-b" style={{ borderColor: COLORS.borderDark, backgroundColor: `${COLORS.primary}0D` }}>
         <div className="flex justify-between items-end mb-3">
-          <div><span className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: `${COLORS.primary}99` }}>Reputation Matrix</span>
-          <h3 className="text-lg font-bold uppercase" style={{ color: 'white' }}>Agent Trust Score</h3></div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: `${COLORS.primary}99` }}>Reputation Matrix</span>
+            <h3 className="text-lg font-bold uppercase" style={{ color: 'white' }}>Agent Trust Score</h3>
+          </div>
           <span className="text-2xl font-bold" style={{ color: COLORS.primary, fontFamily: FONTS.mono }}>{trustScore}<span className="text-sm opacity-50">/100</span></span>
         </div>
         <div className="h-4 w-full rounded-full overflow-hidden border p-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}>
@@ -150,18 +156,32 @@ export default function IssuerProfilePage() {
       <div className="flex flex-col pb-24">
         <div className="px-6 py-4 border-b flex justify-between" style={{ backgroundColor: COLORS.surfaceDark, borderColor: COLORS.borderDark }}>
           <h3 className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'white' }}>Mission History</h3>
-          <span className="material-symbols-outlined text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>filter_list</span>
+          <ListFilter className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />
         </div>
 
         {missions.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-500 text-sm">No completed missions yet</p>
+            <div className="mb-4">
+              <ClipboardList className="w-16 h-16 mx-auto" style={{ color: `${COLORS.primary}33` }} />
+            </div>
+            <p className="text-gray-400 text-sm mb-2">No completed missions yet</p>
+            <p className="text-gray-600 text-xs">
+              {agentId === 'system' 
+                ? 'System core missions are classified'
+                : issuer.is_agent 
+                  ? 'This agent is new to the network' 
+                  : 'This user hasn\'t completed any missions'}
+            </p>
           </div>
         ) : (
           <table className="w-full text-left text-[11px]" style={{ fontFamily: FONTS.mono }}>
-            <thead><tr className="border-b uppercase" style={{ borderColor: COLORS.borderDark, color: 'rgba(255,255,255,0.4)' }}>
-              <th className="px-6 py-3 font-normal">Task Type</th><th className="px-4 py-3 font-normal text-center">Rating</th><th className="px-6 py-3 font-normal text-right">Status</th>
-            </tr></thead>
+            <thead>
+              <tr className="border-b uppercase" style={{ borderColor: COLORS.borderDark, color: 'rgba(255,255,255,0.4)' }}>
+                <th className="px-6 py-3 font-normal">Task Type</th>
+                <th className="px-4 py-3 font-normal text-center">Rating</th>
+                <th className="px-6 py-3 font-normal text-right">Status</th>
+              </tr>
+            </thead>
             <tbody className="divide-y" style={{ borderColor: COLORS.borderDark }}>
               {missions.map((mission, i) => {
                 const task = mission.tasks;
@@ -197,12 +217,24 @@ export default function IssuerProfilePage() {
 
       <div className="mt-auto p-6 flex flex-col gap-3">
         <button className="w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2 uppercase text-sm" style={{ backgroundColor: COLORS.primary, color: '#000' }}>
-          <span className="material-symbols-outlined text-[18px]">bolt</span>Connect for Mission
+          <Zap className="w-5 h-5" />Connect for Mission
         </button>
         <button className="w-full border font-bold py-4 rounded-lg flex items-center justify-center gap-2 uppercase text-sm" style={{ backgroundColor: 'transparent', color: 'rgba(255,255,255,0.6)', borderColor: 'rgba(255,255,255,0.2)' }}>
-          <span className="material-symbols-outlined text-[18px]">mail</span>Send Protocol Inquiry
+          <Mail className="w-5 h-5" />Send Protocol Inquiry
         </button>
       </div>
     </div>
+  );
+}
+
+export default function IssuerProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen bg-[#050505]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00ff88]"></div>
+      </div>
+    }>
+      <IssuerProfileContent />
+    </Suspense>
   );
 }

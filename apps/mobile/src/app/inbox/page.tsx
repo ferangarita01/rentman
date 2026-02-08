@@ -3,33 +3,56 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles, MessageSquare, Clock, ArrowRight } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
 import { supabase, getThreads, Thread } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function InboxPage() {
     const router = useRouter();
     const [threads, setThreads] = useState<Thread[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [userId, setUserId] = useState<string | null>(null);
+    const { user, loading: authLoading } = useAuth();
 
-    // Load user and threads
+    // Hide navigation bar on this page
     useEffect(() => {
-        loadUserAndThreads();
-        
-        // Set up real-time subscription for new messages
+        const nav = document.querySelector('nav');
+        if (nav) {
+            nav.style.display = 'none';
+        }
+        return () => {
+            const nav = document.querySelector('nav');
+            if (nav) {
+                nav.style.display = '';
+            }
+        };
+    }, []);
+
+    // Load threads when user is available
+    useEffect(() => {
+        if (user) {
+            loadThreadsData(user.id);
+        } else if (!authLoading && !user) {
+            setError('Please log in to view messages');
+            setLoading(false);
+        }
+    }, [user, authLoading]);
+
+    // Set up real-time subscription for new messages
+    useEffect(() => {
+        if (!user) return;
+
         const channel = supabase
             .channel('inbox-messages')
             .on(
                 'postgres_changes',
-                { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'messages' 
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages'
                 },
                 () => {
                     // Reload threads when new message arrives
-                    if (userId) loadThreadsData(userId);
+                    loadThreadsData(user.id);
                 }
             )
             .subscribe();
@@ -37,52 +60,45 @@ export default function InboxPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId]);
-
-    async function loadUserAndThreads() {
-        try {
-            // Get current user
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            
-            if (userError || !user) {
-                setError('Please log in to view messages');
-                setLoading(false);
-                return;
-            }
-
-            setUserId(user.id);
-            await loadThreadsData(user.id);
-        } catch (err) {
-            console.error('Error loading inbox:', err);
-            setError('Failed to load messages');
-            setLoading(false);
-        }
-    }
+    }, [user]);
 
     async function loadThreadsData(uid: string) {
         setLoading(true);
-        const { data, error: threadsError } = await getThreads(uid);
+        setError(null);
         
+        const { data, error: threadsError } = await getThreads(uid);
+
+        // Always show AI assistant thread
+        const aiThread: Thread = {
+            id: 'ai-assistant',
+            task_id: 'ai',
+            task_title: 'RENTMAN_OS',
+            task_type: 'ai',
+            last_message: 'System online. Ready for tasking.',
+            last_message_at: new Date().toISOString(),
+            unread_count: 0,
+            sender_type: 'system',
+            task_status: 'online'
+        };
+
         if (threadsError) {
             console.error('Error loading threads:', threadsError);
-            setError('Failed to load message threads');
-        } else {
-            // Add AI assistant as first thread
-            const aiThread: Thread = {
-                id: 'ai-assistant',
-                task_id: 'ai',
-                task_title: 'RENTMAN_OS',
-                task_type: 'ai',
-                last_message: 'System online. Ready for tasking.',
-                last_message_at: new Date().toISOString(),
-                unread_count: 0,
-                sender_type: 'system',
-                task_status: 'online'
-            };
+            console.error('Error details:', JSON.stringify(threadsError, null, 2));
             
+            // Check if it's a table not found error
+            const errorMessage = (threadsError as any).message || String(threadsError);
+            if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
+                setError('Database setup incomplete. Messages table not created yet.');
+            } else {
+                setError(`Failed to load threads: ${errorMessage}`);
+            }
+            
+            // Still show AI thread even if there's an error
+            setThreads([aiThread]);
+        } else {
             setThreads([aiThread, ...(data || [])]);
         }
-        
+
         setLoading(false);
     }
 
@@ -91,7 +107,7 @@ export default function InboxPage() {
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / 60000);
-        
+
         if (diffMins < 1) return 'Now';
         if (diffMins < 60) return `${diffMins}m`;
         const diffHours = Math.floor(diffMins / 60);
@@ -110,7 +126,7 @@ export default function InboxPage() {
             {/* Header */}
             <header className="px-4 py-4 pt-6 border-b border-[#333] sticky top-0 bg-[#050505]/95 backdrop-blur z-10">
                 <div className="flex justify-between items-center mb-1">
-                    <h1 className="text-2xl font-bold text-white font-mono tracking-wider">COMLINK</h1>
+                    <h1 className="text-2xl font-bold text-white font-mono tracking-wider">RentMan_OS</h1>
                     <div className="flex gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse"></span>
                         <span className="text-[10px] text-[#00ff88] font-mono tracking-widest">SECURE</span>
@@ -122,7 +138,7 @@ export default function InboxPage() {
             </header>
 
             {/* Thread List */}
-            <main className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
+            <main className="flex-1 overflow-y-auto p-4 space-y-3 pb-20">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00ff88]"></div>
@@ -148,11 +164,10 @@ export default function InboxPage() {
                         >
                             <div className="flex items-start gap-4">
                                 {/* Avatar */}
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${
-                                    thread.task_type === 'ai'
-                                        ? 'bg-[#00ff88]/10 border-[#00ff88]/30 shadow-[0_0_15px_rgba(0,255,136,0.1)]'
-                                        : 'bg-[#222] border-[#444]'
-                                }`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${thread.task_type === 'ai'
+                                    ? 'bg-[#00ff88]/10 border-[#00ff88]/30 shadow-[0_0_15px_rgba(0,255,136,0.1)]'
+                                    : 'bg-[#222] border-[#444]'
+                                    }`}>
                                     {thread.task_type === 'ai' ? (
                                         <Sparkles className="w-6 h-6 text-[#00ff88]" />
                                     ) : (
@@ -165,9 +180,8 @@ export default function InboxPage() {
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start">
-                                        <h3 className={`font-bold text-sm truncate ${
-                                            thread.task_type === 'ai' ? 'text-white' : 'text-gray-200'
-                                        }`}>
+                                        <h3 className={`font-bold text-sm truncate ${thread.task_type === 'ai' ? 'text-white' : 'text-gray-200'
+                                            }`}>
                                             {thread.task_title}
                                         </h3>
                                         <span className="text-[10px] text-gray-500 font-mono whitespace-nowrap ml-2">
@@ -177,18 +191,16 @@ export default function InboxPage() {
 
                                     {getThreadSubtitle(thread) && (
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${
-                                                thread.unread_count > 0 ? 'bg-[#00ff88]' : 'bg-gray-600'
-                                            }`}></span>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${thread.unread_count > 0 ? 'bg-[#00ff88]' : 'bg-gray-600'
+                                                }`}></span>
                                             <p className="text-[10px] text-gray-400 font-mono uppercase tracking-wide truncate">
                                                 {getThreadSubtitle(thread)}
                                             </p>
                                         </div>
                                     )}
 
-                                    <p className={`text-xs mt-2 truncate font-mono ${
-                                        thread.unread_count > 0 ? 'text-white' : 'text-gray-500'
-                                    }`}>
+                                    <p className={`text-xs mt-2 truncate font-mono ${thread.unread_count > 0 ? 'text-white' : 'text-gray-500'
+                                        }`}>
                                         {thread.task_type === 'ai' && <span className="text-[#00ff88] mr-1">{'>'}</span>}
                                         {thread.last_message}
                                     </p>
@@ -211,8 +223,6 @@ export default function InboxPage() {
                     ))
                 )}
             </main>
-
-            <BottomNav />
         </div>
     );
 }

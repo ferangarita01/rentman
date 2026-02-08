@@ -1,12 +1,26 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SmartChat, { Message } from '@/components/SmartChat';
 
 function ContractChatContent() {
     const searchParams = useSearchParams();
     const contractId = searchParams.get('id') || 'UNKNOWN';
+
+    // Hide navigation bar on this page
+    useEffect(() => {
+        const nav = document.querySelector('nav');
+        if (nav) {
+            nav.style.display = 'none';
+        }
+        return () => {
+            const nav = document.querySelector('nav');
+            if (nav) {
+                nav.style.display = '';
+            }
+        };
+    }, []);
 
     // Use explicit type for messages state
     const [messages, setMessages] = useState<Message[]>([

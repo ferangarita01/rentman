@@ -15,8 +15,8 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  // Hide on auth page, landing page, settings, or when no user
-  if (pathname === '/auth' || pathname === '/landing.html' || pathname === '/settings' || !user) {
+  // Hide on auth page, landing page, settings, contract chat, or when no user
+  if (!user || pathname === '/auth' || pathname === '/landing.html' || pathname?.startsWith('/settings') || pathname?.startsWith('/contract/chat')) {
     return null;
   }
 

@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getTaskById, acceptTask, Task, supabase } from '@/lib/supabase-client';
+import { getTaskById, acceptTask, Task, supabase, getAgentProfile, calculateTrustScore } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
     ChevronLeft,
     Radio,
@@ -13,8 +14,25 @@ import {
     MapPin,
     Unlock,
     CheckCircle,
-    Loader2
+    Loader2,
+    Navigation,
+    ExternalLink
 } from 'lucide-react';
+
+interface IssuerData {
+    id: string; // Added issuer ID
+    name: string;
+    trustScore: number;
+    verified: boolean;
+}
+
+interface LocationData {
+    distance: string;
+    userLat: number | null;
+    userLng: number | null;
+    targetLat: number | null;
+    targetLng: number | null;
+}
 
 function ContractDetailsContent() {
     const router = useRouter();
@@ -24,19 +42,29 @@ function ContractDetailsContent() {
     const [task, setTask] = useState<Task | null>(null);
     const [loading, setLoading] = useState(true);
     const [accepting, setAccepting] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
+    const [issuerData, setIssuerData] = useState<IssuerData | null>(null);
+    const [locationData, setLocationData] = useState<LocationData>({
+        distance: 'CALCULATING...',
+        userLat: null,
+        userLng: null,
+        targetLat: null,
+        targetLng: null
+    });
+    const { user } = useAuth();
+    const userId = user?.id || null;
 
     useEffect(() => {
         if (contractId) {
-            checkUser();
             loadTask();
         }
     }, [contractId]);
 
-    async function checkUser() {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUserId(user?.id || null);
-    }
+    useEffect(() => {
+        if (task) {
+            loadIssuerData();
+            initializeGeolocation();
+        }
+    }, [task]);
 
     async function loadTask() {
         if (!contractId) return;
@@ -47,6 +75,176 @@ function ContractDetailsContent() {
             setTask(data);
         }
         setLoading(false);
+    }
+
+    async function loadIssuerData() {
+        if (!task) return;
+
+        try {
+            // Get issuer ID (requester_id or created_by field)
+            const issuerId = task.requester_id || task.agent_id;
+
+            if (!issuerId) {
+                // Fallback to system issuer
+                setIssuerData({
+                    id: 'system',
+                    name: 'RENTMAN_CORE_v2',
+                    trustScore: 100,
+                    verified: true
+                });
+                return;
+            }
+
+            // Fetch agent profile with trust score
+            const { data, error } = await getAgentProfile(issuerId);
+
+            if (error || !data) {
+                console.error('Error loading issuer data:', error);
+                setIssuerData({
+                    id: issuerId, // Use the ID even if profile fails
+                    name: 'RENTMAN_CORE_v2',
+                    trustScore: 100,
+                    verified: true
+                });
+                return;
+            }
+
+            setIssuerData({
+                id: issuerId,
+                name: data.profile.full_name || data.profile.email || 'RENTMAN_CORE_v2',
+                trustScore: data.trustScore,
+                verified: data.profile.is_agent || false
+            });
+        } catch (err) {
+            console.error('Error in loadIssuerData:', err);
+            setIssuerData({
+                id: 'system',
+                name: 'RENTMAN_CORE_v2',
+                trustScore: 100,
+                verified: true
+            });
+        }
+    }
+
+    function handleIssuerClick() {
+        if (!issuerData?.id || issuerData.id === 'system') {
+            return; // Don't navigate for system issuers
+        }
+        router.push(`/issuer?id=${issuerData.id}`);
+    }
+
+    function initializeGeolocation() {
+        if (!task) return;
+
+        // Check if geolocation is available
+        if (!('geolocation' in navigator)) {
+            setLocationData(prev => ({
+                ...prev,
+                distance: 'GPS UNAVAILABLE'
+            }));
+            return;
+        }
+
+        // Get user's current position
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+
+                // Try to get target coordinates from task
+                let targetLat: number | null = null;
+                let targetLng: number | null = null;
+
+                // Check if task has geo_location field
+                if (task.geo_location) {
+                    // Could be POINT type or JSONB with lat/lng
+                    if (typeof task.geo_location === 'object') {
+                        targetLat = task.geo_location.lat || task.geo_location.latitude;
+                        targetLng = task.geo_location.lng || task.geo_location.longitude;
+                    }
+                }
+
+                // Fallback: Use a mock coordinate if no real location
+                // In production, you would geocode task.location_address
+                if (targetLat === null || targetLng === null) {
+                    // Mock coordinates (Downtown area)
+                    targetLat = 40.7128;
+                    targetLng = -74.0060;
+                }
+
+                // Calculate distance using Haversine formula
+                const distance = calculateHaversineDistance(
+                    userLat,
+                    userLng,
+                    targetLat,
+                    targetLng
+                );
+
+                setLocationData({
+                    distance: `${distance.toFixed(1)} KM`,
+                    userLat,
+                    userLng,
+                    targetLat,
+                    targetLng
+                });
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                setLocationData(prev => ({
+                    ...prev,
+                    distance: 'LOCATION DENIED'
+                }));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+
+    function calculateHaversineDistance(
+        lat1: number,
+        lon1: number,
+        lat2: number,
+        lon2: number
+    ): number {
+        const R = 6371; // Earth's radius in km
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function toRad(degrees: number): number {
+        return degrees * (Math.PI / 180);
+    }
+
+    function openNavigation(service: 'google' | 'waze') {
+        if (!locationData.targetLat || !locationData.targetLng) {
+            alert('Target location not available');
+            return;
+        }
+
+        const lat = locationData.targetLat;
+        const lng = locationData.targetLng;
+
+        let url = '';
+        if (service === 'google') {
+            url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        } else if (service === 'waze') {
+            url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+        }
+
+        window.open(url, '_blank');
     }
 
     async function handleAcceptContract() {
@@ -171,39 +369,124 @@ function ContractDetailsContent() {
                         <ShieldCheck className="w-4 h-4 text-[#00ff88]" />
                         <h3 className="text-[#00ff88] text-sm font-mono font-bold tracking-widest uppercase">ISSUER SIGNATURE</h3>
                     </div>
-                    <div className="flex items-center gap-4 bg-[#1a1a1a]/60 p-4 border border-[#333333] rounded-lg relative overflow-hidden">
-                        <div className="text-[#00ff88] flex items-center justify-center rounded border border-[#00ff88]/30 bg-[#00ff88]/10 shrink-0 size-12 shadow-[0_0_10px_rgba(0,255,136,0.15)]">
-                            <Fingerprint className="w-8 h-8" />
+                    <div
+                        onClick={handleIssuerClick}
+                        className="bg-[#1a1a1a]/60 p-4 border border-[#333333] rounded-lg space-y-4 active:scale-95 transition-transform cursor-pointer hover:border-[#00ff88]/30"
+                    >
+                        {/* Issuer Identity */}
+                        <div className="flex items-center gap-4 relative overflow-hidden">
+                            <div className="text-[#00ff88] flex items-center justify-center rounded border border-[#00ff88]/30 bg-[#00ff88]/10 shrink-0 size-12 shadow-[0_0_10px_rgba(0,255,136,0.15)]">
+                                <Fingerprint className="w-8 h-8" />
+                            </div>
+                            <div className="flex flex-col justify-center flex-1">
+                                <p className="text-white font-mono text-sm tracking-tight">Hash: 0x{task.id.slice(0, 4)}...{task.id.slice(-4)}</p>
+                                <p className="text-gray-500 text-xs font-mono mt-1">
+                                    Verified AI Issuer: {issuerData?.name || 'Loading...'}
+                                </p>
+                            </div>
+                            <div className="absolute right-0 top-0 h-full w-1 bg-[#00ff88]"></div>
+                            <div className="absolute right-2 top-2">
+                                <ChevronLeft className="w-4 h-4 text-[#00ff88] rotate-180" />
+                            </div>
                         </div>
-                        <div className="flex flex-col justify-center flex-1">
-                            <p className="text-white font-mono text-sm tracking-tight">Hash: 0x{task.id.slice(0, 4)}...{task.id.slice(-4)}</p>
-                            <p className="text-gray-500 text-xs font-mono mt-1">Verified AI Issuer: RENTMAN_CORE_v2</p>
-                        </div>
-                        <div className="absolute right-0 top-0 h-full w-1 bg-[#00ff88]"></div>
+
+                        {/* Trust Score */}
+                        {issuerData && (
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-mono text-gray-400 uppercase">Trust Score</span>
+                                    <span className="text-sm font-mono text-[#00ff88] font-bold">
+                                        {issuerData.trustScore}/100
+                                    </span>
+                                </div>
+                                <div className="h-2 w-full rounded-full overflow-hidden border border-[#333333] bg-black">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-[#00ff88] to-[#00cc6d] transition-all duration-500"
+                                        style={{ width: `${issuerData.trustScore}%` }}
+                                    ></div>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-gray-500 font-mono">
+                                    {issuerData.verified && (
+                                        <>
+                                            <CheckCircle className="w-3 h-3 text-[#00ff88]" />
+                                            <span>Verified Issuer</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
 
-                {/* Map Placeholder */}
-                <div className="w-full h-32 rounded-lg border border-[#333333] bg-[#1a1a1a] overflow-hidden relative group">
-                    {/* Simplified map pattern background */}
-                    <div className="absolute inset-0 opacity-20"
-                        style={{
-                            backgroundImage: 'radial-gradient(#00ff88 1px, transparent 1px)',
-                            backgroundSize: '20px 20px'
-                        }}>
+                {/* Geolocation & Navigation */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-[#333333] pb-2">
+                        <MapPin className="w-4 h-4 text-[#00ff88]" />
+                        <h3 className="text-[#00ff88] text-sm font-mono font-bold tracking-widest uppercase">OBJECTIVE LOCATION</h3>
                     </div>
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent"></div>
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-[#00ff88]" />
-                        <span className="text-[10px] font-mono text-[#00ff88] uppercase">
-                            {task.location_address || 'Sector 7-G / Unknown District'}
-                        </span>
+                    {/* Map Visualization */}
+                    <div className="w-full h-40 rounded-lg border border-[#333333] bg-[#1a1a1a] overflow-hidden relative group">
+                        {/* Grid pattern background */}
+                        <div className="absolute inset-0 opacity-20"
+                            style={{
+                                backgroundImage: 'radial-gradient(#00ff88 1px, transparent 1px)',
+                                backgroundSize: '20px 20px'
+                            }}>
+                        </div>
+
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent"></div>
+
+                        {/* Location Info */}
+                        <div className="absolute bottom-3 left-3 right-3 space-y-2">
+                            <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded border border-[#00ff88]/20 inline-flex">
+                                <MapPin className="w-3 h-3 text-[#00ff88]" />
+                                <span className="text-[10px] font-mono text-white uppercase truncate">
+                                    {task.location_address || 'Sector 7-G / Unknown District'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Distance Badge */}
+                        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded border border-[#00ff88]/30">
+                            <div className="flex items-center gap-1">
+                                <Navigation className="w-3 h-3 text-[#00ff88]" />
+                                <span className="text-xs font-mono text-white font-bold uppercase">
+                                    {locationData.distance}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Pulsing Target Marker */}
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                            <div className="relative">
+                                <div className="w-4 h-4 bg-[#00ff88] rounded-full animate-ping absolute"></div>
+                                <div className="w-4 h-4 bg-[#00ff88] rounded-full relative"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 px-2 py-1 rounded border border-[#00ff88]/20">
-                        <span className="text-[8px] font-mono text-white/70 uppercase">Distance: 1.2km</span>
+
+                    {/* Navigation Buttons */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => openNavigation('google')}
+                            disabled={!locationData.targetLat || !locationData.targetLng}
+                            className="flex items-center justify-center gap-2 bg-[#1a1a1a] border border-[#333333] hover:border-[#00ff88] py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+                        >
+                            <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-[#00ff88] transition-colors" />
+                            <span className="text-sm font-mono text-white uppercase">Google Maps</span>
+                        </button>
+                        <button
+                            onClick={() => openNavigation('waze')}
+                            disabled={!locationData.targetLat || !locationData.targetLng}
+                            className="flex items-center justify-center gap-2 bg-[#1a1a1a] border border-[#333333] hover:border-[#00ff88] py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+                        >
+                            <Navigation className="w-4 h-4 text-gray-400 group-hover:text-[#00ff88] transition-colors" />
+                            <span className="text-sm font-mono text-white uppercase">Waze</span>
+                        </button>
                     </div>
-                </div>
+                </section>
             </main>
 
             {/* Fixed Action Button */}
