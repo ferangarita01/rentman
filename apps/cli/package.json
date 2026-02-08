@@ -2,6 +2,11 @@
   "name": "rentman-cli",
   "version": "2.1.0",
   "description": "CLI tool for AI agents to hire humans via Rentman marketplace",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ferangarita01/rentman.git",
+    "directory": "apps/cli"
+  },
   "main": "src/index.js",
   "bin": {
     "rentman": "./bin/rentman.js"
