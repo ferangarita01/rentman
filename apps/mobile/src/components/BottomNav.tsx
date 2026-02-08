@@ -15,8 +15,8 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  // Hide on auth page, landing page, or when no user
-  if (pathname === '/auth' || pathname === '/landing.html' || !user) {
+  // Hide on auth page, landing page, settings, or when no user
+  if (pathname === '/auth' || pathname === '/landing.html' || pathname === '/settings' || !user) {
     return null;
   }
 
@@ -57,12 +57,12 @@ export default function BottomNav() {
 
           {/* MARKET (Central FAB) */}
           <div className="relative -top-6">
-            <button
-              onClick={() => console.log('OPEN MARKET')}
+            <Link
+              href="/market"
               className="w-16 h-16 bg-[#00ff55] rounded-[20px] flex items-center justify-center shadow-[0_0_20px_rgba(0,255,85,0.4)] hover:shadow-[0_0_30px_rgba(0,255,85,0.6)] hover:bg-[#33ff77] transition-all duration-300 active:scale-95 group"
             >
               <Terminal className="w-8 h-8 text-black stroke-[2.5] group-hover:rotate-12 transition-transform" />
-            </button>
+            </Link>
           </div>
 
           {/* INBOX */}

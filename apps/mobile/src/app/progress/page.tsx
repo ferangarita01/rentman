@@ -31,8 +31,10 @@ export default function ProgressPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: 'agt_007', // Mock ID
-                    email: 'agent007@rentman.io'
+                    userId: 'agt_007',
+                    email: 'agent007@rentman.io',
+                    firstName: 'James', // Prefill for speed
+                    lastName: 'Bond'
                 })
             });
 

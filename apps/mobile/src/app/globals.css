@@ -131,3 +131,27 @@ body {
   white-space: nowrap;
   direction: ltr;
 }
+
+/* ========== HOLOGRAM ANIMATIONS ========== */
+@keyframes hologram-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-10px) scale(1.05); opacity: 1; }
+}
+
+@keyframes hologram-flicker {
+  0% { opacity: 0.8; filter: brightness(1); }
+  5% { opacity: 0.5; filter: brightness(2) hue-rotate(90deg); }
+  10% { opacity: 0.8; filter: brightness(1); }
+  15% { opacity: 0.9; }
+  50% { opacity: 0.8; }
+  55% { opacity: 0.4; filter: brightness(1.5); }
+  60% { opacity: 0.8; }
+  100% { opacity: 0.8; }
+}
+
+@keyframes hologram-scan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}

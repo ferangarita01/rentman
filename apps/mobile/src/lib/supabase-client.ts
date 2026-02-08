@@ -36,6 +36,43 @@ export interface Profile {
   xp: number;
   status: string;
   uptime: number;
+  settings?: UserSettings;
+}
+
+export interface UserSettings {
+  camera_enabled: boolean;
+  gps_enabled: boolean;
+  biometrics_enabled: boolean;
+  offline_mode: boolean;
+  push_notifications: boolean;
+  ai_link_enabled: boolean;
+  neural_notifications: boolean;
+  auto_accept_threshold: number;
+}
+
+export interface Message {
+  id: string;
+  task_id: string;
+  sender_id: string;
+  sender_type: 'user' | 'agent' | 'system';
+  content: string;
+  message_type: 'text' | 'image' | 'location' | 'system';
+  read_at?: string;
+  metadata?: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Thread {
+  id: string;
+  task_id: string;
+  task_title: string;
+  task_type: string;
+  last_message: string;
+  last_message_at: string;
+  unread_count: number;
+  sender_type: string;
+  task_status: string;
 }
 
 // Task functions
@@ -135,4 +172,271 @@ export async function acceptTask(taskId: string, userId: string) {
   }
 
   return { data, error };
+}
+
+// ============================================
+// INBOX / MESSAGING FUNCTIONS
+// ============================================
+
+/**
+ * Get all message threads for the current user
+ * Returns tasks with their latest message
+ */
+export async function getThreads(userId: string) {
+  try {
+    // Get all tasks where user is involved (as agent or requester)
+    const { data: tasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select(`
+        id,
+        title,
+        task_type,
+        status,
+        agent_id,
+        requester_id
+      `)
+      .or(`agent_id.eq.${userId},requester_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (tasksError) {
+      console.error('Error fetching tasks for threads:', tasksError);
+      return { data: null, error: tasksError };
+    }
+
+    if (!tasks || tasks.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get latest message for each task
+    const taskIds = tasks.map(t => t.id);
+    const { data: messages, error: messagesError } = await supabase
+      .from('messages')
+      .select('*')
+      .in('task_id', taskIds)
+      .order('created_at', { ascending: false });
+
+    if (messagesError) {
+      console.error('Error fetching messages:', messagesError);
+      return { data: null, error: messagesError };
+    }
+
+    // Build threads with latest message and unread count
+    const threads: Thread[] = tasks.map(task => {
+      const taskMessages = messages?.filter(m => m.task_id === task.id) || [];
+      const latestMessage = taskMessages[0];
+      const unreadCount = taskMessages.filter(
+        m => !m.read_at && m.sender_id !== userId
+      ).length;
+
+      return {
+        id: `contract-${task.id}`,
+        task_id: task.id,
+        task_title: task.title,
+        task_type: task.task_type,
+        last_message: latestMessage?.content || 'No messages yet',
+        last_message_at: latestMessage?.created_at || task.status,
+        unread_count: unreadCount,
+        sender_type: latestMessage?.sender_type || 'system',
+        task_status: task.status
+      };
+    });
+
+    return { data: threads, error: null };
+  } catch (err) {
+    console.error('Error in getThreads:', err);
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Get all messages for a specific task
+ */
+export async function getMessages(taskId: string) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching messages:', error);
+    return { data: null, error };
+  }
+
+  return { data: data as Message[], error: null };
+}
+
+/**
+ * Send a new message to a task thread
+ */
+export async function sendMessage(
+  taskId: string,
+  senderId: string,
+  content: string,
+  messageType: 'text' | 'image' | 'location' | 'system' = 'text',
+  metadata?: any
+) {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      task_id: taskId,
+      sender_id: senderId,
+      sender_type: 'user',
+      content,
+      message_type: messageType,
+      metadata: metadata || {}
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error sending message:', error);
+    return { data: null, error };
+  }
+
+  return { data: data as Message, error: null };
+}
+
+/**
+ * Mark messages as read
+ */
+export async function markMessagesAsRead(messageIds: string[]) {
+  const { error } = await supabase
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .in('id', messageIds);
+
+  if (error) {
+    console.error('Error marking messages as read:', error);
+  }
+
+  return { error };
+}
+
+// ============================================
+// SETTINGS FUNCTIONS
+// ============================================
+
+/**
+ * Get user settings from profile
+ */
+export async function getSettings(userId: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('settings')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching settings:', error);
+    return { data: null, error };
+  }
+
+  const defaultSettings: UserSettings = {
+    camera_enabled: true,
+    gps_enabled: true,
+    biometrics_enabled: false,
+    offline_mode: false,
+    push_notifications: true,
+    ai_link_enabled: true,
+    neural_notifications: false,
+    auto_accept_threshold: 100
+  };
+
+  return { 
+    data: (data?.settings || defaultSettings) as UserSettings, 
+    error: null 
+  };
+}
+
+/**
+ * Update user settings
+ */
+export async function updateSettings(userId: string, settings: Partial<UserSettings>) {
+  // First get current settings
+  const { data: currentData } = await getSettings(userId);
+  const mergedSettings = { ...currentData, ...settings };
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ settings: mergedSettings })
+    .eq('id', userId)
+    .select('settings')
+    .single();
+
+  if (error) {
+    console.error('Error updating settings:', error);
+    return { data: null, error };
+  }
+
+  return { data: data?.settings as UserSettings, error: null };
+}
+
+// ============================================
+// AGENT/ISSUER PROFILE FUNCTIONS
+// ============================================
+
+/**
+ * Get agent profile with completed tasks for trust score calculation
+ */
+export async function getAgentProfile(agentId: string) {
+  // Get profile data
+  const { data: profile, error: profileError } = await getProfile(agentId);
+  
+  if (profileError || !profile) {
+    return { data: null, error: profileError };
+  }
+
+  // Get completed tasks by this agent
+  const { data: completedTasks, error: tasksError } = await supabase
+    .from('task_assignments')
+    .select(`
+      id,
+      task_id,
+      rating,
+      completed_at,
+      tasks (
+        id,
+        title,
+        task_type,
+        location_address,
+        payment_status
+      )
+    `)
+    .eq('user_id', agentId)
+    .eq('status', 'completed')
+    .not('rating', 'is', null)
+    .order('completed_at', { ascending: false });
+
+  if (tasksError) {
+    console.error('Error fetching agent tasks:', tasksError);
+  }
+
+  return {
+    data: {
+      profile,
+      completedTasks: completedTasks || [],
+      trustScore: calculateTrustScore(completedTasks || [])
+    },
+    error: null
+  };
+}
+
+/**
+ * Calculate trust score based on completed missions
+ */
+export function calculateTrustScore(missions: any[]): number {
+  if (!missions || missions.length === 0) return 50; // Default for new agents
+
+  // Average rating (1-5 scale) converted to 0-80 range
+  const totalRating = missions.reduce((sum, m) => sum + (m.rating || 3), 0);
+  const avgRating = totalRating / missions.length;
+  const ratingScore = (avgRating / 5) * 80;
+
+  // Completion bonus: up to 20 points for experience
+  const completionBonus = Math.min(missions.length * 2, 20);
+
+  // Final score capped at 100
+  return Math.min(100, Math.round(ratingScore + completionBonus));
 }

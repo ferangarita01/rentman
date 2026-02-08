@@ -60,21 +60,31 @@ app.post('/api/create-payment-intent', async (req, res) => {
 // 2. Stripe Connect Onboarding (For Agents/Workers)
 app.post('/api/stripe/onboard', async (req, res) => {
     try {
-        const { userId, email } = req.body; // metadata from our DB
+        const { userId, email, firstName, lastName } = req.body; // metadata from our DB
 
         // A. Create Express Account
-        const account = await stripe.accounts.create({
+        const accountParams = {
             type: 'express',
-            country: 'US', // Default to US for this MVP (or parameterized)
+            country: 'US',
             email: email,
             capabilities: {
-                card_payments: { requested: true },
-                transfers: { requested: true },
+                transfers: { requested: true }, // Only transfers needed for payouts
             },
+            business_type: 'individual', // Skip business selection
             metadata: {
                 rentman_user_id: userId
             }
-        });
+        };
+
+        // Option A+: Prefill Data if available
+        if (firstName || lastName) {
+            accountParams.individual = {
+                first_name: firstName,
+                last_name: lastName
+            };
+        }
+
+        const account = await stripe.accounts.create(accountParams);
 
         // B. Create Account Link (for the UI)
         const accountLink = await stripe.accountLinks.create({

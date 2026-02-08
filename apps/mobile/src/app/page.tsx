@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthPage from './auth/page';
 import { getTasks, Task } from '@/lib/supabase-client';
+import HolographicProjection from '@/components/HolographicProjection';
 
 export default function HomePage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
+  const [activeTab, setActiveTab] = useState<'active' | 'complete'>('active');
 
   console.log('🏠 HomePage: Render - loading:', loading, '| user:', user?.email || 'NONE');
 
@@ -19,12 +21,14 @@ export default function HomePage() {
     if (user) {
       loadTasks();
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   async function loadTasks() {
-    console.log('📊 Loading tasks from Supabase...');
+    console.log('📊 Loading tasks from Supabase for tab:', activeTab);
     setLoadingTasks(true);
-    const { data, error } = await getTasks('open');
+    // 'active' tab shows 'open' tasks, 'complete' tab shows 'completed' tasks
+    const status = activeTab === 'active' ? 'open' : 'completed';
+    const { data, error } = await getTasks(status);
 
     if (error) {
       console.error('❌ Error loading tasks:', error);
@@ -78,7 +82,7 @@ export default function HomePage() {
         style={{ backgroundColor: 'rgba(5, 5, 5, 0.8)', borderColor: COLORS.cardBorder }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ color: COLORS.primary }}>home_work</span>
+            {/* <span className="material-symbols-outlined" style={{ color: COLORS.primary }}>home_work</span> */}
             <h1 className="text-white text-lg font-bold tracking-wider uppercase" style={{ fontFamily: FONTS.display }}>Rentman</h1>
           </div>
           <div className="flex items-center gap-4">
@@ -86,23 +90,26 @@ export default function HomePage() {
               <span className="text-[10px] uppercase tracking-tighter" style={{ fontFamily: FONTS.mono, color: '#6b7280' }}>Status</span>
               <span className="text-[10px]" style={{ fontFamily: FONTS.mono, color: COLORS.primary }}>ONLINE</span>
             </div>
-            <button className="text-white">
+            {/* <button className="text-white">
               <span className="material-symbols-outlined">notifications</span>
-            </button>
+            </button> */}
           </div>
         </div>
       </header>
 
       {/* Navigation Tabs */}
-      <nav className="flex border-b px-4" style={{ backgroundColor: COLORS.bgDark, borderColor: COLORS.cardBorder }}>
-        <button className="flex flex-col items-center justify-center border-b-2 px-4 py-3" style={{ borderColor: COLORS.primary, color: COLORS.primary }}>
-          <p className="text-xs font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>TASKS</p>
+      <nav className="flex border-b px-4 gap-8" style={{ backgroundColor: COLORS.bgDark, borderColor: COLORS.cardBorder }}>
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`flex flex-col items-center justify-center border-b-2 px-4 py-3 transition-colors ${activeTab === 'active' ? 'border-[#00ff88] text-[#00ff88]' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+        >
+          <p className="text-xs font-bold tracking-widest text-shadow-glow" style={{ fontFamily: FONTS.mono }}>ACTIVE</p>
         </button>
-        <button className="flex flex-col items-center justify-center border-b-2 border-transparent px-4 py-3" style={{ color: '#6b7280' }}>
-          <p className="text-xs font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>NEARBY</p>
-        </button>
-        <button className="flex flex-col items-center justify-center border-b-2 border-transparent px-4 py-3" style={{ color: '#6b7280' }}>
-          <p className="text-xs font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>ACTIVE</p>
+        <button
+          onClick={() => setActiveTab('complete')}
+          className={`flex flex-col items-center justify-center border-b-2 px-4 py-3 transition-colors ${activeTab === 'complete' ? 'border-[#00ff88] text-[#00ff88]' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+        >
+          <p className="text-xs font-bold tracking-widest" style={{ fontFamily: FONTS.mono }}>COMPLETE</p>
         </button>
       </nav>
 
@@ -146,13 +153,8 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <div className="w-full h-32 bg-gray-900 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <div className="w-full h-full bg-gray-800 opacity-60 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-gray-600 text-6xl">
-                    {task.task_type === 'delivery' ? 'package' : task.task_type === 'verification' ? 'fact_check' : 'construction'}
-                  </span>
-                </div>
+              <div className="w-full h-auto bg-black relative">
+                <HolographicProjection type={task.task_type} />
               </div>
 
               <div className="grid grid-cols-2 gap-4 border-t pt-4" style={{ borderColor: COLORS.cardBorder }}>

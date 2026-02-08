@@ -70,11 +70,14 @@ export default function ProfilePage() {
       style={{ backgroundColor: COLORS.bgDark, fontFamily: FONTS.display, backgroundImage: 'radial-gradient(circle at 2px 2px, #00ff8811 1px, transparent 0)', backgroundSize: '24px 24px' }}>
 
       <div className="flex items-center backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b" style={{ backgroundColor: 'rgba(5,5,5,0.8)', borderColor: COLORS.cyberBorder }}>
-        <div className="flex items-center justify-center border rounded" style={{ color: COLORS.primary, borderColor: `${COLORS.primary}4D`, width: '40px', height: '40px' }}>
+        {/* <div className="flex items-center justify-center border rounded" style={{ color: COLORS.primary, borderColor: `${COLORS.primary}4D`, width: '40px', height: '40px' }}>
           <span className="material-symbols-outlined">home_work</span>
-        </div>
+        </div> */}
         <h2 className="text-lg font-bold tracking-wider flex-1 text-center uppercase" style={{ color: 'white', fontFamily: FONTS.display }}>Profile</h2>
-        <button className="flex items-center justify-center rounded border" style={{ width: '40px', height: '40px', borderColor: COLORS.cyberBorder, color: COLORS.primary }}>
+        <button
+          onClick={() => router.push('/settings')}
+          className="flex items-center justify-center rounded border"
+          style={{ width: '40px', height: '40px', borderColor: COLORS.cyberBorder, color: COLORS.primary }}>
           <span className="material-symbols-outlined">settings</span>
         </button>
       </div>
