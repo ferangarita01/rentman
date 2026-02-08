@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Browser } from '@capacitor/browser';
 import { App as CapacitorApp } from '@capacitor/app';
+import { trackAuthEvent, trackPageView } from '@/lib/analytics';
 
 export default function AuthPage() {
     const [operatorId, setOperatorId] = useState('');
@@ -16,26 +17,14 @@ export default function AuthPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // GLOBAL CLICK LOGGER (Kept for now)
-        console.log('DEBUG_SUPABASE_URL:', require('@/lib/supabase').debugUrl);
-
-        const handleClick = (e: any) => {
-            const target = e.target as HTMLElement;
-            const logData = {
-                tag: target.tagName,
-                text: target.textContent?.slice(0, 30).replace(/\s+/g, ' ').trim(), // Clean text
-                id: target.id,
-                classes: target.className,
-                timestamp: new Date().toISOString()
-            };
-            console.log('USER_INTERACTION:', JSON.stringify(logData));
-        };
-        window.addEventListener('click', handleClick);
-
+        trackPageView('/auth', 'Authentication');
+        
         let listenerHandle: any;
         const setupDeepLinkListener = async () => {
             listenerHandle = await CapacitorApp.addListener('appUrlOpen', async (data) => {
-                console.log('DEEP_LINK_OPEN:', data.url); // Log deep links too
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('DEEP_LINK_OPEN:', data.url);
+                }
                 const url = new URL(data.url);
                 const hash = url.hash;
                 if (hash && hash.includes('access_token')) {
@@ -57,13 +46,13 @@ export default function AuthPage() {
         };
         setupDeepLinkListener();
         return () => {
-            window.removeEventListener('click', handleClick);
             if (listenerHandle) listenerHandle.remove();
         };
     }, [router]);
 
     const handleGoogleLogin = async () => {
         setLoading(true);
+        trackAuthEvent('login', 'google');
         try {
             const isCapacitor = typeof (window as any).Capacitor !== 'undefined';
             if (isCapacitor) {
@@ -83,8 +72,10 @@ export default function AuthPage() {
                 });
             }
         } catch (error: any) {
-            console.error('GOOGLE_AUTH_ERROR:', error);
-            console.error('GOOGLE_AUTH_DETAILS:', JSON.stringify(error, null, 2));
+            trackAuthEvent('login_failed', 'google', { error: error.message });
+            if (process.env.NODE_ENV === 'development') {
+                console.error('GOOGLE_AUTH_ERROR:', error);
+            }
             toast.error(error.message);
             setLoading(false);
         }
@@ -92,10 +83,9 @@ export default function AuthPage() {
 
     const handleInitializeSession = async () => {
         setLoading(true);
-        console.log('🔑 AuthPage: Starting login with mode:', mode);
         try {
             if (mode === 'signup') {
-                console.log('📝 AuthPage: Attempting signup for:', operatorId);
+                trackAuthEvent('signup', 'email');
                 const { error } = await supabase.auth.signUp({
                     email: operatorId,
                     password: accessKey,
@@ -104,25 +94,26 @@ export default function AuthPage() {
                     }
                 });
                 if (error) throw error;
-                console.log('✅ AuthPage: Signup successful');
                 toast.success('Operator registered. Check comms link (email).');
             } else {
-                console.log('🔐 AuthPage: Attempting signin for:', operatorId);
+                trackAuthEvent('login', 'email');
                 const { error, data } = await supabase.auth.signInWithPassword({
                     email: operatorId,
                     password: accessKey,
                 });
                 if (error) throw error;
                 
-                console.log('✅ AuthPage: Login successful! User:', data.user?.email);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('✅ Login successful:', data.user?.email);
+                }
                 toast.success('Access Granted');
-                
-                // DO NOT REDIRECT - let AuthContext update and HomePage will re-render
                 setLoading(false);
             }
         } catch (error: any) {
-            console.error('❌ AuthPage: Login error:', error.message);
-            console.log('📧 AuthPage: Failed login attempt for:', operatorId);
+            trackAuthEvent('login_failed', 'email', { error: error.message });
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Auth error:', error.message);
+            }
             toast.error(`Access Denied: ${error.message}`);
         } finally {
             setLoading(false);

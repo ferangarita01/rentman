@@ -1,9 +1,50 @@
-
-client_secret_*.json
-*.log
+# Environment Variables
 .env
 .env.local
+.env.*.local
+*.env
+
+# OAuth & API Secrets
+client_secret_*.json
+*.credentials.json
+*.key.json
+service-account*.json
+
+# Logs
+*.log
+*.log_
+
+# Dependencies
 node_modules
-.DS_Store
+
+# Build Output
 dist
+build
+.next
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# Vercel
 .vercel
+
+# Mobile Artifacts (should be in separate dist)
+*.apk
+*.aab
+*.ipa
+
+# Backup Directories
+_CRITICAL_BACKUP_*
+_backup_*
+_DELETED_*
+
+# Temporary Files
+*.tmp
+*.temp

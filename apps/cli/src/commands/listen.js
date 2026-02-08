@@ -1,18 +1,29 @@
 const { createClient } = require('@supabase/supabase-js');
-
-const SUPABASE_URL = 'https://uoekolfgbbmvhzsfkjef.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZWtvbGZnYmJtdmh6c2ZramVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjQzNzUsImV4cCI6MjA4NTkwMDM3NX0.DYxAxi4TTBLgdVruu8uGM3Jog7JZaplWqikAvI0EXvk';
+const { getApiConfig, getIdentity } = require('../lib/secure-config');
+const chalk = require('chalk');
 
 /**
  * Listen for real-time updates on a specific task
  * @param {string} taskId - The task UUID to watch
  */
 module.exports = async (taskId) => {
+    // Get API config from environment
+    const apiConfig = getApiConfig();
+    const identity = getIdentity();
+
+    if (!apiConfig.supabaseKey) {
+        console.error(chalk.red('\n❌ Error: SUPABASE_ANON_KEY not set'));
+        console.log(chalk.yellow('→ Create .env file: cp .env.example .env'));
+        console.log(chalk.yellow('→ Add your Supabase anon key to .env'));
+        process.exit(1);
+    }
+
     console.log(`\n👁️  Watching task: ${taskId}`);
     console.log('─'.repeat(50));
     console.log('Listening for status changes... (Press Ctrl+C to stop)\n');
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(apiConfig.supabaseUrl, apiConfig.supabaseKey);
+
 
     // First, get current task status
     const { data: task, error } = await supabase

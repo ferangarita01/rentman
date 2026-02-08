@@ -13,10 +13,13 @@ import {
     Zap,
     ShieldCheck,
     TriangleAlert,
-    Activity
+    Activity,
+    FileText,
+    ExternalLink
 } from 'lucide-react';
 import { supabase, getSettings, updateSettings, UserSettings } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { trackPageView, trackSettingsChange, trackButtonClick } from '@/lib/analytics';
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -37,6 +40,7 @@ export default function SettingsPage() {
 
     // Load settings on mount
     useEffect(() => {
+        trackPageView('/settings', 'Settings');
         loadUserSettings();
     }, []);
 
@@ -94,6 +98,9 @@ export default function SettingsPage() {
         const newValue = !hardware[key];
         setHardware(prev => ({ ...prev, [key]: newValue }));
 
+        // Track analytics
+        trackSettingsChange(`hardware_${key}`, newValue);
+
         // Map to DB field names
         const dbFieldMap = {
             camera: 'camera_enabled',
@@ -108,6 +115,9 @@ export default function SettingsPage() {
         const newValue = !comms[key];
         setComms(prev => ({ ...prev, [key]: newValue }));
 
+        // Track analytics
+        trackSettingsChange(`comms_${key}`, newValue);
+
         // Map to DB field names
         const dbFieldMap = {
             aiLink: 'ai_link_enabled',
@@ -118,11 +128,17 @@ export default function SettingsPage() {
     };
 
     const handleReboot = () => {
+        trackButtonClick('Emergency Reboot', 'Settings');
         if (confirm('REBOOT SYSTEM?')) {
-            // Mock reboot action
             alert('SYSTEM REBOOT INITIATED...');
             setTimeout(() => router.push('/'), 1000);
         }
+    };
+
+    const openLegalDocument = (type: 'privacy' | 'terms') => {
+        const url = type === 'privacy' ? '/privacy-policy.html' : '/terms-of-service.html';
+        trackButtonClick(`Open ${type === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}`, 'Settings - Legal');
+        window.open(url, '_blank');
     };
 
     // Inline styles for specific effects not in Tailwind by default
@@ -333,6 +349,48 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                             <div className="text-[#00ff88] font-mono text-xs uppercase cursor-pointer hover:underline">Manage</div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* Category: Legal & Compliance */}
+                <div className="mt-8 px-4">
+                    <h3 className="font-mono text-[10px] tracking-[0.2em] text-white/40 mb-3 border-l-2 border-[#00ff88] pl-2 uppercase font-bold">
+                        LEGAL_&_COMPLIANCE
+                    </h3>
+                    <div className="space-y-[-1px]">
+
+                        {/* Item: Privacy Policy */}
+                        <div 
+                            onClick={() => openLegalDocument('privacy')}
+                            className="flex items-center gap-4 border border-[#333333] bg-[#1a1a1a]/30 p-4 justify-between transition-colors hover:bg-[#1a1a1a]/50 cursor-pointer active:scale-[0.99]">
+                            <div className="flex items-center gap-4">
+                                <div className="text-[#00ff88] flex items-center justify-center border border-[#00ff88]/20 bg-[#00ff88]/5 w-10 h-10">
+                                    <ShieldCheck className="w-5 h-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-bold tracking-tight">Privacy Policy</p>
+                                    <p className="text-white/40 text-[11px] leading-tight">How we collect and protect your data</p>
+                                </div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-[#00ff88]" />
+                        </div>
+
+                        {/* Item: Terms of Service */}
+                        <div 
+                            onClick={() => openLegalDocument('terms')}
+                            className="flex items-center gap-4 border border-[#333333] bg-[#1a1a1a]/30 p-4 justify-between transition-colors hover:bg-[#1a1a1a]/50 cursor-pointer active:scale-[0.99]">
+                            <div className="flex items-center gap-4">
+                                <div className="text-[#00ff88] flex items-center justify-center border border-[#00ff88]/20 bg-[#00ff88]/5 w-10 h-10">
+                                    <FileText className="w-5 h-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-bold tracking-tight">Terms of Service</p>
+                                    <p className="text-white/40 text-[11px] leading-tight">Operator responsibilities and protocol rules</p>
+                                </div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-[#00ff88]" />
                         </div>
 
                     </div>

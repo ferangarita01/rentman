@@ -8,9 +8,9 @@ android {
     signingConfigs {
         release {
             storeFile file('../rentman-release-key.jks')
-            storePassword 'Rentman2026!'
-            keyAlias 'rentman'
-            keyPassword 'Rentman2026!'
+            storePassword System.getenv("RENTMAN_KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("RENTMAN_KEY_ALIAS") ?: "rentman"
+            keyPassword System.getenv("RENTMAN_KEY_PASSWORD") ?: ""
         }
     }
     
@@ -18,8 +18,8 @@ android {
         applicationId "com.rentman.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -30,7 +30,7 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

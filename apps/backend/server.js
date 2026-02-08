@@ -4,23 +4,46 @@ const nacl = require('tweetnacl');
 const naclUtil = require('tweetnacl-util');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
-require('dotenv').config();
+const { getSecret, initializeSecrets } = require('./secrets');
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Production-Ready Server Initialization with Secret Manager
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+let stripe;
+let supabase;
+let WEBHOOK_SECRET;
+
+async function initializeServer() {
+    console.log('🚀 Initializing Rentman Backend...\n');
+
+    try {
+        // Preload all secrets (faster runtime)
+        await initializeSecrets();
+        
+        // Retrieve secrets
+        const STRIPE_SECRET_KEY = await getSecret('STRIPE_SECRET_KEY');
+        WEBHOOK_SECRET = await getSecret('WEBHOOK_SECRET');
+        const SUPABASE_SERVICE_ROLE_KEY = await getSecret('SUPABASE_SERVICE_ROLE_KEY');
+        const SUPABASE_URL = await getSecret('SUPABASE_URL');
+
+        // Initialize services
+        stripe = require('stripe')(STRIPE_SECRET_KEY);
+        supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+        console.log('✅ Backend initialized successfully\n');
+    } catch (error) {
+        console.error('❌ FATAL: Failed to initialize backend');
+        console.error(error);
+        process.exit(1);
+    }
+}
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 8080;
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
-
-// Admin Client for Backend Operations
-const supabase = createClient(
-    process.env.SUPABASE_URL || 'https://uoekolfgbbmvhzsfkjef.supabase.co',
-    process.env.SUPABASE_SERVICE_ROLE_KEY // MUST be set in Cloud Run Env Vars
-);
-
-app.use(bodyParser.json());
 
 // Health Check
 app.get('/', (req, res) => {
@@ -121,22 +144,42 @@ app.post('/api/stripe/transfer', async (req, res) => {
             }
         });
 
+        console.log(`✅ Transfer successful: ${transfer.id} ($${amount} to ${destinationAccountId})`);
         res.json({ transferId: transfer.id, status: 'success' });
 
     } catch (e) {
-        console.error('Transfer Error:', e.message);
-        res.status(500).send({ error: e.message });
+        // Enhanced error logging for debugging payout issues
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('💥 STRIPE TRANSFER FAILED');
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error(`Error Type: ${e.type || 'Unknown'}`);
+        console.error(`Error Code: ${e.code || 'N/A'}`);
+        console.error(`Error Message: ${e.message}`);
+        console.error(`Destination Account: ${destinationAccountId}`);
+        console.error(`Amount: $${amount} USD`);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        res.status(500).send({ 
+            error: e.message,
+            type: e.type,
+            code: e.code 
+        });
     }
 });
 
 // Database Webhook Endpoint
 app.post('/webhooks/tasks', async (req, res) => {
-    const apiKey = req.query.secret;
+    // 1. Security Check (Header-based Authentication)
+    const webhookSecret = req.headers['x-webhook-secret'];
 
-    // 1. Security Check (Webhook Secret)
-    if (apiKey !== WEBHOOK_SECRET) {
-        console.error('⛔ Operations blocked: Invalid Webhook Secret');
-        return res.status(401).send('Unauthorized');
+    if (!webhookSecret || webhookSecret !== WEBHOOK_SECRET) {
+        console.error('⛔ Webhook blocked: Invalid or missing x-webhook-secret header');
+        console.error(`   Received: ${webhookSecret ? '[REDACTED]' : 'undefined'}`);
+        console.error(`   Expected: Header 'x-webhook-secret' with correct value`);
+        return res.status(401).json({ 
+            error: 'Unauthorized', 
+            message: 'Invalid webhook authentication' 
+        });
     }
 
     const { type, table, record } = req.body;
@@ -228,35 +271,71 @@ const model = vertex_ai.preview.getGenerativeModel({
 async function analyzeWithAI(record) {
     console.log(`🤖 AI Analyzing Task: ${record.title}`);
 
-    // Construct Prompt
-    const prompt = `
-    You are the "Rentman Brain". Analyze this task for safety, clarity, and viability.
-    
-    Task Title: ${record.title}
-    Description: ${record.description}
-    Budget: $${record.budget_amount}
-    Type: ${record.task_type}
-    
-    Output strictly in JSON format:
-    {
-        "viable": boolean,
-        "safety_score": number (0-100),
-        "complexity": "low" | "medium" | "high",
-        "reasoning": "short explanation",
-        "tags": ["tag1", "tag2"]
-    }
-    `;
+    // Construct Prompt (Fine-tuned for consistent JSON output)
+    const prompt = `You are the "Rentman Brain", an AI safety and viability analyzer for task marketplace.
+
+Analyze this task and respond ONLY with valid JSON (no markdown, no code blocks):
+
+Task Title: ${record.title}
+Description: ${record.description}
+Budget: $${record.budget_amount}
+Type: ${record.task_type}
+
+Required JSON format:
+{
+  "viable": true,
+  "safety_score": 85,
+  "complexity": "medium",
+  "reasoning": "Clear task with reasonable budget",
+  "tags": ["delivery", "urban"]
+}
+
+Rules:
+- viable: true if task is legal, safe, and achievable
+- safety_score: 0-100 (reject if <70)
+- complexity: "low" | "medium" | "high"
+- reasoning: max 100 characters
+- tags: 2-4 relevant keywords
+
+Respond with JSON only:`;
+
+    // AI Timeout Protection
+    const AI_TIMEOUT_MS = 30000; // 30 seconds
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AI analysis timeout after 30s')), AI_TIMEOUT_MS);
+    });
 
     try {
-        const result = await model.generateContent(prompt);
+        // Race between AI call and timeout
+        const result = await Promise.race([
+            model.generateContent(prompt),
+            timeoutPromise
+        ]);
+        
         const response = result.response;
         const text = response.candidates[0].content.parts[0].text;
 
-        // Extract JSON from markdown code block if present
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const aiAnalysis = jsonMatch ? JSON.parse(jsonMatch[0]) : { error: "Failed to parse AI response" };
+        // Enhanced JSON extraction (handles markdown code blocks)
+        let aiAnalysis;
+        try {
+            // First try: Direct parse
+            aiAnalysis = JSON.parse(text);
+        } catch (e) {
+            // Second try: Extract from code block
+            const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                aiAnalysis = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+            } else {
+                throw new Error('Failed to extract JSON from AI response');
+            }
+        }
 
-        console.log('🧠 AI Analysis Result:', aiAnalysis);
+        console.log('🧠 AI Analysis Result:', JSON.stringify(aiAnalysis, null, 2));
+
+        // Validate AI response structure
+        if (typeof aiAnalysis.viable !== 'boolean' || typeof aiAnalysis.safety_score !== 'number') {
+            throw new Error('Invalid AI response structure');
+        }
 
         if (aiAnalysis.viable && aiAnalysis.safety_score > 70) {
             await updateTaskStatus(record.id, 'matching', { ai_analysis: aiAnalysis });
@@ -267,9 +346,42 @@ async function analyzeWithAI(record) {
         }
 
     } catch (err) {
-        console.error('💥 AI Analysis Failed:', err);
-        // Fallback: Approve if AI fails (for MVP) or flag
-        await updateTaskStatus(record.id, 'manual_review', { ai_error: err.message });
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('💥 AI ANALYSIS FAILED');
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error(`Task ID: ${record.id}`);
+        console.error(`Task Title: ${record.title}`);
+        console.error(`Error: ${err.message}`);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // Retry mechanism (1 attempt)
+        console.log('🔄 Retrying AI analysis (1/1)...');
+        try {
+            const retryResult = await Promise.race([
+                model.generateContent(prompt),
+                timeoutPromise
+            ]);
+            
+            const retryText = retryResult.response.candidates[0].content.parts[0].text;
+            const retryAnalysis = JSON.parse(retryText.match(/\{[\s\S]*\}/)[0]);
+            
+            console.log('✅ Retry successful');
+            
+            if (retryAnalysis.viable && retryAnalysis.safety_score > 70) {
+                await updateTaskStatus(record.id, 'matching', { ai_analysis: retryAnalysis, retry: true });
+            } else {
+                await updateTaskStatus(record.id, 'flagged', { ai_analysis: retryAnalysis, retry: true });
+            }
+            
+        } catch (retryErr) {
+            console.error('❌ Retry failed. Escalating to manual review.');
+            // Fallback: Manual review
+            await updateTaskStatus(record.id, 'manual_review', { 
+                ai_error: err.message,
+                retry_error: retryErr.message,
+                requires_human_review: true
+            });
+        }
     }
 }
 
@@ -280,7 +392,18 @@ async function updateTaskStatus(taskId, status, metadataUpdate = {}) {
     }).eq('id', taskId);
 }
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.error(`DEBUG: PROJECT_ID = ${process.env.PROJECT_ID}`);
+// Start server after loading secrets
+initializeServer().then(() => {
+    app.listen(PORT, () => {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🚀 Rentman Backend Server');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`📡 Listening on port ${PORT}`);
+        console.log(`🔐 Secrets: Google Cloud Secret Manager`);
+        console.log(`🌐 Project: ${process.env.GCP_PROJECT_ID || 'agent-gen-1'}`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    });
+}).catch(err => {
+    console.error('❌ Failed to initialize server:', err);
+    process.exit(1);
 });

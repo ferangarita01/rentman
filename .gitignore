@@ -1,9 +1,44 @@
-apps/mobile/client_secret_*.json
-node_modules/
+# Secrets & Environment
+client_secret_*.json
+*.pem
+*.key
 .env
-.DS_Store
+.env.local
+.env.*.local
+rentman_identity.json
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
 dist/
 .next/
 out/
 build/
 .vercel
+
+# Binary artifacts
+*.apk
+*.aab
+*.ipa
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Releases (moved to _releases/)
+_releases/
