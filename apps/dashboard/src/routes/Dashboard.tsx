@@ -39,15 +39,13 @@ const Dashboard: React.FC = () => {
                 return;
             }
 
-            // 2. Fetch Profile (Credits)
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('credits')
-                .eq('id', session.user.id)
-                .single();
-
-            if (mounted && profile) {
-                setCredits(Number(profile.credits) || 0);
+            // 2. Fetch Credits from Stripe Sync Engine (same source as Wallet)
+            const { data: deposits } = await supabase.rpc('get_my_deposits');
+            if (mounted && deposits && deposits.length > 0) {
+                const totalCredits = deposits.reduce((sum: number, d: any) => sum + Number(d.amount), 0);
+                setCredits(totalCredits);
+            } else if (mounted) {
+                setCredits(0);
             }
 
             // 3. Fetch Agents (My Agents - who used credits)
