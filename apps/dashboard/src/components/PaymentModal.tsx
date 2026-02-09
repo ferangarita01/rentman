@@ -119,10 +119,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
             />
           </div>
 
-          {/* Card Payment Form (Stripe) */}
-          {paymentMethod === 'card' && (
-
-            {/* Card Payment Form (Stripe Checkout) */ }
+          {/* Card Payment Form (Stripe Checkout) */}
           {paymentMethod === 'card' && (
             <div className="space-y-4">
               <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
@@ -170,7 +167,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                 {loading ? 'Redirecting...' : `Pay $${amount} via Stripe`}
               </button>
             </div>
-          )}
           )}
 
           {/* Crypto Payment Info */}
