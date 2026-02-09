@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     cleartext: false,
-    allowNavigation: ['*.supabase.co']
+    allowNavigation: ['*.supabase.co', 'rentman.space', 'connect.stripe.com']
   },
   plugins: {
     SplashScreen: {

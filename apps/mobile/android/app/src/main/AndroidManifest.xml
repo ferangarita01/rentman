@@ -28,6 +28,14 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="com.rentman.app" />
             </intent-filter>
+
+            <!-- App Links for HTTPS (Stripe Connect) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="rentman.space" />
+            </intent-filter>
         </activity>
 
         <provider

@@ -5,6 +5,7 @@ import WalletConnect from '@/components/WalletConnect';
 import { ArrowUpRight, ArrowDownLeft, DollarSign, Building, Plus, RefreshCw } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { Browser } from '@capacitor/browser';
+import { App, URLOpenListenerEvent } from '@capacitor/app';
 import toast from 'react-hot-toast';
 import { supabase, getProfile, Profile } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,6 +69,45 @@ export default function ProgressPage() {
     useEffect(() => {
         fetchData();
     }, [user]);
+
+    // Deep link listener for Stripe Connect redirect
+    useEffect(() => {
+        let listenerHandle: any;
+        
+        const setupListener = async () => {
+            const handleDeepLink = (event: URLOpenListenerEvent) => {
+                console.log('[STRIPE_REDIRECT] Deep link received:', event.url);
+                try {
+                    const url = new URL(event.url);
+                    if (url.hostname === 'rentman.space' && url.pathname.includes('/progress')) {
+                        // Handle Stripe Connect success
+                        if (url.searchParams.get('success') === 'true') {
+                            toast.success('Bank Account Linked Successfully!');
+                            fetchData(); // Refresh profile to get stripe_account_id
+                            Browser.close(); // Close browser if still open
+                        }
+                        // Handle refresh (user closed onboarding)
+                        if (url.searchParams.get('refresh') === 'true') {
+                            toast.error('Onboarding incomplete. Please try again.');
+                            Browser.close();
+                        }
+                    }
+                } catch (err) {
+                    console.error('[STRIPE_REDIRECT] Error parsing URL:', err);
+                }
+            };
+            
+            listenerHandle = await App.addListener('appUrlOpen', handleDeepLink);
+        };
+        
+        setupListener();
+        
+        return () => {
+            if (listenerHandle) {
+                listenerHandle.remove();
+            }
+        };
+    }, []);
 
     const handleRefresh = () => {
         setRefreshing(true);

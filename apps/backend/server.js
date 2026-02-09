@@ -144,6 +144,33 @@ app.post('/api/stripe/onboard', async (req, res) => {
     try {
         const { userId, email, firstName, lastName } = req.body; // metadata from our DB
 
+        if (!userId || !email) {
+            return res.status(400).json({ error: 'userId and email required' });
+        }
+
+        console.log(`🏦 Stripe onboarding request for user: ${userId}`);
+
+        // Check if user already has a Stripe account
+        const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('stripe_account_id')
+            .eq('id', userId)
+            .single();
+
+        let accountId = existingProfile?.stripe_account_id;
+
+        // If account exists, create new link (resume onboarding)
+        if (accountId) {
+            console.log(`♻️  Resuming onboarding for existing account: ${accountId}`);
+            const accountLink = await stripe.accountLinks.create({
+                account: accountId,
+                refresh_url: 'https://rentman.space/progress?refresh=true',
+                return_url: 'https://rentman.space/progress?success=true',
+                type: 'account_onboarding',
+            });
+            return res.json({ url: accountLink.url, accountId: accountId, resumed: true });
+        }
+
         // A. Create Express Account
         const accountParams = {
             type: 'express',
@@ -167,6 +194,7 @@ app.post('/api/stripe/onboard', async (req, res) => {
         }
 
         const account = await stripe.accounts.create(accountParams);
+        console.log(`✅ Created Stripe account: ${account.id}`);
 
         // B. Create Account Link (for the UI)
         const accountLink = await stripe.accountLinks.create({
@@ -179,7 +207,11 @@ app.post('/api/stripe/onboard', async (req, res) => {
         res.json({ url: accountLink.url, accountId: account.id });
 
     } catch (e) {
-        console.error('Connect Error:', e.message);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('💥 STRIPE ONBOARD FAILED');
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error(`Error: ${e.message}`);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         res.status(500).send({ error: e.message });
     }
 });
