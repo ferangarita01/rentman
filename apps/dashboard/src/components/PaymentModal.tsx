@@ -121,14 +121,56 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
           {/* Card Payment Form (Stripe) */}
           {paymentMethod === 'card' && (
-            <Elements stripe={stripePromise}>
-              <StripeCardForm
-                amount={amount}
-                userId={userId}
-                onSuccess={onSuccess}
-                onError={(msg) => alert(msg)}
-              />
-            </Elements>
+
+            {/* Card Payment Form (Stripe Checkout) */ }
+          {paymentMethod === 'card' && (
+            <div className="space-y-4">
+              <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 bg-[#6772e5]/20 rounded flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#6772e5] text-lg">lock</span>
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-mono font-bold">Stripe Secure Checkout</p>
+                    <p className="text-xs text-slate-500 font-mono">Redirects to Stripe.com</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const BACKEND_URL = import.meta.env.VITE_AGENT_GATEWAY_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+                    const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        amount,
+                        userId,
+                        returnUrl: window.location.origin + '/wallet'
+                      })
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                      window.location.href = data.url;
+                    } else {
+                      alert('Failed to init checkout');
+                      setLoading(false);
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    alert('Payment Error');
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full py-4 bg-[#6772e5] text-white font-mono text-sm font-bold uppercase rounded-lg hover:bg-[#5469d4] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? 'Redirecting...' : `Pay $${amount} via Stripe`}
+              </button>
+            </div>
+          )}
           )}
 
           {/* Crypto Payment Info */}

@@ -50,7 +50,7 @@ app.get('/', (req, res) => {
     res.status(200).send('Rentman Backend is Active 🧠');
 });
 
-// 1. Create Payment Intent (For Dashboard "Buy Credits")
+// 1. Create Payment Intent (For Dashboard "Buy Credits" - Inline)
 app.post('/api/create-payment-intent', async (req, res) => {
     try {
         const { amount, userId, currency = 'usd' } = req.body;
@@ -77,6 +77,52 @@ app.post('/api/create-payment-intent', async (req, res) => {
     } catch (e) {
         console.error('Stripe Error:', e.message);
         res.status(400).send({ error: e.message });
+    }
+});
+
+// 1.5 Create Checkout Session (Hosted Page - Recommended)
+app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+        const { amount, userId, returnUrl } = req.body;
+
+        if (!amount) return res.status(400).send({ error: 'Amount required' });
+        if (!userId) return res.status(400).send({ error: 'User ID required' });
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: 'Rentman Credits',
+                            description: 'Add funds to your Rentman wallet',
+                        },
+                        unit_amount: Math.round(amount * 100), // Amount in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url: `${returnUrl || 'https://rentman.app/wallet'}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${returnUrl || 'https://rentman.app/wallet'}?canceled=true`,
+            // Essential: Pass metadata to the underlying PaymentIntent so our webhook catches it
+            payment_intent_data: {
+                metadata: {
+                    service: 'rentman_credits',
+                    userId: userId
+                }
+            },
+            metadata: {
+                service: 'rentman_credits',
+                userId: userId
+            }
+        });
+
+        res.json({ url: session.url });
+    } catch (e) {
+        console.error('Stripe Checkout Error:', e.message);
+        res.status(500).send({ error: e.message });
     }
 });
 
