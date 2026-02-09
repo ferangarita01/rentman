@@ -50,6 +50,19 @@ app.get('/', (req, res) => {
     res.status(200).send('Rentman Backend is Active 🧠');
 });
 
+// Health Endpoint for Load Balancer
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        version: '2.0.0',
+        services: {
+            stripe: !!stripe,
+            supabase: !!supabase
+        }
+    });
+});
+
 // 1. Create Payment Intent (For Dashboard "Buy Credits" - Inline)
 app.post('/api/create-payment-intent', async (req, res) => {
     try {
@@ -683,7 +696,7 @@ app.post('/api/escrow/lock', async (req, res) => {
 
         // 2. Create Stripe PaymentIntent with manual capture
         const grossAmountCents = Math.round(task.budget_amount * 100);
-        
+
         const paymentIntent = await stripe.paymentIntents.create({
             amount: grossAmountCents,
             currency: task.budget_currency?.toLowerCase() || 'usd',
@@ -1053,7 +1066,7 @@ app.post('/api/proofs/review', async (req, res) => {
                 .eq('task_id', proof.task_id);
 
             const allApproved = allProofs.every(p => p.status === 'approved');
-            
+
             console.log(`📊 All proofs approved: ${allApproved}`);
         }
 
@@ -1104,7 +1117,7 @@ app.get('/api/escrow/status/:taskId', async (req, res) => {
 app.post('/api/cron/auto-approve', async (req, res) => {
     try {
         console.log('⏰ Cron triggered: auto-approve');
-        
+
         const { autoApproveExpiredProofs } = require('./cron-auto-approve');
         await autoApproveExpiredProofs(supabase);
 
