@@ -50,18 +50,57 @@ const Dashboard: React.FC = () => {
                 setCredits(Number(profile.credits) || 0);
             }
 
-            // 3. Fetch Agents (Real)
-            const { data: agentsData } = await supabase
-                .from('agents')
-                .select('id, name, type, status, total_tasks_posted')
-                .limit(10);
+            // 3. Fetch Agents (My Agents - who used credits)
+            // Strategy: Transactions -> Tasks -> Agents
+            const { data: myTx } = await supabase
+                .from('transactions')
+                .select('task_id')
+                .eq('user_id', session.user.id);
+
+            let myAgentIds: string[] = [];
+
+            if (myTx && myTx.length > 0) {
+                const taskIds = myTx.map(t => t.task_id).filter(id => id !== null);
+                if (taskIds.length > 0) {
+                    const { data: myTasks } = await supabase
+                        .from('tasks')
+                        .select('agent_id')
+                        .in('id', taskIds);
+
+                    if (myTasks) {
+                        myAgentIds = myTasks.map(t => t.agent_id).filter(id => id !== null);
+                    }
+                }
+            }
+
+            // Fetch Agents (Filter by IDs if we have some, otherwise fall back to all/none?)
+            // User asked: "show agents who have used credits".
+            // If no credits used, show empty or maybe recommendation?
+            // Let's fetch ALL for now but mark "Mine" or just show Mine?
+            // User request implies filtering.
+
+            let query = supabase.from('agents').select('id, name, type, status, total_tasks_posted');
+
+            if (myAgentIds.length > 0) {
+                query = query.in('id', [...new Set(myAgentIds)]);
+            } else {
+                // If no agents used, maybe show nothing or top agents?
+                // For now, let's limit to empty if no history? 
+                // Creating a fallback to ensure UI isn't broken for new users.
+                // But request was specific.
+                // Let's show TOP agents if no history, but if history exists, show mine.
+                query = query.limit(10);
+            }
+
+            const { data: agentsData } = await query;
 
             if (mounted && agentsData) {
                 const formattedAgents = agentsData.map(a => ({
                     id: a.id.substring(0, 8).toUpperCase(), // Short ID for UI
                     name: a.name,
                     status: (a.status || 'OFFLINE').toUpperCase(),
-                    tasks: a.total_tasks_posted || 0
+                    tasks: a.total_tasks_posted || 0,
+                    isMyAgent: myAgentIds.includes(a.id) // Flag for UI
                 }));
                 if (formattedAgents.length > 0) setAgents(formattedAgents);
             }
@@ -197,14 +236,20 @@ const Dashboard: React.FC = () => {
                         </div>
                     )}
                     {currentView === 'agents' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {agents.length === 0 ? (
-                                <div className="col-span-3 text-center text-slate-500 text-xs p-10">NO AGENTS ONLINE</div>
-                            ) : (
-                                agents.map(agent => (
-                                    <AgentCard key={agent.id} agent={agent} />
-                                ))
-                            )}
+                        <div className="h-full">
+                            <h2 className="text-white text-xs uppercase tracking-widest mb-6 sticky top-0 bg-[#050505] py-2 z-10">Active_Agents_Protocol</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {agents.length === 0 ? (
+                                    <div className="col-span-3 text-center opacity-40 p-10">
+                                        <span className="material-symbols-outlined text-4xl mb-4">smart_toy</span>
+                                        <p className="mono-text uppercase tracking-widest text-xs">No Agents Have Used Credits Yet</p>
+                                    </div>
+                                ) : (
+                                    agents.map(agent => (
+                                        <AgentCard key={agent.id} agent={agent} />
+                                    ))
+                                )}
+                            </div>
                         </div>
                     )}
                     {currentView === 'missions' && (
