@@ -1,38 +1,128 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WalletConnect from '@/components/WalletConnect';
-import { ArrowUpRight, ArrowDownLeft, History, Wallet, CreditCard, DollarSign, Building } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, DollarSign, Building, Plus, RefreshCw } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { Browser } from '@capacitor/browser';
 import toast from 'react-hot-toast';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface Deposit {
+    id: string;
+    user_id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    type: string;
+    description: string;
+    created_at: string;
+}
 
 export default function ProgressPage() {
+    const { user } = useAuth();
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    // Mock Data
-    const rentmanCredits = 1250.00; // $1250.00
-    const solBalance = 4.2; // ~ $600
+    // Real Data from Stripe Sync Engine
+    const [rentmanCredits, setRentmanCredits] = useState(0);
+    const [transactions, setTransactions] = useState<Deposit[]>([]);
+    const solBalance = 4.2; // Placeholder for crypto
 
-    const transactions = [
-        { id: 1, type: 'EARNED', amount: 50, task: 'Delivery #8291', date: '2 min ago', status: 'CONFIRMED' },
-        { id: 2, type: 'WITHDRAW', amount: -600, task: 'To Phantom', date: '1 day ago', status: 'COMPLETED' },
-        { id: 3, type: 'EARNED', amount: 150, task: 'Drone Surveillance', date: '2 days ago', status: 'CONFIRMED' },
-    ];
+    // Fetch deposits from Stripe Sync Engine
+    const fetchDeposits = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
 
+        try {
+            const { data: deposits, error } = await supabase.rpc('get_my_deposits');
+
+            if (error) {
+                console.error('Error fetching deposits:', error);
+                toast.error('Failed to load wallet data');
+            } else if (deposits && deposits.length > 0) {
+                const total = deposits.reduce((sum: number, d: Deposit) => sum + Number(d.amount), 0);
+                setRentmanCredits(total);
+                setTransactions(deposits);
+            } else {
+                setRentmanCredits(0);
+                setTransactions([]);
+            }
+        } catch (e) {
+            console.error('Wallet fetch error:', e);
+        }
+        setLoading(false);
+        setRefreshing(false);
+    };
+
+    useEffect(() => {
+        fetchDeposits();
+    }, [user]);
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        fetchDeposits();
+    };
+
+    // Add Funds via Stripe Checkout
+    const handleAddFunds = async () => {
+        if (!user) {
+            toast.error('Please log in first');
+            return;
+        }
+
+        const loadingToast = toast.loading('Opening Stripe Checkout...');
+        try {
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+
+            const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.id,
+                    amount: 100, // Default $100
+                    successUrl: 'https://rentman.space/wallet?success=true',
+                    cancelUrl: 'https://rentman.space/wallet?canceled=true'
+                })
+            });
+
+            if (!res.ok) throw new Error('Backend error');
+
+            const data = await res.json();
+            if (data.url) {
+                await Browser.open({ url: data.url });
+                toast.dismiss(loadingToast);
+                toast.success('Complete payment in browser');
+            } else {
+                throw new Error('No checkout URL returned');
+            }
+        } catch (e: any) {
+            toast.dismiss(loadingToast);
+            toast.error('Checkout failed: ' + e.message);
+        }
+    };
+
+    // Link Bank Account (Stripe Connect)
     const handleLinkBank = async () => {
+        if (!user) {
+            toast.error('Please log in first');
+            return;
+        }
+
         const loadingToast = toast.loading('Taking you to Stripe...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: 'agt_007',
-                    email: 'agent007@rentman.io',
-                    firstName: 'James', // Prefill for speed
-                    lastName: 'Bond'
+                    userId: user.id,
+                    email: user.email,
                 })
             });
 
@@ -51,6 +141,20 @@ export default function ProgressPage() {
         }
     };
 
+    // Format date helper
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#00ff88] border-t-transparent"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-black text-white pb-24 font-sans">
             {/* Header */}
@@ -58,10 +162,18 @@ export default function ProgressPage() {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-bold tracking-wider">FINANCE</h1>
-                        <p className="text-gray-400 text-xs font-mono mt-1">OPERATIVE ID: AGT-007</p>
+                        <p className="text-gray-400 text-xs font-mono mt-1">WALLET BALANCE</p>
                     </div>
-                    <div className="h-10 w-10 bg-[#00ff88]/10 rounded-full flex items-center justify-center border border-[#00ff88]/30">
-                        <DollarSign className="text-[#00ff88]" size={20} />
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleRefresh}
+                            className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center border border-white/10"
+                        >
+                            <RefreshCw className={`text-gray-400 ${refreshing ? 'animate-spin' : ''}`} size={18} />
+                        </button>
+                        <div className="h-10 w-10 bg-[#00ff88]/10 rounded-full flex items-center justify-center border border-[#00ff88]/30">
+                            <DollarSign className="text-[#00ff88]" size={20} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,10 +192,10 @@ export default function ProgressPage() {
 
                     <div className="mt-6 flex gap-3">
                         <button
-                            onClick={handleLinkBank}
-                            className="flex-1 bg-white text-black py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                            onClick={handleAddFunds}
+                            className="flex-1 bg-[#00ff88] text-black py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-[#00cc6d] transition-colors flex items-center justify-center gap-2"
                         >
-                            <Building size={16} /> LINK BANK
+                            <Plus size={16} /> ADD FUNDS
                         </button>
                         <button
                             onClick={() => {
@@ -120,30 +232,48 @@ export default function ProgressPage() {
                     )}
                 </div>
 
+                {/* Bank Link */}
+                <div>
+                    <h3 className="text-xs font-mono text-gray-500 mb-3 tracking-widest uppercase">Bank Account</h3>
+                    <button
+                        onClick={handleLinkBank}
+                        className="w-full bg-[#0a0a0a] border border-white/10 text-white py-4 rounded-xl font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <Building size={18} /> LINK BANK ACCOUNT (STRIPE)
+                    </button>
+                </div>
+
                 {/* Transaction History */}
                 <div>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xs font-mono text-gray-500 tracking-widest uppercase">Recent Activity</h3>
-                        <button className="text-xs text-[#00ff88] hover:text-[#00ff88]/80">View All</button>
+                        <h3 className="text-xs font-mono text-gray-500 tracking-widest uppercase">Recent Deposits</h3>
+                        <span className="text-xs text-[#00ff88]">{transactions.length} total</span>
                     </div>
 
                     <div className="space-y-3">
-                        {transactions.map(tx => (
-                            <div key={tx.id} className="bg-[#0a0a0a] border border-white/5 p-4 rounded-xl flex justify-between items-center hover:border-[#00ff88]/30 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${tx.type === 'EARNED' ? 'bg-[#00ff88]/10 text-[#00ff88]' : 'bg-red-500/10 text-red-500'}`}>
-                                        {tx.type === 'EARNED' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm text-white">{tx.task}</p>
-                                        <p className="text-xs text-gray-500">{tx.date} • {tx.status}</p>
-                                    </div>
-                                </div>
-                                <div className={`font-mono font-bold ${tx.type === 'EARNED' ? 'text-[#00ff88]' : 'text-white'}`}>
-                                    {tx.type === 'EARNED' ? '+' : ''}{tx.amount}
-                                </div>
+                        {transactions.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <p className="text-sm">No deposits yet</p>
+                                <p className="text-xs mt-1">Tap "Add Funds" to get started</p>
                             </div>
-                        ))}
+                        ) : (
+                            transactions.map(tx => (
+                                <div key={tx.id} className="bg-[#0a0a0a] border border-white/5 p-4 rounded-xl flex justify-between items-center hover:border-[#00ff88]/30 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full flex items-center justify-center bg-[#00ff88]/10 text-[#00ff88]">
+                                            <ArrowDownLeft size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm text-white">{tx.description}</p>
+                                            <p className="text-xs text-gray-500">{formatDate(tx.created_at)} • {tx.status}</p>
+                                        </div>
+                                    </div>
+                                    <div className="font-mono font-bold text-[#00ff88]">
+                                        +${Number(tx.amount).toFixed(2)}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
