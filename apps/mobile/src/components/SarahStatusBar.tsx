@@ -46,7 +46,7 @@ export default function SarahStatusBar() {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                            Sarah
+                            Rentman
                         </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${isReady
                             ? 'bg-green-500/20 text-green-400'
@@ -91,7 +91,7 @@ export default function SarahStatusBar() {
                             ? 'hover:bg-white/10 text-gray-400 hover:text-white'
                             : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}
                     `}
-                    aria-label="Cerrar Sarah"
+                    aria-label="Cerrar Rentman"
                 >
                     <XMarkIcon className="w-5 h-5" />
                 </button>

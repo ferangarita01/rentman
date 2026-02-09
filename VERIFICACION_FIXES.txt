@@ -1,0 +1,58 @@
+# VERIFICACIÓN DE FIXES - RESULTADOS
+
+## 1. RLS Policy Fixes ❓ PARCIAL
+
+### Estado:
+- ✅ Existe documentación en RLS_FIX_GUIDE.md (para habit_logs)
+- ❌ NO encontré evidencia de DROP/CREATE policies específicas para task_assignments
+- ❌ NO hay migración SQL documentada para task_assignments RLS
+- ⚠️  La documentación existente es para habit_logs, NO para task_assignments
+
+### Archivos relevantes:
+- apps/mobile/RLS_FIX_GUIDE.md (solo habit_logs)
+- apps/dashboard/supabase/migrations/20260206003223_rls_policies.sql (solo tasks)
+
+### Conclusión RLS:
+❌ Los fixes específicos de task_assignments mencionados NO están documentados/aplicados
+
+
+## 2. Navigation Logic Fix ✅ APLICADO
+
+### Verificado en: apps/mobile/src/components/BottomNav.tsx
+Línea 19:
+if (!user || pathname === '/auth' || pathname === '/landing.html' || pathname?.startsWith('/settings') || pathname?.startsWith('/contract/chat') || pathname?.startsWith('/assistant') || pathname?.startsWith('/sarah'))
+
+### Estado:
+✅ /assistant está en la lista de exclusión
+✅ /sarah está en la lista de exclusión
+✅ Rentman OS thread ya NO es bloqueado por BottomNav
+
+### Conclusión Navigation:
+✅ FIX APLICADO CORRECTAMENTE
+
+
+## 3. "Active Feed" Logic Fix ✅ APLICADO
+
+### Verificado en: apps/mobile/src/lib/supabase-client.ts
+
+Línea 174: assigned_human_id: userId
+Línea 205: .or(\gent_id.eq.\,assigned_human_id.eq.\\)
+
+### Estado:
+✅ acceptTask() ahora establece assigned_human_id al userId actual
+✅ getThreads() consulta por assigned_human_id
+✅ Los contratos aceptados aparecerán en "Active" tab
+
+### Conclusión Active Feed:
+✅ FIX APLICADO CORRECTAMENTE
+
+
+## RESUMEN FINAL
+
+| Fix | Estado | Evidencia |
+|-----|--------|-----------|
+| RLS Policies task_assignments | ❌ NO | Sin documentación ni código |
+| BottomNav exclusions | ✅ SÍ | Código en línea 19 |
+| Active Feed logic | ✅ SÍ | Código en líneas 174, 205 |
+
+**2 de 3 fixes aplicados (67%)**

@@ -8,17 +8,18 @@ import StripeCardForm from './StripeCardForm';
 import { connectWallet } from '../lib/solana';
 
 // Initialize Stripe with Public Key (Env Var)
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
+  userId: string; // Add userId prop
 }
 
-export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModalProps) {
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, userId }) => {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
-  const [amount, setAmount] = useState(100);
+  const [amount, setAmount] = useState<number>(10);
   const [loading, setLoading] = useState(false);
   const [walletAddr, setWalletAddr] = useState<string | null>(null);
 
@@ -70,8 +71,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
             <button
               onClick={() => setPaymentMethod('card')}
               className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${paymentMethod === 'card'
-                  ? 'bg-[#00ff88] text-black border-[#00ff88]'
-                  : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
+                ? 'bg-[#00ff88] text-black border-[#00ff88]'
+                : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
                 }`}
             >
               <CreditCard className="w-4 h-4 inline mr-2" />
@@ -80,8 +81,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
             <button
               onClick={() => setPaymentMethod('crypto')}
               className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${paymentMethod === 'crypto'
-                  ? 'bg-[#00ff88] text-black border-[#00ff88]'
-                  : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
+                ? 'bg-[#00ff88] text-black border-[#00ff88]'
+                : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
                 }`}
             >
               <Wallet className="w-4 h-4 inline mr-2" />
@@ -99,8 +100,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
                   type="button"
                   onClick={() => setAmount(val)}
                   className={`py-3 rounded-lg border transition-all font-mono text-sm ${amount === val
-                      ? 'bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]'
-                      : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
+                    ? 'bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]'
+                    : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-white/20'
                     }`}
                 >
                   ${val}
@@ -123,11 +124,9 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
             <Elements stripe={stripePromise}>
               <StripeCardForm
                 amount={amount}
-                onSuccess={() => {
-                  alert('Payment Successful! (Mocked)');
-                  onSuccess?.();
-                }}
-                onError={(msg) => alert('Error: ' + msg)}
+                userId={userId}
+                onSuccess={onSuccess}
+                onError={(msg) => alert(msg)}
               />
             </Elements>
           )}
@@ -165,3 +164,5 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
     </div>
   );
 }
+
+export default PaymentModal;

@@ -1,19 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wallet, CreditCard, ArrowUpRight, ArrowDownLeft, Plus, History } from 'lucide-react';
 import PaymentModal from '../components/PaymentModal';
+import { supabase } from '../lib/supabase';
+
+interface Transaction {
+    id: string;
+    type: 'earning' | 'withdrawal' | 'bonus' | 'penalty' | 'refund' | 'deposit';
+    amount: number;
+    description: string | null;
+    created_at: string;
+    status: string;
+}
 
 const WalletPage: React.FC = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-    // Mock Data
-    const credits = 1250.00;
-    const transactions = [
-        { id: 1, type: 'EARNED', amount: 50, description: 'Contract #8291 - Delivery', date: '2024-02-07', status: 'COMPLETED' },
-        { id: 2, type: 'WITHDRAW', amount: -600, description: 'Withdrawal to Phantom', date: '2024-02-06', status: 'COMPLETED' },
-        { id: 3, type: 'DEPOSIT', amount: 500, description: 'Card Deposit', date: '2024-02-05', status: 'COMPLETED' },
-        { id: 4, type: 'EARNED', amount: 150, description: 'Contract #8290 - Verification', date: '2024-02-04', status: 'COMPLETED' },
-    ];
+    // Real Data State
+    const [credits, setCredits] = useState<number>(0);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchData = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        setUserId(session.user.id);
+
+        // 1. Get Balance
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('credits')
+            .eq('id', session.user.id)
+            .single();
+
+        if (profile) setCredits(Number(profile.credits) || 0);
+
+        // 2. Get Transactions
+        const { data: txs } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+
+        if (txs) setTransactions(txs);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchData();
+
+        // Realtime Subscription
+        const channel = supabase
+            .channel('wallet_changes')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'transactions' },
+                () => {
+                    console.log('🔔 New transaction! Updating wallet...');
+                    fetchData(); // Refresh data on new transaction
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const connectPhantom = async () => {
         if (typeof window !== 'undefined' && (window as any).solana) {
@@ -35,6 +88,39 @@ const WalletPage: React.FC = () => {
         }
     };
 
+    // Helper to format date
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getTypeIcon = (type: string) => {
+        switch (type) {
+            case 'earning': return '💰';
+            case 'deposit': return <ArrowDownLeft size={18} />;
+            case 'withdrawal': return <ArrowUpRight size={18} />;
+            default: return '📄';
+        }
+    };
+
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'earning': return 'bg-[#00ff88]/10 text-[#00ff88]';
+            case 'deposit': return 'bg-blue-500/10 text-blue-500';
+            case 'withdrawal': return 'bg-red-500/10 text-red-500';
+            default: return 'bg-slate-500/10 text-slate-500';
+        }
+    };
+
+    if (loading) {
+        return <div className="min-h-screen bg-[#050505] text-white p-8 flex items-center justify-center font-mono">Loading Wallet...</div>;
+    }
+
     return (
         <div className="min-h-screen bg-[#050505] text-white p-8">
             <div className="max-w-6xl mx-auto">
@@ -48,7 +134,7 @@ const WalletPage: React.FC = () => {
                     {/* Balance Card */}
                     <div className="md:col-span-2 bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/10 rounded-2xl p-8 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00ff88]/5 rounded-full blur-3xl" />
-                        
+
                         <div className="relative z-10">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
@@ -84,7 +170,7 @@ const WalletPage: React.FC = () => {
                     {/* Crypto Connection Card */}
                     <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6">
                         <h3 className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4">Crypto Wallet</h3>
-                        
+
                         {!walletAddress ? (
                             <button
                                 onClick={connectPhantom}
@@ -131,49 +217,53 @@ const WalletPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                        {transactions.map((tx) => (
-                            <div
-                                key={tx.id}
-                                className="flex items-center justify-between p-4 bg-[#111] border border-white/5 rounded-lg hover:border-white/10 transition-colors"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                        tx.type === 'EARNED' ? 'bg-[#00ff88]/10 text-[#00ff88]' :
-                                        tx.type === 'DEPOSIT' ? 'bg-blue-500/10 text-blue-500' :
-                                        'bg-red-500/10 text-red-500'
-                                    }`}>
-                                        {tx.type === 'EARNED' && '💰'}
-                                        {tx.type === 'DEPOSIT' && <ArrowDownLeft size={18} />}
-                                        {tx.type === 'WITHDRAW' && <ArrowUpRight size={18} />}
-                                    </div>
-                                    <div>
-                                        <p className="text-white text-sm font-mono">{tx.description}</p>
-                                        <p className="text-slate-500 text-xs font-mono">{tx.date}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className={`text-lg font-bold font-mono ${
-                                        tx.amount > 0 ? 'text-[#00ff88]' : 'text-red-500'
-                                    }`}>
-                                        {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} USD
-                                    </p>
-                                    <p className="text-[10px] text-slate-600 font-mono uppercase">{tx.status}</p>
-                                </div>
+                        {transactions.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500 font-mono text-sm">
+                                No transactions found.
                             </div>
-                        ))}
+                        ) : (
+                            transactions.map((tx) => (
+                                <div
+                                    key={tx.id}
+                                    className="flex items-center justify-between p-4 bg-[#111] border border-white/5 rounded-lg hover:border-white/10 transition-colors"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTypeColor(tx.type)}`}>
+                                            {getTypeIcon(tx.type)}
+                                        </div>
+                                        <div>
+                                            <p className="text-white text-sm font-mono">{tx.description || tx.type.toUpperCase()}</p>
+                                            <p className="text-slate-500 text-xs font-mono">{formatDate(tx.created_at)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-lg font-bold font-mono ${(tx.type === 'deposit' || tx.type === 'earning' || tx.type === 'bonus') ? 'text-[#00ff88]' : 'text-red-500'
+                                            }`}>
+                                            {(tx.type === 'deposit' || tx.type === 'earning' || tx.type === 'bonus') ? '+' : ''}
+                                            {Number(tx.amount).toFixed(2)} USD
+                                        </p>
+                                        <p className="text-[10px] text-slate-600 font-mono uppercase">{tx.status}</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Payment Modal */}
-            <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                onSuccess={() => {
-                    setIsPaymentModalOpen(false);
-                    alert('Payment successful! Credits added to your account.');
-                }}
-            />
+            {userId && (
+                <PaymentModal
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => setIsPaymentModalOpen(false)}
+                    userId={userId}
+                    onSuccess={() => {
+                        setIsPaymentModalOpen(false);
+                        // fetchData() called automatically by realtime subscription
+                        alert('Payment successful! Credits adding shortly...');
+                    }}
+                />
+            )}
         </div>
     );
 };

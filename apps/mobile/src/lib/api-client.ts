@@ -5,7 +5,7 @@
 
 import { Capacitor } from '@capacitor/core';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-api-mqadwgncoa-uc.a.run.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
 
 /**
  * Resolves API URL - uses absolute URL for Capacitor native apps
@@ -24,18 +24,18 @@ function getApiUrl(path: string): string {
  */
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const url = getApiUrl(path);
-  
+
   const defaultOptions: RequestInit = {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers || {}),
     },
-    ...options,
   };
 
   try {
     const response = await fetch(url, defaultOptions);
-    
+
     // If fetch fails on native, log for debugging
     if (!response.ok && Capacitor.isNativePlatform()) {
       console.error('[API_ERROR]', {
@@ -44,7 +44,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
         statusText: response.statusText,
       });
     }
-    
+
     return response;
   } catch (error) {
     console.error('[FETCH_ERROR]', { url, error });

@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { NativeLog } from '@/lib/nativeLogger';
 
 // WebSocket server URL
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-api-mqadwgncoa-uc.a.run.app';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
 // Build WebSocket URL - use wss:// for https://, ws:// for http://
 const WS_URL = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
 
@@ -196,7 +196,7 @@ export function SarahProvider({ children }: { children: React.ReactNode }) {
         }
 
         log.info('🔵 [Sarah] Setting response: Conectando...');
-        setAgentResponse('🔄 Conectando con Sarah...');
+        setAgentResponse('🔄 Conectando con Rentman...');
 
         try {
             const url = `${WS_URL}?mode=${mode}`; // ✅ Append mode to URL

@@ -152,7 +152,7 @@ export default function SarahEmbeddedVoice() {
                     </div>
 
                     <div className="flex flex-col">
-                        <span className="text-white font-semibold text-lg">Sarah</span>
+                        <span className="text-white font-semibold text-lg">Rentman</span>
                         <span className="text-sm flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             <span className="text-green-400">

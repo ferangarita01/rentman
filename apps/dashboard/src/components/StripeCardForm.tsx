@@ -3,11 +3,12 @@ import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 interface StripeCardFormProps {
     amount: number;
+    userId: string; // Add userId prop
     onSuccess: () => void;
     onError: (msg: string) => void;
 }
 
-export default function StripeCardForm({ amount, onSuccess, onError }: StripeCardFormProps) {
+export default function StripeCardForm({ amount, userId, onSuccess, onError }: StripeCardFormProps) {
     const stripe = useStripe();
     const elements = useElements();
     const [processing, setProcessing] = useState(false);
@@ -23,17 +24,17 @@ export default function StripeCardForm({ amount, onSuccess, onError }: StripeCar
 
         // 1. Create a PaymentIntent on the backend
         try {
-            const BACKEND_URL = 'https://rentman-backend-346436028870.us-east1.run.app';
+            const BACKEND_URL = import.meta.env.VITE_AGENT_GATEWAY_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
 
             const { clientSecret } = await fetch(`${BACKEND_URL}/api/create-payment-intent`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount }),
+                body: JSON.stringify({ amount, userId }), // Pass userId
             }).then(r => r.json());
 
             const result = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: {
-                    card: elements.getElement(CardElement)!,
+                    card: elements.getElement(CardElement) as any,
                 },
             });
 

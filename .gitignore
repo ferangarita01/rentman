@@ -42,3 +42,6 @@ yarn-error.log*
 
 # Releases (moved to _releases/)
 _releases/
+
+.vercel
+.env*.local

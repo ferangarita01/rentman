@@ -56,7 +56,7 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
             const { data: { user } } = await supabase.auth.getUser();
             const userId = user?.id || 'unknown';
 
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-api-mqadwgncoa-uc.a.run.app';
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
             const response = await fetch(`${backendUrl}/api/auth/google/url?userId=${userId}`);
             const data = await response.json();
 
@@ -100,7 +100,7 @@ export default function CalendarConnect({ onConnectionChange }: CalendarConnectP
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-central1.run.app';
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
             await fetch(`${backendUrl}/api/auth/google/disconnect`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

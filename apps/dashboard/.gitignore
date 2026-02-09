@@ -48,3 +48,6 @@ _DELETED_*
 # Temporary Files
 *.tmp
 *.temp
+
+.vercel
+.env*.local

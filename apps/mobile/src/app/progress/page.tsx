@@ -23,9 +23,7 @@ export default function ProgressPage() {
     const handleLinkBank = async () => {
         const loadingToast = toast.loading('Taking you to Stripe...');
         try {
-            // TODO: Use real Env Var for Cloud Run URL
-            const BACKEND_URL = 'https://rentman-backend-346436028870.us-east1.run.app';
-            // Fallback to local if needed: 'http://10.0.2.2:8080'
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
                 method: 'POST',

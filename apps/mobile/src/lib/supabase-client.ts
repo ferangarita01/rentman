@@ -169,7 +169,11 @@ export async function acceptTask(taskId: string, userId: string) {
   if (!error) {
     await supabase
       .from('tasks')
-      .update({ status: 'assigned' })
+      .update({
+        status: 'assigned',
+        assigned_human_id: userId,
+        assigned_at: new Date().toISOString()
+      })
       .eq('id', taskId);
   }
 
@@ -222,12 +226,12 @@ export async function getThreads(userId: string) {
     // If messages table doesn't exist, still return threads with tasks
     if (messagesError) {
       console.error('Error fetching messages:', messagesError);
-      
+
       // Check if it's a "table doesn't exist" error
       const errorMessage = (messagesError as any).message || String(messagesError);
       if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
         console.warn('Messages table does not exist. Returning threads without messages.');
-        
+
         // Return threads with placeholder messages
         const threadsWithoutMessages: Thread[] = tasks.map(task => ({
           id: `contract-${task.id}`,
@@ -240,10 +244,10 @@ export async function getThreads(userId: string) {
           sender_type: 'system',
           task_status: task.status
         }));
-        
+
         return { data: threadsWithoutMessages, error: null };
       }
-      
+
       // For other errors, return the error
       return { data: null, error: messagesError };
     }
@@ -371,9 +375,9 @@ export async function getSettings(userId: string) {
     auto_accept_threshold: 100
   };
 
-  return { 
-    data: (data?.settings || defaultSettings) as UserSettings, 
-    error: null 
+  return {
+    data: (data?.settings || defaultSettings) as UserSettings,
+    error: null
   };
 }
 
@@ -434,7 +438,7 @@ export async function getAgentProfile(agentId: string) {
 
   // Get profile data
   const { data: profile, error: profileError } = await getProfile(agentId);
-  
+
   // If profile doesn't exist, create a minimal one
   if (profileError || !profile) {
     console.error('Profile not found, returning minimal data:', profileError);
