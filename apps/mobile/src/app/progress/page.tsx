@@ -73,7 +73,7 @@ export default function ProgressPage() {
     // Deep link listener for Stripe Connect redirect
     useEffect(() => {
         let listenerHandle: any;
-        
+
         const setupListener = async () => {
             const handleDeepLink = (event: URLOpenListenerEvent) => {
                 console.log('[STRIPE_REDIRECT] Deep link received:', event.url);
@@ -96,12 +96,12 @@ export default function ProgressPage() {
                     console.error('[STRIPE_REDIRECT] Error parsing URL:', err);
                 }
             };
-            
+
             listenerHandle = await App.addListener('appUrlOpen', handleDeepLink);
         };
-        
+
         setupListener();
-        
+
         return () => {
             if (listenerHandle) {
                 listenerHandle.remove();
@@ -123,7 +123,7 @@ export default function ProgressPage() {
 
         const loadingToast = toast.loading('Opening Stripe Checkout...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
                 method: 'POST',
@@ -161,7 +161,7 @@ export default function ProgressPage() {
 
         const loadingToast = toast.loading('Connecting to Stripe...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
                 method: 'POST',
@@ -206,7 +206,7 @@ export default function ProgressPage() {
 
         const loadingToast = toast.loading('Processing Payout...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/transfer`, {
                 method: 'POST',
