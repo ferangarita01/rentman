@@ -10,6 +10,7 @@ export interface Task {
   id: string;
   agent_id?: string;
   requester_id?: string;
+  assigned_human_id?: string;
   title: string;
   description: string;
   task_type: string;
@@ -24,6 +25,8 @@ export interface Task {
   priority: number;
   created_at: string;
   updated_at: string;
+  completed_at?: string;
+  disputed_at?: string;
 }
 
 export interface Profile {
@@ -576,7 +579,7 @@ export async function uploadProof(
 ) {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
-    
+
     const response = await fetch(`${BACKEND_URL}/api/proofs/upload`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -632,7 +635,7 @@ export async function reviewProof(
 ) {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
-    
+
     const response = await fetch(`${BACKEND_URL}/api/proofs/review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -662,10 +665,10 @@ export async function reviewProof(
 export async function getEscrowStatus(taskId: string) {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
-    
+
     const response = await fetch(`${BACKEND_URL}/api/escrow/status/${taskId}`);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Failed to get escrow status');
     }
@@ -683,7 +686,7 @@ export async function getEscrowStatus(taskId: string) {
 export async function releasePayment(taskId: string, approverId: string) {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
-    
+
     const response = await fetch(`${BACKEND_URL}/api/escrow/release`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -708,7 +711,7 @@ export async function releasePayment(taskId: string, approverId: string) {
 export async function initiateDispute(taskId: string, initiatorId: string, reason: string) {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
-    
+
     const response = await fetch(`${BACKEND_URL}/api/escrow/dispute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
