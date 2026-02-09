@@ -1,13 +1,13 @@
 'use client';
 
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Camera, FileText, MapPin, CheckCircle, DollarSign, AlertCircle } from 'lucide-react';
-import { 
-    getTaskById, 
-    getTaskProofs, 
-    uploadProof, 
-    reviewProof, 
+import { Camera, FileText, MapPin, CheckCircle, DollarSign, AlertCircle, ArrowLeft, Upload, Send, Paperclip, ChevronRight } from 'lucide-react';
+import {
+    getTaskById,
+    getTaskProofs,
+    uploadProof,
+    reviewProof,
     getEscrowStatus,
     releasePayment,
     Task,
@@ -29,6 +29,7 @@ function ContractChatContent() {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [showUploadMenu, setShowUploadMenu] = useState(false);
+    const [message, setMessage] = useState('');
 
     // Hide navigation bar
     useEffect(() => {
@@ -73,15 +74,12 @@ function ContractChatContent() {
 
     async function loadContractData() {
         setLoading(true);
-        
-        // Load task
+
         const { data: taskData } = await getTaskById(contractId);
         if (taskData) setTask(taskData);
 
-        // Load proofs
         await loadProofs();
 
-        // Load escrow status
         const { data: escrowData } = await getEscrowStatus(contractId);
         if (escrowData) setEscrowStatus(escrowData);
 
@@ -105,11 +103,9 @@ function ContractChatContent() {
             let locationData = null;
 
             if (type === 'photo') {
-                // In production, this would open camera/file picker
                 title = 'Photo Proof';
                 fileUrl = 'https://via.placeholder.com/400x300?text=Proof+Photo';
             } else if (type === 'location') {
-                // Get current location
                 if (navigator.geolocation) {
                     const position = await new Promise<GeolocationPosition>((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -189,12 +185,25 @@ function ContractChatContent() {
     const allProofsApproved = proofs.length > 0 && proofs.every(p => p.status === 'approved');
     const canReleasePayment = isRequester && allProofsApproved && escrowStatus?.status === 'held';
 
+    // Get status text
+    const getStatusText = () => {
+        if (task?.status === 'COMPLETED') return 'COMPLETED';
+        if (proofs.length === 0) return 'WAITING_FOR_PROOF';
+        if (proofs.some(p => p.status === 'pending')) return 'PENDING_REVIEW';
+        if (allProofsApproved) return 'APPROVED';
+        return 'IN_PROGRESS';
+    };
+
     if (loading) {
         return (
             <div className="h-screen bg-[#050505] flex items-center justify-center">
+                {/* Scanline Effect */}
+                <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                    <div className="w-full h-[100px] bg-gradient-to-b from-transparent via-[#00ff88]/5 to-transparent animate-scanline" />
+                </div>
                 <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-[#00ff88] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-white font-mono">LOADING CONTRACT...</p>
+                    <div className="w-16 h-16 border-2 border-[#00ff88]/30 border-t-[#00ff88] rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-[#00ff88] font-mono text-sm tracking-widest">LOADING_CONTRACT...</p>
                 </div>
             </div>
         );
@@ -205,12 +214,12 @@ function ContractChatContent() {
             <div className="h-screen bg-[#050505] flex items-center justify-center">
                 <div className="text-center">
                     <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <p className="text-white font-mono mb-4">CONTRACT NOT FOUND</p>
+                    <p className="text-white font-mono mb-4">CONTRACT_NOT_FOUND</p>
                     <button
                         onClick={() => router.push('/inbox')}
-                        className="px-6 py-2 bg-[#00ff88] text-black font-mono font-bold rounded-lg"
+                        className="px-6 py-2 bg-[#00ff88] text-black font-mono font-bold rounded"
                     >
-                        Back to Inbox
+                        RETURN
                     </button>
                 </div>
             </div>
@@ -218,126 +227,218 @@ function ContractChatContent() {
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] flex flex-col">
-            {/* Header */}
-            <div className="bg-[#1a1a1a] border-b border-[#333] p-4">
-                <div className="flex items-center justify-between mb-3">
-                    <button 
-                        onClick={() => router.push('/inbox')}
-                        className="text-gray-400 hover:text-white"
-                    >
-                        ← Back
-                    </button>
-                    <div className="text-center flex-1">
-                        <h1 className="text-white font-mono font-bold">{task.title}</h1>
-                        <p className="text-[10px] text-[#00ff88] font-mono uppercase tracking-wider">
-                            {task.status}
-                        </p>
-                    </div>
-                    <div className="w-16" /> {/* Spacer */}
-                </div>
+        <div className="min-h-screen bg-[#050505] flex flex-col max-w-md mx-auto relative overflow-hidden">
+            {/* Background Grid Lines */}
+            <div
+                className="fixed inset-0 pointer-events-none opacity-30"
+                style={{
+                    backgroundImage: 'linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px)',
+                    backgroundSize: '100% 3px'
+                }}
+            />
 
-                {/* Escrow Status */}
+            {/* Scanline Animation */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden z-10">
+                <div
+                    className="absolute w-full h-[100px] opacity-10"
+                    style={{
+                        background: 'linear-gradient(0deg, rgba(0, 255, 136, 0) 0%, rgba(0, 255, 136, 0.05) 50%, rgba(0, 255, 136, 0) 100%)',
+                        animation: 'scanline 6s linear infinite'
+                    }}
+                />
+            </div>
+
+            {/* Header */}
+            <header className="pt-12 pb-6 px-6 border-b border-white/10 backdrop-blur-xl bg-[#0f0f0f]/70 sticky top-0 z-20">
+                <div className="flex items-center justify-between mb-2">
+                    <button
+                        onClick={() => router.push('/inbox')}
+                        className="flex items-center text-[#00ff88]/80 hover:text-[#00ff88] transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="font-mono text-xs ml-1 tracking-wider">RETURN</span>
+                    </button>
+                    <div className="flex items-center space-x-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff88] opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00ff88]"></span>
+                        </span>
+                        <span className="font-mono text-[10px] tracking-widest text-[#00ff88]">{getStatusText()}</span>
+                    </div>
+                </div>
+                <h1 className="font-mono text-lg font-bold tracking-tight text-white">
+                    CONTRACT_LOG: <span className="text-[#00ff88]/90">#{contractId.slice(0, 4).toUpperCase()}</span>
+                </h1>
+                <p className="font-mono text-[10px] text-white/40 mt-1 uppercase tracking-wider">{task.title}</p>
+
+                {/* Escrow Status Bar */}
                 {escrowStatus && (
-                    <div className="bg-[#111] border border-[#333] rounded-lg p-3 grid grid-cols-3 gap-2 text-center">
-                        <div>
-                            <p className="text-[10px] text-gray-500 font-mono uppercase">Gross</p>
-                            <p className="text-white font-mono font-bold">${escrowStatus.grossAmount}</p>
+                    <div className="mt-4 grid grid-cols-3 gap-2 p-3 bg-black/40 border border-white/10 rounded">
+                        <div className="text-center">
+                            <p className="font-mono text-[9px] text-white/40 uppercase tracking-wider">GROSS</p>
+                            <p className="font-mono font-bold text-white">${escrowStatus.grossAmount || task.budget_amount}</p>
                         </div>
-                        <div>
-                            <p className="text-[10px] text-gray-500 font-mono uppercase">Net</p>
-                            <p className="text-[#00ff88] font-mono font-bold">${escrowStatus.netAmount}</p>
+                        <div className="text-center">
+                            <p className="font-mono text-[9px] text-white/40 uppercase tracking-wider">NET</p>
+                            <p className="font-mono font-bold text-[#00ff88]">${escrowStatus.netAmount || Math.floor(task.budget_amount * 0.9)}</p>
                         </div>
-                        <div>
-                            <p className="text-[10px] text-gray-500 font-mono uppercase">Status</p>
-                            <p className="text-white font-mono font-bold text-xs uppercase">{escrowStatus.status}</p>
+                        <div className="text-center">
+                            <p className="font-mono text-[9px] text-white/40 uppercase tracking-wider">ESCROW</p>
+                            <p className="font-mono font-bold text-white text-xs uppercase">{escrowStatus.status || 'PENDING'}</p>
                         </div>
                     </div>
                 )}
-            </div>
+            </header>
 
-            {/* Proofs List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto pb-[200px]">
                 {proofs.length === 0 ? (
-                    <div className="text-center py-12">
-                        <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                        <p className="text-gray-500 font-mono">No proofs submitted yet</p>
-                        {isHuman && (
-                            <p className="text-gray-600 text-sm mt-2">Upload proof to complete this contract</p>
-                        )}
+                    /* Empty State - Evidence Preview Window */
+                    <div className="flex-1 min-h-[300px] backdrop-blur-xl bg-[#0f0f0f]/70 border border-[#00ff88]/10 rounded-lg flex flex-col items-center justify-center relative">
+                        {/* Corner Decorations */}
+                        <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-[#00ff88]/40" />
+                        <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-[#00ff88]/40" />
+                        <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-[#00ff88]/40" />
+                        <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-[#00ff88]/40" />
+
+                        {/* Label */}
+                        <div className="absolute top-2 left-2 font-mono text-[9px] text-[#00ff88]/30 uppercase">EVIDENCE_PREVIEW_WINDOW</div>
+
+                        {/* Dots */}
+                        <div className="absolute top-2 right-2 flex space-x-1">
+                            <div className="w-1 h-1 bg-[#00ff88]/20" />
+                            <div className="w-1 h-1 bg-[#00ff88]/20" />
+                            <div className="w-1 h-1 bg-[#00ff88]/20" />
+                        </div>
+
+                        <div className="flex flex-col items-center text-center px-8">
+                            <div className="w-20 h-20 mb-6 flex items-center justify-center border-2 border-dashed border-[#00ff88]/20 rounded-full">
+                                <Upload className="w-10 h-10 text-[#00ff88]/30" />
+                            </div>
+                            <h2 className="font-mono text-sm font-bold text-white mb-2 uppercase tracking-wide">No proofs submitted yet</h2>
+                            <p className="text-xs text-white/40 leading-relaxed max-w-[200px]">
+                                Upload mission proof to verify contract completion and release escrow funds.
+                            </p>
+                        </div>
                     </div>
                 ) : (
-                    proofs.map(proof => (
-                        <ProofCard
-                            key={proof.id}
-                            proof={proof}
-                            isRequester={isRequester}
-                            onApprove={handleApproveProof}
-                            onReject={handleRejectProof}
-                        />
-                    ))
+                    /* Proof Cards */
+                    <div className="space-y-4">
+                        <div className="font-mono text-[9px] text-[#00ff88]/50 uppercase tracking-wider mb-2">
+                            EVIDENCE_LOG [{proofs.length} ENTRIES]
+                        </div>
+                        {proofs.map(proof => (
+                            <ProofCard
+                                key={proof.id}
+                                proof={proof}
+                                isRequester={isRequester}
+                                onApprove={handleApproveProof}
+                                onReject={handleRejectProof}
+                            />
+                        ))}
+                    </div>
                 )}
-            </div>
 
-            {/* Bottom Actions */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#1a1a1a] border-t border-[#333] p-4">
+                {/* Upload Buttons Grid */}
                 {isHuman && task.status !== 'COMPLETED' && (
-                    <div className="space-y-2">
-                        {showUploadMenu ? (
-                            <div className="grid grid-cols-3 gap-2 mb-2">
-                                <button
-                                    onClick={() => handleUploadProof('photo')}
-                                    disabled={uploading}
-                                    className="flex flex-col items-center gap-2 p-3 bg-[#111] border border-[#333] rounded-lg hover:border-[#00ff88] hover:bg-[#00ff88]/10 transition-colors disabled:opacity-50"
-                                >
-                                    <Camera className="w-6 h-6 text-[#00ff88]" />
-                                    <span className="text-[10px] font-mono text-gray-400">Photo</span>
-                                </button>
-                                <button
-                                    onClick={() => handleUploadProof('location')}
-                                    disabled={uploading}
-                                    className="flex flex-col items-center gap-2 p-3 bg-[#111] border border-[#333] rounded-lg hover:border-[#00ff88] hover:bg-[#00ff88]/10 transition-colors disabled:opacity-50"
-                                >
-                                    <MapPin className="w-6 h-6 text-[#00ff88]" />
-                                    <span className="text-[10px] font-mono text-gray-400">Location</span>
-                                </button>
-                                <button
-                                    onClick={() => handleUploadProof('text')}
-                                    disabled={uploading}
-                                    className="flex flex-col items-center gap-2 p-3 bg-[#111] border border-[#333] rounded-lg hover:border-[#00ff88] hover:bg-[#00ff88]/10 transition-colors disabled:opacity-50"
-                                >
-                                    <FileText className="w-6 h-6 text-[#00ff88]" />
-                                    <span className="text-[10px] font-mono text-gray-400">Note</span>
-                                </button>
-                            </div>
-                        ) : null}
+                    <div className="grid grid-cols-3 gap-3">
                         <button
-                            onClick={() => setShowUploadMenu(!showUploadMenu)}
+                            onClick={() => handleUploadProof('photo')}
                             disabled={uploading}
-                            className="w-full py-3 bg-[#00ff88] text-black font-mono font-bold rounded-lg hover:bg-[#00cc6d] transition-colors disabled:opacity-50"
+                            className="flex flex-col items-center justify-center p-4 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
                         >
-                            {uploading ? 'UPLOADING...' : showUploadMenu ? 'CLOSE MENU' : '📤 UPLOAD PROOF'}
+                            <Camera className="w-6 h-6 text-[#00ff88] mb-2 group-hover:scale-110 transition-transform" />
+                            <span className="font-mono text-[9px] text-white/60 tracking-wider uppercase">Capture_Img</span>
+                        </button>
+                        <button
+                            onClick={() => handleUploadProof('location')}
+                            disabled={uploading}
+                            className="flex flex-col items-center justify-center p-4 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
+                        >
+                            <MapPin className="w-6 h-6 text-[#00ff88] mb-2 group-hover:scale-110 transition-transform" />
+                            <span className="font-mono text-[9px] text-white/60 tracking-wider uppercase">Geo_Locate</span>
+                        </button>
+                        <button
+                            onClick={() => handleUploadProof('text')}
+                            disabled={uploading}
+                            className="flex flex-col items-center justify-center p-4 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
+                        >
+                            <FileText className="w-6 h-6 text-[#00ff88] mb-2 group-hover:scale-110 transition-transform" />
+                            <span className="font-mono text-[9px] text-white/60 tracking-wider uppercase">Attach_Log</span>
                         </button>
                     </div>
                 )}
+            </main>
 
-                {canReleasePayment && (
+            {/* Footer */}
+            <footer className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 pt-4 space-y-4 backdrop-blur-xl bg-[#050505]/90 border-t border-white/10 z-30">
+                {/* Message Input */}
+                <div className="flex items-center space-x-3">
+                    <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                        <Paperclip className="w-5 h-5 text-white/60" />
+                    </button>
+                    <div className="flex-1 relative">
+                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <span className="font-mono text-[#00ff88] text-xs">&gt;</span>
+                        </div>
+                        <input
+                            type="text"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="TYPE_MESSAGE..."
+                            className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-7 pr-4 text-xs font-mono text-[#00ff88] focus:ring-1 focus:ring-[#00ff88]/40 focus:border-[#00ff88]/40 placeholder:text-white/20 outline-none"
+                        />
+                    </div>
+                    <button className="p-2 bg-white/5 rounded-full hover:bg-[#00ff88]/20 transition-colors">
+                        <Send className="w-5 h-5 text-[#00ff88]" />
+                    </button>
+                </div>
+
+                {/* Main Action Button */}
+                {canReleasePayment ? (
                     <button
                         onClick={handleReleasePayment}
-                        className="w-full py-3 bg-[#00ff88] text-black font-mono font-bold rounded-lg hover:bg-[#00cc6d] transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-[#00ff88] hover:bg-[#00e67a] active:scale-[0.98] transition-all py-4 px-6 rounded flex items-center justify-center space-x-2 group"
+                        style={{ boxShadow: '0 0 15px rgba(0, 255, 136, 0.4)' }}
                     >
-                        <DollarSign className="w-5 h-5" />
-                        RELEASE PAYMENT (${escrowStatus.netAmount})
+                        <DollarSign className="w-5 h-5 text-black" />
+                        <span className="font-mono font-bold text-black tracking-[0.15em] text-sm uppercase">
+                            Release_Payment (${escrowStatus?.netAmount || task.budget_amount})
+                        </span>
+                        <ChevronRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
                     </button>
-                )}
-
-                {task.status === 'COMPLETED' && (
-                    <div className="flex items-center justify-center gap-2 py-3 bg-[#00ff88]/10 border border-[#00ff88]/30 rounded-lg">
+                ) : isHuman && task.status !== 'COMPLETED' ? (
+                    <button
+                        onClick={() => { }}
+                        disabled={proofs.length === 0 || proofs.some(p => p.status !== 'approved')}
+                        className="w-full bg-[#00ff88] hover:bg-[#00e67a] active:scale-[0.98] transition-all py-4 px-6 rounded flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ boxShadow: '0 0 15px rgba(0, 255, 136, 0.4)' }}
+                    >
+                        <span className="font-mono font-bold text-black tracking-[0.15em] text-sm uppercase">
+                            Submit_Completion
+                        </span>
+                        <ChevronRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
+                    </button>
+                ) : task.status === 'COMPLETED' ? (
+                    <div className="w-full bg-[#00ff88]/10 border border-[#00ff88]/30 py-4 px-6 rounded flex items-center justify-center space-x-2">
                         <CheckCircle className="w-5 h-5 text-[#00ff88]" />
-                        <span className="text-[#00ff88] font-mono font-bold">CONTRACT COMPLETED</span>
+                        <span className="font-mono font-bold text-[#00ff88] tracking-[0.15em] text-sm uppercase">
+                            Contract_Completed
+                        </span>
                     </div>
-                )}
-            </div>
+                ) : null}
+
+                {/* Bottom Indicator */}
+                <div className="w-20 h-1 bg-white/10 mx-auto rounded-full" />
+            </footer>
+
+            {/* CSS for Scanline Animation */}
+            <style jsx>{`
+                @keyframes scanline {
+                    0% { top: -100px; }
+                    100% { top: 100%; }
+                }
+            `}</style>
         </div>
     );
 }
@@ -345,10 +446,10 @@ function ContractChatContent() {
 export default function ContractChatPage() {
     return (
         <Suspense fallback={
-            <div className="h-screen bg-black text-white flex items-center justify-center">
+            <div className="h-screen bg-[#050505] text-white flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-[#00ff88] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="font-mono">Loading...</p>
+                    <div className="w-12 h-12 border-2 border-[#00ff88]/30 border-t-[#00ff88] rounded-full animate-spin mx-auto mb-4" />
+                    <p className="font-mono text-[#00ff88] text-sm tracking-widest">INITIALIZING...</p>
                 </div>
             </div>
         }>
@@ -356,4 +457,3 @@ export default function ContractChatPage() {
         </Suspense>
     );
 }
-
