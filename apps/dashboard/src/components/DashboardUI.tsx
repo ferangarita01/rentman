@@ -4,10 +4,10 @@ import React from 'react';
 export const NavItem: React.FC<{ icon: string, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-4 px-4 py-3 text-xs uppercase tracking-widest transition-all ${active ? 'bg-[#00ff88]/10 text-[#00ff88] border-r-2 border-[#00ff88]' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+        className={`w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest transition-all ${active ? 'bg-[#00ff88]/10 text-[#00ff88] border-r-2 border-[#00ff88]' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
     >
-        <span className="material-symbols-outlined text-lg">{icon}</span>
-        {label}
+        <span className="material-symbols-outlined text-lg min-w-[24px] text-center">{icon}</span>
+        <span className="truncate text-left">{label}</span>
     </button>
 );
 

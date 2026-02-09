@@ -81,8 +81,32 @@ const Dashboard: React.FC = () => {
 
         loadDashboardData();
 
+        // Realtime Subscription
+        const channel = supabase
+            .channel('dashboard-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'tasks'
+                },
+                (payload: any) => {
+                    const newRecord = payload.new;
+                    if (payload.eventType === 'INSERT') {
+                        setMissions((prev) => [newRecord, ...prev]);
+                    } else if (payload.eventType === 'UPDATE') {
+                        setMissions((prev) => prev.map((task) =>
+                            task.id === newRecord.id ? { ...task, ...newRecord } : task
+                        ));
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             mounted = false;
+            supabase.removeChannel(channel);
         };
     }, [navigate]);
 
