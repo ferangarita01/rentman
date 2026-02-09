@@ -141,9 +141,22 @@ const WalletPage: React.FC<WalletPageProps> = ({ embedded = false }) => {
         <div className={embedded ? "w-full text-white" : "min-h-screen bg-[#050505] text-white p-8"}>
             <div className={embedded ? "" : "max-w-6xl mx-auto"}>
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold font-mono tracking-wider">WALLET</h1>
-                    <p className="text-slate-500 text-sm font-mono mt-1 uppercase tracking-widest">Manage Your Funds</p>
+                <div className="mb-8 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold font-mono tracking-wider">WALLET</h1>
+                        <p className="text-slate-500 text-sm font-mono mt-1 uppercase tracking-widest">Manage Your Funds</p>
+                    </div>
+                    {!embedded && (
+                        <a
+                            href="/dashboard"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-white text-sm font-mono hover:bg-white/5 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            Dashboard
+                        </a>
+                    )}
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
