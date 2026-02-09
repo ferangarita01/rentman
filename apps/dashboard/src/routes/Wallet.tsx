@@ -12,7 +12,11 @@ interface Transaction {
     status: string;
 }
 
-const WalletPage: React.FC = () => {
+interface WalletPageProps {
+    embedded?: boolean;
+}
+
+const WalletPage: React.FC<WalletPageProps> = ({ embedded = false }) => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -122,8 +126,8 @@ const WalletPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className={embedded ? "w-full text-white" : "min-h-screen bg-[#050505] text-white p-8"}>
+            <div className={embedded ? "" : "max-w-6xl mx-auto"}>
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold font-mono tracking-wider">WALLET</h1>

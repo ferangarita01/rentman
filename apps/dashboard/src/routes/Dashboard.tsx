@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LogoSVG from '../components/LogoSVG';
 import { NavItem, StatCard, AgentCard } from '../components/DashboardUI';
 import { supabase } from '../lib/supabase';
+import WalletPage from './Wallet';
 
 type View = 'overview' | 'wallet' | 'agents' | 'missions';
 
@@ -115,6 +116,9 @@ const Dashboard: React.FC = () => {
         navigate('/');
     };
 
+    // Calculate Completed Missions
+    const completedMissions = missions.filter(m => m.status === 'completed').length;
+
     return (
         <div className="min-h-screen bg-[#050505] text-slate-300 mono-text flex overflow-hidden">
             <nav className="w-64 border-r border-[#00ff88]/10 bg-[#080808] flex flex-col p-6 z-20">
@@ -157,7 +161,7 @@ const Dashboard: React.FC = () => {
                         <div className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <StatCard label="Live_Missions" value={missions.length.toString()} delta="ACTIVE" />
-                                <StatCard label="Avg_Latency" value="120ms" delta="REALTIME" />
+                                <StatCard label="Completed_Missions" value={completedMissions.toString()} delta="TOTAL" />
                                 <StatCard label="Active_Agents" value={agents.length.toString()} delta="ONLINE" />
                             </div>
 
@@ -188,16 +192,8 @@ const Dashboard: React.FC = () => {
                         </div>
                     )}
                     {currentView === 'wallet' && (
-                        <div className="space-y-8">
-                            <div className="bg-[#0a0a0a] border border-[#00ff88]/30 p-10 rounded-2xl flex flex-col md:flex-row justify-between items-center">
-                                <div>
-                                    <h2 className="text-slate-500 text-xs uppercase tracking-widest mb-2">Available_Balance</h2>
-                                    <div className="text-6xl font-extrabold text-[#00ff88] tracking-tighter">${credits.toLocaleString()}</div>
-                                </div>
-                                <div className="flex gap-4">
-                                    <button className="bg-[#00ff88] text-black px-6 py-3 font-bold text-sm uppercase opacity-50 cursor-not-allowed">Top Up (Soon)</button>
-                                </div>
-                            </div>
+                        <div className="h-full">
+                            <WalletPage embedded={true} />
                         </div>
                     )}
                     {currentView === 'agents' && (
