@@ -31,23 +31,35 @@ const WalletPage: React.FC<WalletPageProps> = ({ embedded = false }) => {
         if (!session) return;
         setUserId(session.user.id);
 
-        // 1. Get Balance
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('credits')
-            .eq('id', session.user.id)
-            .single();
+        // 1. Get Deposits from Stripe Sync Engine (via secure function)
+        const { data: deposits, error } = await supabase.rpc('get_my_deposits');
 
-        if (profile) setCredits(Number(profile.credits) || 0);
+        if (error) {
+            console.error('Error fetching deposits:', error);
+            setLoading(false);
+            return;
+        }
 
-        // 2. Get Transactions
-        const { data: txs } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .order('created_at', { ascending: false });
+        // 2. Calculate total balance from deposits (Stripe Sync Engine is source of truth)
+        if (deposits && deposits.length > 0) {
+            const totalCredits = deposits.reduce((sum: number, d: any) => sum + Number(d.amount), 0);
+            setCredits(totalCredits);
 
-        if (txs) setTransactions(txs);
+            // Map Stripe deposits to Transaction format
+            const mappedTxs: Transaction[] = deposits.map((d: any) => ({
+                id: d.id,
+                type: 'deposit' as const,
+                amount: Number(d.amount),
+                description: d.description,
+                created_at: d.created_at,
+                status: d.status
+            }));
+            setTransactions(mappedTxs);
+        } else {
+            setCredits(0);
+            setTransactions([]);
+        }
+
         setLoading(false);
     };
 
