@@ -651,6 +651,558 @@ Responde SOLO con las 3 sugerencias en formato de lista, una por línea, sin nú
     }
 });
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ESCROW & PAYMENTS API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// POST /api/escrow/lock - Block funds when human accepts task
+app.post('/api/escrow/lock', async (req, res) => {
+    try {
+        const { taskId, humanId } = req.body;
+
+        if (!taskId || !humanId) {
+            return res.status(400).json({ error: 'taskId and humanId required' });
+        }
+
+        console.log(`🔒 Locking funds for task ${taskId}, human ${humanId}`);
+
+        // 1. Get task details
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (taskError || !task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        if (task.status !== 'OPEN') {
+            return res.status(400).json({ error: 'Task is not available' });
+        }
+
+        // 2. Create Stripe PaymentIntent with manual capture
+        const grossAmountCents = Math.round(task.budget_amount * 100);
+        
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: grossAmountCents,
+            currency: task.budget_currency?.toLowerCase() || 'usd',
+            capture_method: 'manual',
+            metadata: {
+                service: 'rentman_escrow',
+                taskId: taskId,
+                humanId: humanId,
+                requesterId: task.requester_id
+            }
+        });
+
+        // 3. Insert escrow transaction
+        const { data: escrow, error: escrowError } = await supabase
+            .from('escrow_transactions')
+            .insert({
+                task_id: taskId,
+                requester_id: task.requester_id,
+                human_id: humanId,
+                gross_amount: grossAmountCents,
+                status: 'held',
+                stripe_payment_intent_id: paymentIntent.id
+            })
+            .select()
+            .single();
+
+        if (escrowError) {
+            console.error('❌ Escrow creation error:', escrowError);
+            return res.status(500).json({ error: 'Failed to create escrow' });
+        }
+
+        // 4. Update task
+        await supabase
+            .from('tasks')
+            .update({
+                assigned_human_id: humanId,
+                status: 'ASSIGNED',
+                payment_status: 'escrowed',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+
+        console.log('✅ Funds locked successfully:', escrow.id);
+
+        res.json({
+            success: true,
+            escrowId: escrow.id,
+            message: 'Funds locked',
+            clientSecret: paymentIntent.client_secret
+        });
+
+    } catch (error) {
+        console.error('❌ Escrow lock error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/escrow/release - Release funds to human after approval
+app.post('/api/escrow/release', async (req, res) => {
+    try {
+        const { taskId, approverId } = req.body;
+
+        if (!taskId || !approverId) {
+            return res.status(400).json({ error: 'taskId and approverId required' });
+        }
+
+        console.log(`💰 Releasing funds for task ${taskId}`);
+
+        // 1. Get task and verify approver is requester
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (taskError || !task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        if (task.requester_id !== approverId) {
+            return res.status(403).json({ error: 'Only requester can approve' });
+        }
+
+        // 2. Verify all proofs are approved
+        const { data: proofs } = await supabase
+            .from('task_proofs')
+            .select('*')
+            .eq('task_id', taskId);
+
+        if (!proofs || proofs.length === 0) {
+            return res.status(400).json({ error: 'No proofs submitted' });
+        }
+
+        const pendingProofs = proofs.filter(p => p.status === 'pending');
+        if (pendingProofs.length > 0) {
+            return res.status(400).json({ error: 'Some proofs still pending review' });
+        }
+
+        const rejectedProofs = proofs.filter(p => p.status === 'rejected');
+        if (rejectedProofs.length > 0) {
+            return res.status(400).json({ error: 'Cannot release with rejected proofs' });
+        }
+
+        // 3. Get escrow transaction
+        const { data: escrow, error: escrowError } = await supabase
+            .from('escrow_transactions')
+            .select('*')
+            .eq('task_id', taskId)
+            .single();
+
+        if (escrowError || !escrow) {
+            return res.status(404).json({ error: 'Escrow not found' });
+        }
+
+        if (escrow.status !== 'held') {
+            return res.status(400).json({ error: `Escrow already ${escrow.status}` });
+        }
+
+        // 4. Get human's Stripe Connect account
+        const { data: humanProfile } = await supabase
+            .from('profiles')
+            .select('stripe_connect_account_id, stripe_connect_status')
+            .eq('id', escrow.human_id)
+            .single();
+
+        if (!humanProfile?.stripe_connect_account_id || humanProfile.stripe_connect_status !== 'connected') {
+            return res.status(400).json({ error: 'Human must connect Stripe account first' });
+        }
+
+        // 5. Capture payment
+        await stripe.paymentIntents.capture(escrow.stripe_payment_intent_id);
+
+        // 6. Transfer to human (net amount after fees)
+        const transfer = await stripe.transfers.create({
+            amount: escrow.net_amount,
+            currency: task.budget_currency?.toLowerCase() || 'usd',
+            destination: humanProfile.stripe_connect_account_id,
+            metadata: {
+                taskId: taskId,
+                escrowId: escrow.id
+            }
+        });
+
+        // 7. Update escrow status
+        await supabase
+            .from('escrow_transactions')
+            .update({
+                status: 'released',
+                stripe_transfer_id: transfer.id,
+                released_at: new Date().toISOString()
+            })
+            .eq('id', escrow.id);
+
+        // 8. Update task
+        await supabase
+            .from('tasks')
+            .update({
+                status: 'COMPLETED',
+                payment_status: 'released',
+                completed_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+
+        console.log('✅ Payment released:', transfer.id);
+
+        res.json({
+            success: true,
+            message: 'Payment released to human',
+            transferId: transfer.id,
+            amount: escrow.net_amount / 100
+        });
+
+    } catch (error) {
+        console.error('❌ Escrow release error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/escrow/dispute - Initiate dispute
+app.post('/api/escrow/dispute', async (req, res) => {
+    try {
+        const { taskId, initiatorId, reason } = req.body;
+
+        if (!taskId || !initiatorId || !reason) {
+            return res.status(400).json({ error: 'taskId, initiatorId, and reason required' });
+        }
+
+        console.log(`⚠️ Dispute initiated for task ${taskId}`);
+
+        // 1. Get task
+        const { data: task } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // Verify initiator is involved in task
+        if (task.requester_id !== initiatorId && task.assigned_human_id !== initiatorId) {
+            return res.status(403).json({ error: 'Only task participants can dispute' });
+        }
+
+        // 2. Update escrow
+        const { data: escrow } = await supabase
+            .from('escrow_transactions')
+            .update({
+                status: 'disputed',
+                dispute_reason: reason,
+                disputed_at: new Date().toISOString()
+            })
+            .eq('task_id', taskId)
+            .select()
+            .single();
+
+        // 3. Update task
+        await supabase
+            .from('tasks')
+            .update({
+                payment_status: 'disputed',
+                disputed_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+
+        // 4. Generate AI dispute summary
+        const disputeSummary = await generateDisputeSummary(taskId, task, reason);
+
+        console.log('📝 Dispute created with AI summary');
+
+        res.json({
+            success: true,
+            message: 'Dispute initiated',
+            escrowId: escrow.id,
+            aiSummary: disputeSummary
+        });
+
+    } catch (error) {
+        console.error('❌ Dispute error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/proofs/upload - Human uploads proof of work
+app.post('/api/proofs/upload', async (req, res) => {
+    try {
+        const { taskId, humanId, proofType, title, description, fileUrl, locationData } = req.body;
+
+        if (!taskId || !humanId || !proofType || !title) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        console.log(`📸 Proof upload for task ${taskId}`);
+
+        // 1. Verify task assignment
+        const { data: task } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        if (task.assigned_human_id !== humanId) {
+            return res.status(403).json({ error: 'Not assigned to this task' });
+        }
+
+        // 2. AI validation for photo/video proofs
+        let aiValidation = null;
+        if ((proofType === 'photo' || proofType === 'video') && fileUrl) {
+            aiValidation = await validateProofWithAI(fileUrl, task);
+        }
+
+        // 3. Insert proof
+        const { data: proof, error: proofError } = await supabase
+            .from('task_proofs')
+            .insert({
+                task_id: taskId,
+                human_id: humanId,
+                proof_type: proofType,
+                title: title,
+                description: description,
+                file_url: fileUrl,
+                location_data: locationData,
+                ai_validation: aiValidation,
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+        if (proofError) {
+            console.error('❌ Proof insert error:', proofError);
+            return res.status(500).json({ error: 'Failed to save proof' });
+        }
+
+        // 4. Notify requester (could use Supabase Realtime or push notification)
+        console.log('📬 Notifying requester of new proof');
+
+        res.json({
+            success: true,
+            proofId: proof.id,
+            aiValidation: aiValidation,
+            message: 'Proof uploaded successfully'
+        });
+
+    } catch (error) {
+        console.error('❌ Proof upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/proofs/review - Requester approves/rejects proof
+app.post('/api/proofs/review', async (req, res) => {
+    try {
+        const { proofId, action, reviewerId, rejectionReason } = req.body;
+
+        if (!proofId || !action || !reviewerId) {
+            return res.status(400).json({ error: 'proofId, action, and reviewerId required' });
+        }
+
+        if (!['approve', 'reject'].includes(action)) {
+            return res.status(400).json({ error: 'action must be approve or reject' });
+        }
+
+        console.log(`✅ Reviewing proof ${proofId}: ${action}`);
+
+        // 1. Get proof and task
+        const { data: proof } = await supabase
+            .from('task_proofs')
+            .select('*, tasks(*)')
+            .eq('id', proofId)
+            .single();
+
+        if (!proof) {
+            return res.status(404).json({ error: 'Proof not found' });
+        }
+
+        // 2. Verify reviewer is requester
+        if (proof.tasks.requester_id !== reviewerId) {
+            return res.status(403).json({ error: 'Only requester can review' });
+        }
+
+        // 3. Update proof
+        const updateData = {
+            status: action === 'approve' ? 'approved' : 'rejected',
+            reviewed_by: reviewerId,
+            reviewed_at: new Date().toISOString()
+        };
+
+        if (action === 'reject' && rejectionReason) {
+            updateData.rejection_reason = rejectionReason;
+        }
+
+        await supabase
+            .from('task_proofs')
+            .update(updateData)
+            .eq('id', proofId);
+
+        // 4. If all proofs approved, can trigger auto-release
+        if (action === 'approve') {
+            const { data: allProofs } = await supabase
+                .from('task_proofs')
+                .select('status')
+                .eq('task_id', proof.task_id);
+
+            const allApproved = allProofs.every(p => p.status === 'approved');
+            
+            console.log(`📊 All proofs approved: ${allApproved}`);
+        }
+
+        res.json({
+            success: true,
+            message: `Proof ${action}d`,
+            proofId: proofId
+        });
+
+    } catch (error) {
+        console.error('❌ Proof review error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/escrow/status/:taskId - Get escrow status for a task
+app.get('/api/escrow/status/:taskId', async (req, res) => {
+    try {
+        const { taskId } = req.params;
+
+        const { data: escrow, error } = await supabase
+            .from('escrow_transactions')
+            .select('*')
+            .eq('task_id', taskId)
+            .single();
+
+        if (error || !escrow) {
+            return res.status(404).json({ error: 'Escrow not found' });
+        }
+
+        res.json({
+            status: escrow.status,
+            grossAmount: escrow.gross_amount / 100,
+            netAmount: escrow.net_amount / 100,
+            platformFee: escrow.platform_fee_amount / 100,
+            disputeFee: escrow.dispute_fee_amount / 100,
+            heldAt: escrow.held_at,
+            releasedAt: escrow.released_at
+        });
+
+    } catch (error) {
+        console.error('❌ Escrow status error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/cron/auto-approve - Cron endpoint for auto-approving proofs
+app.post('/api/cron/auto-approve', async (req, res) => {
+    try {
+        console.log('⏰ Cron triggered: auto-approve');
+        
+        const { autoApproveExpiredProofs } = require('./cron-auto-approve');
+        await autoApproveExpiredProofs(supabase);
+
+        res.json({ success: true, message: 'Auto-approve completed' });
+    } catch (error) {
+        console.error('❌ Cron error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Helper Functions for Escrow
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function validateProofWithAI(fileUrl, taskContext) {
+    try {
+        const prompt = `Analiza esta prueba de trabajo y valídala contra los requisitos de la tarea.
+
+Tarea: ${taskContext.title}
+Descripción: ${taskContext.description}
+Tipo: ${taskContext.task_type}
+
+Responde SOLO con JSON válido:
+{
+    "valid": true,
+    "confidence": 85,
+    "issues": [],
+    "summary": "Proof matches task requirements"
+}
+
+Reglas:
+- valid: true si la prueba demuestra trabajo completado
+- confidence: 0-100
+- issues: array de problemas detectados
+- summary: resumen breve`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.candidates[0].content.parts[0].text;
+
+        let validation;
+        try {
+            validation = JSON.parse(text);
+        } catch (e) {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                validation = JSON.parse(jsonMatch[0]);
+            } else {
+                validation = { valid: true, confidence: 50, issues: [], summary: 'Manual review required' };
+            }
+        }
+
+        return validation;
+    } catch (error) {
+        console.error('❌ AI validation error:', error);
+        return { valid: true, confidence: 0, issues: ['AI validation failed'], summary: 'Manual review required' };
+    }
+}
+
+async function generateDisputeSummary(taskId, task, disputeReason) {
+    try {
+        // Get all proofs and messages related to task
+        const { data: proofs } = await supabase
+            .from('task_proofs')
+            .select('*')
+            .eq('task_id', taskId);
+
+        const prompt = `Genera un resumen objetivo de esta disputa para el equipo de soporte.
+
+Tarea: ${task.title}
+Budget: $${task.budget_amount}
+Razón de disputa: ${disputeReason}
+
+Pruebas enviadas: ${proofs?.length || 0}
+${proofs?.map(p => `- ${p.proof_type}: ${p.status}`).join('\n')}
+
+Genera un resumen ejecutivo en JSON:
+{
+    "severity": "high|medium|low",
+    "recommended_action": "release|refund|mediation",
+    "key_points": ["punto1", "punto2"],
+    "evidence_quality": "strong|moderate|weak"
+}`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.candidates[0].content.parts[0].text;
+
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            return jsonMatch ? JSON.parse(jsonMatch[0]) : { severity: 'medium', recommended_action: 'mediation' };
+        }
+    } catch (error) {
+        console.error('❌ Dispute summary error:', error);
+        return { severity: 'medium', recommended_action: 'mediation', error: error.message };
+    }
+}
+
 // Start server after loading secrets
 initializeServer().then(() => {
     app.listen(PORT, () => {

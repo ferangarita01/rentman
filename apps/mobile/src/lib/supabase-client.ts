@@ -516,3 +516,214 @@ export function calculateTrustScore(missions: any[]): number {
   // Final score capped at 100
   return Math.min(100, Math.round(ratingScore + completionBonus));
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ESCROW & PROOFS SYSTEM
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface TaskProof {
+  id: string;
+  task_id: string;
+  human_id: string;
+  proof_type: 'photo' | 'video' | 'document' | 'location' | 'text';
+  title: string;
+  description?: string;
+  file_url?: string;
+  location_data?: any;
+  status: 'pending' | 'approved' | 'rejected' | 'disputed';
+  reviewed_by?: string;
+  reviewed_at?: string;
+  rejection_reason?: string;
+  ai_validation?: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EscrowTransaction {
+  id: string;
+  task_id: string;
+  requester_id: string;
+  human_id?: string;
+  gross_amount: number;
+  platform_fee_percent: number;
+  platform_fee_amount: number;
+  dispute_fee_percent: number;
+  dispute_fee_amount: number;
+  net_amount: number;
+  status: 'held' | 'processing' | 'released' | 'refunded' | 'disputed' | 'dispute_resolved';
+  stripe_payment_intent_id?: string;
+  stripe_transfer_id?: string;
+  held_at: string;
+  released_at?: string;
+  disputed_at?: string;
+  resolved_at?: string;
+  dispute_reason?: string;
+  dispute_resolution?: string;
+  dispute_winner?: 'human' | 'requester' | null;
+}
+
+/**
+ * Upload proof of work for a task
+ */
+export async function uploadProof(
+  taskId: string,
+  humanId: string,
+  proofType: 'photo' | 'video' | 'document' | 'location' | 'text',
+  title: string,
+  description?: string,
+  fileUrl?: string,
+  locationData?: any
+) {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    
+    const response = await fetch(`${BACKEND_URL}/api/proofs/upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        taskId,
+        humanId,
+        proofType,
+        title,
+        description,
+        fileUrl,
+        locationData
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to upload proof');
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Error uploading proof:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get proofs for a task
+ */
+export async function getTaskProofs(taskId: string) {
+  const { data, error } = await supabase
+    .from('task_proofs')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching proofs:', error);
+    return { data: null, error };
+  }
+
+  return { data: data as TaskProof[], error: null };
+}
+
+/**
+ * Review a proof (approve/reject)
+ */
+export async function reviewProof(
+  proofId: string,
+  reviewerId: string,
+  action: 'approve' | 'reject',
+  rejectionReason?: string
+) {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    
+    const response = await fetch(`${BACKEND_URL}/api/proofs/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        proofId,
+        reviewerId,
+        action,
+        rejectionReason
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to review proof');
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Error reviewing proof:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get escrow status for a task
+ */
+export async function getEscrowStatus(taskId: string) {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    
+    const response = await fetch(`${BACKEND_URL}/api/escrow/status/${taskId}`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get escrow status');
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Error getting escrow status:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Release payment after approval
+ */
+export async function releasePayment(taskId: string, approverId: string) {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    
+    const response = await fetch(`${BACKEND_URL}/api/escrow/release`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, approverId })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to release payment');
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Error releasing payment:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Initiate dispute
+ */
+export async function initiateDispute(taskId: string, initiatorId: string, reason: string) {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    
+    const response = await fetch(`${BACKEND_URL}/api/escrow/dispute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, initiatorId, reason })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to initiate dispute');
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Error initiating dispute:', error);
+    return { data: null, error };
+  }
+}
+
