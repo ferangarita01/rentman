@@ -146,6 +146,13 @@ const WalletPage: React.FC<WalletPageProps> = ({ embedded = false }) => {
                                     <div className="mt-2 flex items-baseline gap-2">
                                         <span className="text-5xl font-bold text-white tracking-tight">${credits.toFixed(2)}</span>
                                         <span className="text-[#00ff88] text-lg font-mono">USD</span>
+                                        <button
+                                            onClick={fetchData}
+                                            className="ml-4 p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                                            title="Refresh Balance"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="h-12 w-12 bg-[#00ff88]/10 rounded-full flex items-center justify-center border border-[#00ff88]/30">
