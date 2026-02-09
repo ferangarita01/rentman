@@ -5,9 +5,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Strict environment variable requirement
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Strict environment variable requirement (with trim to handle accidental CRLF)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 // Validation: Warn instead of crash to allow Landing page to load
 if (!supabaseUrl || !supabaseAnonKey) {
