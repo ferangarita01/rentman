@@ -175,7 +175,12 @@ app.post('/api/webhooks/stripe', bodyParser.raw({ type: 'application/json' }), a
     // We need a specific secret for the Stripe CLI or Production Webhook
     // For now, we'll try to use the one from secrets, or generic env
     // In production, this MUST be the webhook secret, not the API key
-    const STRIPE_WEBHOOK_SECRET = await getSecret('STRIPE_WEBHOOK_SECRET').catch(() => process.env.STRIPE_WEBHOOK_SECRET);
+    let STRIPE_WEBHOOK_SECRET = await getSecret('STRIPE_WEBHOOK_SECRET').catch(() => process.env.STRIPE_WEBHOOK_SECRET);
+
+    // Fallback: Check for 'WEBHOOK_SECRET' (Cloud Run common name)
+    if (!STRIPE_WEBHOOK_SECRET) {
+        STRIPE_WEBHOOK_SECRET = await getSecret('WEBHOOK_SECRET').catch(() => process.env.WEBHOOK_SECRET);
+    }
 
     if (!STRIPE_WEBHOOK_SECRET) {
         console.error('❌ Missing STRIPE_WEBHOOK_SECRET');
