@@ -2,13 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, CreditCard, Wallet } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import StripeCardForm from './StripeCardForm';
 import { connectWallet } from '../lib/solana';
-
-// Initialize Stripe with Public Key (Env Var)
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface PaymentModalProps {
   isOpen: boolean;
