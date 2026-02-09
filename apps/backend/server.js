@@ -117,8 +117,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 },
             ],
             mode: 'payment',
-            success_url: `${returnUrl || 'https://rentman.app/wallet'}?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${returnUrl || 'https://rentman.app/wallet'}?canceled=true`,
+            success_url: `${returnUrl || 'https://rentman.space/wallet'}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${returnUrl || 'https://rentman.space/wallet'}?canceled=true`,
             // Essential: Pass metadata to the underlying PaymentIntent so our webhook catches it
             payment_intent_data: {
                 metadata: {
@@ -171,8 +171,8 @@ app.post('/api/stripe/onboard', async (req, res) => {
         // B. Create Account Link (for the UI)
         const accountLink = await stripe.accountLinks.create({
             account: account.id,
-            refresh_url: 'https://rentman.app/wallet?refresh=true', // TODO: Update with real URL
-            return_url: 'https://rentman.app/wallet?success=true',
+            refresh_url: 'https://rentman.space/progress?refresh=true',
+            return_url: 'https://rentman.space/progress?success=true',
             type: 'account_onboarding',
         });
 

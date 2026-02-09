@@ -41,6 +41,7 @@ export interface Profile {
   xp: number;
   status: string;
   uptime: number;
+  stripe_account_id?: string;
   settings?: UserSettings;
 }
 

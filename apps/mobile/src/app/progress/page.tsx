@@ -6,7 +6,7 @@ import { ArrowUpRight, ArrowDownLeft, DollarSign, Building, Plus, RefreshCw } fr
 import BottomNav from '@/components/BottomNav';
 import { Browser } from '@capacitor/browser';
 import toast from 'react-hot-toast';
-import { supabase } from '@/lib/supabase-client';
+import { supabase, getProfile, Profile } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Deposit {
@@ -25,20 +25,26 @@ export default function ProgressPage() {
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [profile, setProfile] = useState<Profile | null>(null);
 
     // Real Data from Stripe Sync Engine
     const [rentmanCredits, setRentmanCredits] = useState(0);
     const [transactions, setTransactions] = useState<Deposit[]>([]);
     const solBalance = 4.2; // Placeholder for crypto
 
-    // Fetch deposits from Stripe Sync Engine
-    const fetchDeposits = async () => {
+    // Fetch deposits & profile
+    const fetchData = async () => {
         if (!user) {
             setLoading(false);
             return;
         }
 
         try {
+            // 1. Get Profile (Check for Stripe Account)
+            const { data: profileData } = await getProfile(user.id);
+            if (profileData) setProfile(profileData);
+
+            // 2. Get Deposits
             const { data: deposits, error } = await supabase.rpc('get_my_deposits');
 
             if (error) {
@@ -60,12 +66,12 @@ export default function ProgressPage() {
     };
 
     useEffect(() => {
-        fetchDeposits();
+        fetchData();
     }, [user]);
 
     const handleRefresh = () => {
         setRefreshing(true);
-        fetchDeposits();
+        fetchData();
     };
 
     // Add Funds via Stripe Checkout
@@ -77,7 +83,7 @@ export default function ProgressPage() {
 
         const loadingToast = toast.loading('Opening Stripe Checkout...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
                 method: 'POST',
@@ -85,8 +91,8 @@ export default function ProgressPage() {
                 body: JSON.stringify({
                     userId: user.id,
                     amount: 100, // Default $100
-                    successUrl: 'https://rentman.space/wallet?success=true',
-                    cancelUrl: 'https://rentman.space/wallet?canceled=true'
+                    successUrl: 'https://rentman.space/progress?success=true',
+                    cancelUrl: 'https://rentman.space/progress?canceled=true'
                 })
             });
 
@@ -113,9 +119,9 @@ export default function ProgressPage() {
             return;
         }
 
-        const loadingToast = toast.loading('Taking you to Stripe...');
+        const loadingToast = toast.loading('Connecting to Stripe...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
                 method: 'POST',
@@ -128,7 +134,15 @@ export default function ProgressPage() {
 
             if (!res.ok) throw new Error('Backend error');
 
-            const data = await res.json();
+            const data = await res.json(); // { url, accountId }
+
+            if (data.accountId) {
+                // Persist Stripe Account ID
+                await supabase.from('profiles').update({ stripe_account_id: data.accountId }).eq('id', user.id);
+                // Update local state
+                if (profile) setProfile({ ...profile, stripe_account_id: data.accountId });
+            }
+
             if (data.url) {
                 await Browser.open({ url: data.url });
                 toast.dismiss(loadingToast);
@@ -138,6 +152,43 @@ export default function ProgressPage() {
         } catch (e: any) {
             toast.dismiss(loadingToast);
             toast.error('Connect failed: ' + e.message);
+        }
+    };
+
+    // Withdraw to Bank
+    const handleWithdrawStripe = async () => {
+        if (!user || !profile?.stripe_account_id) return;
+
+        if (rentmanCredits < 10) {
+            toast.error('Minimum withdrawal is $10 USD');
+            return;
+        }
+
+        const loadingToast = toast.loading('Processing Payout...');
+        try {
+            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
+
+            const res = await fetch(`${BACKEND_URL}/api/stripe/transfer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: rentmanCredits, // Withdraw full balance
+                    destinationAccountId: profile.stripe_account_id
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Transfer failed');
+            }
+
+            toast.dismiss(loadingToast);
+            toast.success(`Successfully withdrew $${rentmanCredits.toFixed(2)}!`);
+            handleRefresh(); // Update balance
+
+        } catch (e: any) {
+            toast.dismiss(loadingToast);
+            toast.error('Withdraw failed: ' + e.message);
         }
     };
 
@@ -187,6 +238,7 @@ export default function ProgressPage() {
                     <span className="text-gray-400 text-sm font-mono tracking-widest">TOTAL BALANCE</span>
                     <div className="mt-2 flex items-baseline gap-1">
                         <span className="text-4xl font-bold text-white tracking-tight">${rentmanCredits.toFixed(2)}</span>
+                        <span className="text-4xl font-bold text-white tracking-tight">{rentmanCredits === 0 ? '0.00' : ''}</span>
                         <span className="text-[#00ff88] text-sm">USD</span>
                     </div>
 
@@ -197,23 +249,30 @@ export default function ProgressPage() {
                         >
                             <Plus size={16} /> ADD FUNDS
                         </button>
-                        <button
-                            onClick={() => {
-                                if (!walletAddress) {
-                                    alert('Please connect your Phantom wallet first!');
-                                    return;
-                                }
-                                if (rentmanCredits < 10) {
-                                    alert('Minimum withdrawal is $10 USD');
-                                    return;
-                                }
-                                alert(`Withdraw to Crypto\n\nConverting ${rentmanCredits.toFixed(2)} USD to SOL\nDestination: ${walletAddress.substring(0, 8)}...${walletAddress.substring(walletAddress.length - 4)}\n\nFeature coming soon!`);
-                            }}
-                            className="flex-1 bg-[#0a0a0a] border border-white/20 text-white py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={!walletAddress}
-                        >
-                            <ArrowUpRight size={16} /> WITHDRAW
-                        </button>
+
+                        {/* Dynamic Withdraw Button */}
+                        {profile?.stripe_account_id ? (
+                            <button
+                                onClick={handleWithdrawStripe}
+                                className="flex-1 bg-[#0a0a0a] border border-white/20 text-white py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Building size={16} /> WITHDRAW
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (!walletAddress) {
+                                        toast.error('Connect Wallet first');
+                                        return;
+                                    }
+                                    alert(`Withdraw to Crypto feature is coming soon.`);
+                                }}
+                                className="flex-1 bg-[#0a0a0a] border border-white/20 text-white py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                disabled={!walletAddress}
+                            >
+                                <ArrowUpRight size={16} /> WITHDRAW (CRYPTO)
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -232,15 +291,22 @@ export default function ProgressPage() {
                     )}
                 </div>
 
-                {/* Bank Link */}
+                {/* Bank Link Status */}
                 <div>
                     <h3 className="text-xs font-mono text-gray-500 mb-3 tracking-widest uppercase">Bank Account</h3>
-                    <button
-                        onClick={handleLinkBank}
-                        className="w-full bg-[#0a0a0a] border border-white/10 text-white py-4 rounded-xl font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Building size={18} /> LINK BANK ACCOUNT (STRIPE)
-                    </button>
+
+                    {profile?.stripe_account_id ? (
+                        <div className="w-full bg-[#00ff88]/10 border border-[#00ff88]/30 text-[#00ff88] py-4 rounded-xl flex items-center justify-center gap-2">
+                            <Building size={18} /> BANK LINKED
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleLinkBank}
+                            className="w-full bg-[#0a0a0a] border border-white/10 text-white py-4 rounded-xl font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Building size={18} /> LINK BANK ACCOUNT (STRIPE)
+                        </button>
+                    )}
                 </div>
 
                 {/* Transaction History */}
