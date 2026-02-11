@@ -1,0 +1,122 @@
+const { createClient } = require('@supabase/supabase-js');
+
+const SUPABASE_URL = 'https://uoekolqgbbmvhzsfkjef.supabase.co';
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZWtvbGZnYmJtdmh6c2ZramVmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDMyNDM3NSwiZXhwIjoyMDg1OTAwMzc1fQ.RWcX3r44l1mmJOxOJHyaOR_Tih1mJ6ZEw1z2fkY1mIQ';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+async function updateTasks() {
+  console.log('🔍 Connecting to Supabase...\n');
+  
+  // Get authenticated user from anon key first
+  const anonSupabase = createClient(
+    SUPABASE_URL,
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZWtvbGZnYmJtdmh6c2ZramVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjQzNzUsImV4cCI6MjA4NTkwMDM3NX0.DYxAxi4TTBLgdVruu8uGM3Jog7JZaplWqikAvI0EXvk'
+  );
+  
+  const { data: { user }, error: userError } = await anonSupabase.auth.getUser();
+  
+  if (userError || !user) {
+    console.log('❌ No user logged in. Please log in to the app first.');
+    console.log('Error:', userError?.message);
+    return;
+  }
+  
+  console.log('✅ Found user:');
+  console.log('   ID:', user.id);
+  console.log('   Email:', user.email);
+  console.log('');
+  
+  // Check tasks without agent_id
+  console.log('🔍 Checking tasks without agent_id...\n');
+  
+  const { data: tasksToUpdate, error: checkError } = await supabase
+    .from('tasks')
+    .select('id, title, status, agent_id, assigned_human_id, created_at')
+    .is('agent_id', null)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+  
+  if (checkError) {
+    console.error('❌ Error checking tasks:', checkError);
+    return;
+  }
+  
+  console.log(`📋 Found ${tasksToUpdate?.length || 0} tasks without agent_id:\n`);
+  
+  if (tasksToUpdate && tasksToUpdate.length > 0) {
+    tasksToUpdate.forEach((task, i) => {
+      console.log(`${i + 1}. ${task.title}`);
+      console.log(`   ID: ${task.id.substring(0, 8)}...`);
+      console.log(`   Status: ${task.status}`);
+      console.log(`   Created: ${new Date(task.created_at).toLocaleString()}`);
+      console.log('');
+    });
+    
+    // Ask for confirmation
+    console.log(`\n⚠️  About to update ${tasksToUpdate.length} tasks with agent_id = ${user.id}\n`);
+    
+    // Update tasks using service role for admin access
+    const { data: updated, error: updateError } = await supabase
+      .from('tasks')
+      .update({ agent_id: user.id })
+      .is('agent_id', null)
+      .eq('status', 'open')
+      .select('id, title, status');
+    
+    if (updateError) {
+      console.error('❌ Update error:', updateError);
+    } else {
+      console.log(`✅ Successfully updated ${updated?.length || 0} tasks!\n`);
+      if (updated && updated.length > 0) {
+        updated.forEach((t, i) => {
+          console.log(`   ${i + 1}. ${t.title} (${t.status})`);
+        });
+      }
+      console.log('\n🎉 These tasks will now appear in Inbox > Managing tab!');
+    }
+  } else {
+    console.log('ℹ️  No tasks to update. All open tasks already have agent_id assigned.');
+  }
+  
+  // Show final stats
+  console.log('\n📊 Final stats for user:', user.email, '\n');
+  
+  const { data: allUserTasks } = await supabase
+    .from('tasks')
+    .select('id, title, status, agent_id, assigned_human_id')
+    .or(`agent_id.eq.${user.id},assigned_human_id.eq.${user.id}`)
+    .order('created_at', { ascending: false });
+  
+  if (allUserTasks) {
+    const asAgent = allUserTasks.filter(t => t.agent_id === user.id);
+    const asWorker = allUserTasks.filter(t => t.assigned_human_id === user.id);
+    
+    console.log(`Total tasks: ${allUserTasks.length}`);
+    console.log(`  - As agent (managing): ${asAgent.length} tasks`);
+    console.log(`  - As worker (doing): ${asWorker.length} tasks`);
+    console.log('');
+    
+    if (asAgent.length > 0) {
+      console.log('📝 Tasks you manage:');
+      asAgent.forEach((t, i) => {
+        console.log(`   ${i + 1}. ${t.title} (${t.status})`);
+      });
+      console.log('');
+    }
+    
+    if (asWorker.length > 0) {
+      console.log('🔨 Tasks you\'re doing:');
+      asWorker.forEach((t, i) => {
+        console.log(`   ${i + 1}. ${t.title} (${t.status})`);
+      });
+    }
+  }
+  
+  console.log('\n✅ Done! Refresh the app to see changes.');
+}
+
+updateTasks().then(() => process.exit(0)).catch(err => {
+  console.error('❌ Fatal error:', err);
+  process.exit(1);
+});

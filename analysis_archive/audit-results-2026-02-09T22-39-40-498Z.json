@@ -1,0 +1,88 @@
+{
+  "rlsPolicies": null,
+  "rlsStatus": null,
+  "publicGrants": null,
+  "vaultAccess": {
+    "accessible": false,
+    "secure": "unknown",
+    "error": "Could not find the table 'public.vault.secrets' in the schema cache"
+  },
+  "tablesInfo": [
+    {
+      "table": "tasks",
+      "accessible": true,
+      "rowCount": 2,
+      "rls": "enabled"
+    },
+    {
+      "table": "profiles",
+      "accessible": true,
+      "rowCount": 1,
+      "rls": "enabled"
+    },
+    {
+      "table": "agents",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    },
+    {
+      "table": "messages",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    },
+    {
+      "table": "escrow_transactions",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    },
+    {
+      "table": "transactions",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    },
+    {
+      "table": "task_proofs",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    },
+    {
+      "table": "reviews",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    },
+    {
+      "table": "agent_api_keys",
+      "accessible": true,
+      "rowCount": 0,
+      "rls": "enabled"
+    }
+  ],
+  "errors": [
+    {
+      "opcion": "A",
+      "error": "No se pueden consultar pg_tables directamente",
+      "details": {
+        "code": "PGRST205",
+        "details": null,
+        "hint": "Perhaps you meant the table 'public.profiles'",
+        "message": "Could not find the table 'public.pg_tables' in the schema cache"
+      }
+    },
+    {
+      "opcion": "B",
+      "error": "RPC no disponible para grants",
+      "details": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.exec_sql with parameter query or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.exec_sql(query) in the schema cache"
+      }
+    }
+  ]
+}

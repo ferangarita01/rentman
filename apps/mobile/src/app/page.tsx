@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthPage from './auth/page';
-import { getTasks, Task } from '@/lib/supabase-client';
+import { getTasks, getUserTasks, Task } from '@/lib/supabase-client';
 import HolographicProjection from '@/components/HolographicProjection';
 
 export default function HomePage() {
@@ -26,14 +26,17 @@ export default function HomePage() {
   async function loadTasks() {
     console.log('📊 Loading tasks from Supabase for tab:', activeTab);
     setLoadingTasks(true);
-    // 'active' tab shows 'open' tasks, 'complete' tab shows 'completed' tasks
-    const status = activeTab === 'active' ? 'open' : 'completed';
-    const { data, error } = await getTasks(status);
+    
+    // Map tab name to status filter: 'active' tab -> 'active', 'complete' tab -> 'completed'
+    const statusFilter = activeTab === 'active' ? 'active' : 'completed';
+    
+    // Use getUserTasks to fetch tasks assigned to the current user
+    const { data, error } = await getUserTasks(user!.id, statusFilter);
 
     if (error) {
       console.error('❌ Error loading tasks:', error);
     } else {
-      console.log('✅ Loaded tasks:', data?.length || 0);
+      console.log('✅ Loaded user tasks:', data?.length || 0);
       setTasks(data || []);
     }
     setLoadingTasks(false);
@@ -124,7 +127,20 @@ export default function HomePage() {
         ) : tasks.length === 0 ? (
           <div className="text-center py-12">
             <span className="material-symbols-outlined text-6xl text-gray-700">work_off</span>
-            <p className="text-gray-400 mt-4" style={{ fontFamily: FONTS.mono }}>No tasks available</p>
+            <p className="text-gray-400 mt-4" style={{ fontFamily: FONTS.mono }}>
+              {activeTab === 'active' ? 'NO ACTIVE TASKS' : 'NO COMPLETED TASKS'}
+            </p>
+            
+            {/* Add button to redirect to Market */}
+            {activeTab === 'active' && (
+              <button
+                onClick={() => router.push('/market')}
+                className="mt-6 px-6 py-3 rounded bg-[#00ff88] text-black font-bold uppercase tracking-wider hover:bg-[#00cc6d] transition-colors"
+                style={{ fontFamily: FONTS.mono }}
+              >
+                FIND TASKS
+              </button>
+            )}
           </div>
         ) : (
           tasks.map((task) => (

@@ -19,6 +19,8 @@ interface Deposit {
     type: string;
     description: string;
     created_at: string;
+    processed_at?: string; // Added to match transactions table
+    metadata?: any;
 }
 
 export default function ProgressPage() {
@@ -33,6 +35,11 @@ export default function ProgressPage() {
     const [transactions, setTransactions] = useState<Deposit[]>([]);
     const solBalance = 4.2; // Placeholder for crypto
 
+    // Withdraw Modal State
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [withdrawAmount, setWithdrawAmount] = useState('');
+    const [withdrawing, setWithdrawing] = useState(false);
+
     // Fetch deposits & profile
     const fetchData = async () => {
         if (!user) {
@@ -45,16 +52,20 @@ export default function ProgressPage() {
             const { data: profileData } = await getProfile(user.id);
             if (profileData) setProfile(profileData);
 
-            // 2. Get Deposits
-            const { data: deposits, error } = await supabase.rpc('get_my_deposits');
+            // 2. Get All Transactions from the Stripe Sync VIEW
+            const { data: allTransactions, error } = await supabase
+                .from('wallet_transactions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching deposits:', error);
+                console.error('Error fetching transactions:', error);
                 toast.error('Failed to load wallet data');
-            } else if (deposits && deposits.length > 0) {
-                const total = deposits.reduce((sum: number, d: Deposit) => sum + Number(d.amount), 0);
-                setRentmanCredits(total);
-                setTransactions(deposits);
+            } else if (allTransactions && allTransactions.length > 0) {
+                const total = allTransactions.reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+                setRentmanCredits(Math.max(0, total));
+                setTransactions(allTransactions);
             } else {
                 setRentmanCredits(0);
                 setTransactions([]);
@@ -195,15 +206,32 @@ export default function ProgressPage() {
         }
     };
 
-    // Withdraw to Bank
-    const handleWithdrawStripe = async () => {
+    // Open Withdraw Modal
+    const openWithdrawModal = () => {
         if (!user || !profile?.stripe_account_id) return;
-
         if (rentmanCredits < 10) {
             toast.error('Minimum withdrawal is $10 USD');
             return;
         }
+        setWithdrawAmount('');
+        setShowWithdrawModal(true);
+    };
 
+    // Withdraw to Bank with selected amount
+    const handleWithdrawStripe = async () => {
+        if (!user || !profile?.stripe_account_id) return;
+
+        const amount = parseFloat(withdrawAmount);
+        if (isNaN(amount) || amount < 10) {
+            toast.error('Minimum withdrawal is $10 USD');
+            return;
+        }
+        if (amount > rentmanCredits) {
+            toast.error('Insufficient balance');
+            return;
+        }
+
+        setWithdrawing(true);
         const loadingToast = toast.loading('Processing Payout...');
         try {
             const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
@@ -212,7 +240,7 @@ export default function ProgressPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: rentmanCredits, // Withdraw full balance
+                    amount: amount,
                     destinationAccountId: profile.stripe_account_id
                 })
             });
@@ -222,13 +250,38 @@ export default function ProgressPage() {
                 throw new Error(errData.error || 'Transfer failed');
             }
 
+            const result = await res.json();
+
+            // Save withdrawal transaction to Supabase (negative amount)
+            const { error: insertError } = await supabase.from('transactions').insert({
+                user_id: user.id,
+                amount: -amount, // Negative for withdrawal
+                currency: 'USD',
+                status: 'processing', // Will be updated by webhook eventually
+                type: 'withdrawal',
+                description: `Bank Withdrawal (Transfer: ${result.transferId?.slice(-8) || 'pending'})`,
+                processed_at: new Date().toISOString(),
+                metadata: {
+                    stripe_transfer_id: result.transferId,
+                    destination: profile.stripe_account_id
+                }
+            });
+
+            if (insertError) {
+                console.error('Failed to record withdrawal:', insertError);
+            }
+
             toast.dismiss(loadingToast);
-            toast.success(`Successfully withdrew $${rentmanCredits.toFixed(2)}!`);
-            handleRefresh(); // Update balance
+            toast.success(`Withdrawal of $${amount.toFixed(2)} initiated!`);
+            setShowWithdrawModal(false);
+            setWithdrawAmount('');
+            fetchData(); // Update balance
 
         } catch (e: any) {
             toast.dismiss(loadingToast);
             toast.error('Withdraw failed: ' + e.message);
+        } finally {
+            setWithdrawing(false);
         }
     };
 
@@ -293,7 +346,7 @@ export default function ProgressPage() {
                         {/* Dynamic Withdraw Button */}
                         {profile?.stripe_account_id ? (
                             <button
-                                onClick={handleWithdrawStripe}
+                                onClick={openWithdrawModal}
                                 className="flex-1 bg-[#0a0a0a] border border-white/20 text-white py-3 rounded-lg font-bold text-xs tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
                             >
                                 <Building size={16} /> WITHDRAW
@@ -352,38 +405,102 @@ export default function ProgressPage() {
                 {/* Transaction History */}
                 <div>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xs font-mono text-gray-500 tracking-widest uppercase">Recent Deposits</h3>
+                        <h3 className="text-xs font-mono text-gray-500 tracking-widest uppercase">Transaction History</h3>
                         <span className="text-xs text-[#00ff88]">{transactions.length} total</span>
                     </div>
 
                     <div className="space-y-3">
                         {transactions.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
-                                <p className="text-sm">No deposits yet</p>
-                                <p className="text-xs mt-1">Tap "Add Funds" to get started</p>
+                                <p className="text-sm">No transactions yet</p>
+                                <p className="text-xs mt-1">Tap &quot;Add Funds&quot; to get started</p>
                             </div>
                         ) : (
-                            transactions.map(tx => (
-                                <div key={tx.id} className="bg-[#0a0a0a] border border-white/5 p-4 rounded-xl flex justify-between items-center hover:border-[#00ff88]/30 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full flex items-center justify-center bg-[#00ff88]/10 text-[#00ff88]">
-                                            <ArrowDownLeft size={18} />
+                            transactions.map(tx => {
+                                const isWithdraw = tx.type === 'withdrawal' || Number(tx.amount) < 0;
+                                return (
+                                    <div key={tx.id} className={`bg-[#0a0a0a] border p-4 rounded-xl flex justify-between items-center transition-colors ${isWithdraw ? 'border-orange-500/20 hover:border-orange-500/40' : 'border-white/5 hover:border-[#00ff88]/30'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isWithdraw ? 'bg-orange-500/10 text-orange-400' : 'bg-[#00ff88]/10 text-[#00ff88]'}`}>
+                                                {isWithdraw ? <ArrowUpRight size={18} /> : <ArrowDownLeft size={18} />}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-white">{tx.description}</p>
+                                                <p className="text-xs text-gray-500">{formatDate(tx.processed_at || tx.created_at)} • {tx.status}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-sm text-white">{tx.description}</p>
-                                            <p className="text-xs text-gray-500">{formatDate(tx.created_at)} • {tx.status}</p>
+                                        <div className={`font-mono font-bold ${isWithdraw ? 'text-orange-400' : 'text-[#00ff88]'}`}>
+                                            {isWithdraw ? '-' : '+'}${Math.abs(Number(tx.amount)).toFixed(2)}
                                         </div>
                                     </div>
-                                    <div className="font-mono font-bold text-[#00ff88]">
-                                        +${Number(tx.amount).toFixed(2)}
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>
 
             </div>
+
+            {/* Withdraw Modal */}
+            {showWithdrawModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+                    <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-sm p-6">
+                        <h2 className="text-xl font-bold text-white mb-2">Withdraw Funds</h2>
+                        <p className="text-gray-400 text-sm mb-6">Available: <span className="text-[#00ff88]">${rentmanCredits.toFixed(2)}</span></p>
+
+                        {/* Amount Input */}
+                        <div className="relative mb-4">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">$</span>
+                            <input
+                                type="number"
+                                value={withdrawAmount}
+                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                                placeholder="0.00"
+                                className="w-full bg-black border border-white/20 rounded-xl py-4 pl-10 pr-4 text-2xl font-mono text-white focus:border-[#00ff88] focus:outline-none transition-colors"
+                                min="10"
+                                max={rentmanCredits}
+                            />
+                        </div>
+
+                        {/* Quick Amount Buttons */}
+                        <div className="grid grid-cols-4 gap-2 mb-6">
+                            {[25, 50, 100, rentmanCredits].map((amt, i) => (
+                                <button
+                                    key={amt}
+                                    onClick={() => setWithdrawAmount(amt.toString())}
+                                    className="bg-white/5 border border-white/10 py-2 rounded-lg text-sm font-mono text-white hover:bg-[#00ff88]/10 hover:border-[#00ff88]/30 transition-colors"
+                                >
+                                    {i === 3 ? 'MAX' : `$${amt}`}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowWithdrawModal(false)}
+                                className="flex-1 bg-white/5 border border-white/20 py-3 rounded-xl font-bold text-white text-sm"
+                            >
+                                CANCEL
+                            </button>
+                            <button
+                                onClick={handleWithdrawStripe}
+                                disabled={withdrawing || !withdrawAmount || parseFloat(withdrawAmount) < 10}
+                                className="flex-1 bg-[#00ff88] py-3 rounded-xl font-bold text-black text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {withdrawing ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent"></div>
+                                ) : (
+                                    <><ArrowUpRight size={16} /> WITHDRAW</>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Info */}
+                        <p className="text-xs text-gray-500 text-center mt-4">Funds typically arrive in 1-3 business days</p>
+                    </div>
+                </div>
+            )}
 
             <BottomNav />
         </div>

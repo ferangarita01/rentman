@@ -45,3 +45,21 @@ _releases/
 
 .vercel
 .env*.local
+
+# Temporary Analysis Scripts
+check-*.js
+test-*.js
+diagnose-*.js
+investigate-*.js
+complete-audit.js
+realtime-logger.js
+
+# Temporary Visual Artifacts
+*.png
+*.xml
+
+# Debug Outputs
+debug_output/
+
+# PowerShell Automation
+*.ps1

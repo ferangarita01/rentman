@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { getTasks, Task, getProfile, Profile } from '@/lib/supabase-client';
+import React, { Suspense, useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { getTasks, Task, getProfile, Profile, supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import CreateContractModal from '@/components/CreateContractModal';
 import {
     Search,
     Zap,
@@ -16,26 +17,35 @@ import {
     CheckCircle
 } from 'lucide-react';
 
-export default function MarketPage() {
+function MarketPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'reward' | 'urgency' | 'type'>('reward');
+    const [filter, setFilter] = useState<'reward' | 'urgency' | 'type' | 'own'>('reward');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [rentmanCredits, setRentmanCredits] = useState(0);
 
-    useEffect(() => {
-        loadData();
-    }, [user]);
-
-    async function loadData() {
+    const loadData = React.useCallback(async () => {
         setLoading(true);
 
-        // Fetch user profile if logged in
         if (user) {
             const { data: profileData } = await getProfile(user.id);
             setProfile(profileData);
+
+            // Fetch Wallet Transactions to get accurate balance
+            const { data: allTransactions } = await supabase
+                .from('wallet_transactions')
+                .select('amount')
+                .eq('user_id', user.id);
+
+            if (allTransactions) {
+                const total = allTransactions.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0);
+                setRentmanCredits(Math.max(0, total));
+            }
         }
 
         // Fetch ALL open tasks
@@ -46,7 +56,34 @@ export default function MarketPage() {
             setTasks(data || []);
         }
         setLoading(false);
-    }
+    }, [user]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    // Check for create query param
+    useEffect(() => {
+        const createParam = searchParams.get('create');
+        if (createParam === 'true') {
+            setShowCreateModal(true);
+            // Cleanup URL without refresh
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('create');
+            window.history.replaceState({}, '', newUrl.toString());
+        }
+    }, [searchParams]);
+
+    // Listen for custom event from BottomNav (when already on market page)
+    useEffect(() => {
+        const handleOpenModal = () => {
+            setShowCreateModal(true);
+        };
+        window.addEventListener('openCreateModal', handleOpenModal);
+        return () => {
+            window.removeEventListener('openCreateModal', handleOpenModal);
+        };
+    }, []);
 
     // Generate threat level based on priority
     function getThreatLevel(priority: number): { level: string; icons: number; color: string } {
@@ -108,15 +145,21 @@ export default function MarketPage() {
             case 'type':
                 result.sort((a, b) => (a.task_type || '').localeCompare(b.task_type || ''));
                 break;
+            case 'own':
+                if (user) {
+                    result = result.filter(task => task.agent_id === user.id);
+                }
+                break;
         }
 
         return result;
-    }, [tasks, searchQuery, filter]);
+    }, [tasks, searchQuery, filter, user]);
 
     const filters = [
-        { id: 'reward', label: 'REWARD_DESC' },
+        { id: 'reward', label: 'REWARD' },
         { id: 'urgency', label: 'URGENCY' },
-        { id: 'type', label: 'TASK_TYPE' },
+        { id: 'type', label: 'TYPE' },
+        { id: 'own', label: 'OWN' },
     ];
 
     if (loading) {
@@ -159,7 +202,7 @@ export default function MarketPage() {
                     <div className="text-right">
                         <p className="text-[10px] font-mono text-gray-500">CREDITS</p>
                         <p className="text-sm font-mono text-white">
-                            {(profile?.credits || 0).toLocaleString()} ₭
+                            ${rentmanCredits.toFixed(2)} USD
                         </p>
                     </div>
                 </div>
@@ -289,7 +332,7 @@ export default function MarketPage() {
                                         <div className="flex-1">
                                             <p className="text-xs font-mono text-white mb-1 uppercase">{task.title}</p>
                                             <p className="text-[10px] text-gray-400 italic leading-relaxed line-clamp-2">
-                                                "{task.description || 'No description provided.'}"
+                                                &quot;{task.description || 'No description provided.'}&quot;
                                             </p>
                                         </div>
                                     </div>
@@ -309,6 +352,32 @@ export default function MarketPage() {
                     })
                 )}
             </main>
+
+            {/* Create Contract Modal */}
+            {showCreateModal && (
+                <CreateContractModal
+                    onClose={() => setShowCreateModal(false)}
+                    onCreated={() => {
+                        setShowCreateModal(false);
+                        loadData(); // Reload tasks
+                    }}
+                />
+            )}
         </div>
+    );
+}
+
+export default function MarketPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+                <div className="text-center">
+                    <Loader2 className="w-12 h-12 text-[#00ff88] animate-spin mx-auto mb-4" />
+                    <p className="text-white font-mono tracking-widest">LOADING MARKET...</p>
+                </div>
+            </div>
+        }>
+            <MarketPageContent />
+        </Suspense>
     );
 }

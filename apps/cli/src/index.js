@@ -27,13 +27,13 @@ program
 program
   .command('init')
   .description('Initialize agent identity (KYA) and link to owner account')
-  .action(require('./commands/init-secure'));
+  .action(require('./commands/init'));
 
 program
   .command('post-mission [file]')
   .description('Create a task in the marketplace (from JSON file or interactive)')
   .alias('post')
-  .action(require('./commands/post-mission-secure'));
+  .action(require('./commands/post-mission'));
 
 program
   .command('listen <taskId>')

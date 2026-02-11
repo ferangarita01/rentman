@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import LevelProgress from '@/components/LevelProgress';
 import { getProfile, getTransactions, Profile } from '@/lib/supabase-client';
 
@@ -11,17 +12,12 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const COLORS = { primary: "#00ff88", bgDark: "#050505", cyberBorder: "#1a2e25" };
   const FONTS = { display: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" };
-
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
 
   async function loadData() {
     if (!user) return;
@@ -48,6 +44,13 @@ export default function ProfilePage() {
 
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   if (loading) {
     return (
@@ -86,7 +89,7 @@ export default function ProfilePage() {
         <div className="relative">
           <div className="aspect-square rounded-none border-2 p-1 w-32 h-32 flex items-center justify-center" style={{ borderColor: `${COLORS.primary}80`, backgroundColor: '#1a1a1a' }}>
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              <Image src={profile.avatar_url} alt="Profile" width={128} height={128} className="w-full h-full object-cover" unoptimized />
             ) : (
               <span className="material-symbols-outlined text-6xl" style={{ color: COLORS.primary }}>person</span>
             )}
@@ -115,19 +118,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="mx-4 mb-6 p-6 border relative overflow-hidden" style={{ borderColor: `${COLORS.primary}33`, backgroundColor: `${COLORS.primary}0D` }}>
-        <p className="text-[10px] tracking-[0.3em] uppercase mb-4" style={{ color: `${COLORS.primary}99`, fontFamily: FONTS.mono }}>Total Net Liquidity</p>
-        <h1 className="text-[42px] font-bold" style={{ color: COLORS.primary, fontFamily: FONTS.mono }}>
-          ${(profile?.credits || 0).toFixed(2)}
-        </h1>
-        <div className="mt-4 flex justify-between border-t pt-4" style={{ borderColor: `${COLORS.primary}1A` }}>
-          <div>
-            <span className="text-[10px] uppercase block" style={{ color: 'rgba(255,255,255,0.4)', fontFamily: FONTS.mono }}>Payout Cycle</span>
-            <span className="text-xs" style={{ fontFamily: FONTS.mono }}>WEEKLY</span>
-          </div>
-          <button className="text-xs font-bold px-4 py-2 uppercase" style={{ backgroundColor: COLORS.primary, color: '#000', fontFamily: FONTS.mono }}>Withdraw</button>
-        </div>
-      </div>
+
 
       <div className="px-4 pb-24">
         {transactions.length > 0 ? (

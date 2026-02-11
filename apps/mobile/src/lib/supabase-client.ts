@@ -79,6 +79,8 @@ export interface Thread {
   unread_count: number;
   sender_type: string;
   task_status: string;
+  agent_id?: string;
+  assigned_human_id?: string;
 }
 
 // Task functions
@@ -90,6 +92,32 @@ export async function getTasks(status = 'open') {
     .order('created_at', { ascending: false });
 
   if (error) console.error('Error fetching tasks:', error);
+  return { data: data as Task[] | null, error };
+}
+
+/**
+ * Fetches tasks assigned to a specific user.
+ * @param userId - The ID of the user.
+ * @param statusFilter - 'active' for ongoing tasks, 'completed' for finished ones.
+ */
+export async function getUserTasks(userId: string, statusFilter: 'active' | 'completed' = 'active') {
+  let query = supabase
+    .from('tasks')
+    .select('*')
+    .eq('assigned_human_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (statusFilter === 'active') {
+    // Active tasks include: assigned, accepted, in_progress, dispute
+    query = query.in('status', ['assigned', 'accepted', 'in_progress', 'dispute']);
+  } else {
+    // Completed tasks
+    query = query.eq('status', 'completed');
+  }
+
+  const { data, error } = await query;
+
+  if (error) console.error('Error fetching user tasks:', error);
   return { data: data as Task[] | null, error };
 }
 
@@ -164,7 +192,7 @@ export async function acceptTask(taskId: string, userId: string) {
     .insert({
       task_id: taskId,
       user_id: userId,
-      status: 'assigned',
+      status: 'accepted',
       started_at: new Date().toISOString()
     })
     .select()
@@ -194,8 +222,24 @@ export async function acceptTask(taskId: string, userId: string) {
  */
 export async function getThreads(userId: string) {
   try {
-    // Get all tasks where user is involved (as agent or assigned human)
-    const { data: tasks, error: tasksError } = await supabase
+    console.log('🔍 getThreads called for user:', userId);
+
+    // First, get the user's agent_id from the agents table
+    const { data: userAgent, error: agentError } = await supabase
+      .from('agents')
+      .select('id')
+      .eq('owner_id', userId)
+      .single();
+
+    if (agentError && agentError.code !== 'PGRST116') {
+      console.error('Error fetching user agent:', agentError);
+    }
+
+    const userAgentId = userAgent?.id;
+    console.log('📌 User agent_id:', userAgentId);
+
+    // Get all tasks where user is involved (as agent owner or assigned human)
+    let query = supabase
       .from('tasks')
       .select(`
         id,
@@ -205,14 +249,31 @@ export async function getThreads(userId: string) {
         agent_id,
         assigned_human_id,
         metadata
-      `)
-      .or(`agent_id.eq.${userId},assigned_human_id.eq.${userId}`)
+      `);
+
+    // Build the OR condition dynamically
+    if (userAgentId) {
+      query = query.or(`agent_id.eq.${userAgentId},assigned_human_id.eq.${userId}`);
+    } else {
+      // Fallback: only show tasks assigned to user
+      query = query.eq('assigned_human_id', userId);
+    }
+
+    const { data: tasks, error: tasksError } = await query
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (tasksError) {
       console.error('Error fetching tasks for threads:', tasksError);
       return { data: null, error: tasksError };
+    }
+
+    console.log(`📋 Found ${tasks?.length || 0} tasks for user`);
+    if (tasks && tasks.length > 0) {
+      const asAgent = tasks.filter(t => t.agent_id === userId);
+      const asWorker = tasks.filter(t => t.assigned_human_id === userId);
+      console.log(`   - As agent (created): ${asAgent.length}`);
+      console.log(`   - As worker (assigned): ${asWorker.length}`);
     }
 
     if (!tasks || tasks.length === 0) {
@@ -246,7 +307,9 @@ export async function getThreads(userId: string) {
           last_message_at: new Date().toISOString(),
           unread_count: 0,
           sender_type: 'system',
-          task_status: task.status
+          task_status: task.status,
+          agent_id: task.agent_id,
+          assigned_human_id: task.assigned_human_id
         }));
 
         return { data: threadsWithoutMessages, error: null };
@@ -273,7 +336,9 @@ export async function getThreads(userId: string) {
         last_message_at: latestMessage?.created_at || task.status,
         unread_count: unreadCount,
         sender_type: latestMessage?.sender_type || 'system',
-        task_status: task.status
+        task_status: task.status,
+        agent_id: task.agent_id,
+        assigned_human_id: task.assigned_human_id
       };
     });
 
@@ -731,3 +796,55 @@ export async function initiateDispute(taskId: string, initiatorId: string, reaso
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONTRACT CREATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface CreateTaskParams {
+  title: string;
+  description: string;
+  budget_amount: number;
+  task_type: string;
+  location_address?: string;
+  required_skills?: string[];
+  agent_id?: string;
+  requester_id: string;
+}
+
+/**
+ * Create a new task/contract in the Global Market
+ */
+export async function createTask(params: CreateTaskParams) {
+  const taskData: any = {
+    title: params.title,
+    description: params.description,
+    budget_amount: params.budget_amount,
+    task_type: params.task_type,
+    location_address: params.location_address,
+    required_skills: params.required_skills || [],
+    requester_id: params.requester_id,
+    status: 'open',
+    priority: 5,
+    budget_currency: 'USD',
+    payment_type: 'fixed',
+    payment_status: 'pending',
+    created_at: new Date().toISOString()
+  };
+
+  if (params.agent_id) {
+    taskData.agent_id = params.agent_id;
+  }
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert(taskData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating task:', error);
+    return { data: null, error };
+  }
+
+  return { data: data as Task, error: null };
+}

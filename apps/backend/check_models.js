@@ -2,7 +2,7 @@ const { VertexAI } = require('@google-cloud/vertexai');
 
 async function listModels() {
     const project = process.env.PROJECT_ID || 'agent-gen-1';
-    const location = 'us-central1';
+    const location = 'us-east1';
 
     console.log(`Checking models in project: ${project}, location: ${location}`);
 
@@ -29,7 +29,7 @@ async function listModels() {
             console.log('✅ OK');
         } catch (e) {
             console.log('❌ FAIL');
-            // console.log(e.message); // Uncomment for debug
+            console.log(`   Error: ${e.message}`);
         }
     }
 }

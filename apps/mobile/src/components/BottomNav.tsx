@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -13,6 +13,7 @@ import {
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
 
   // Hide on auth page, landing page, settings, contract chat, or when no user
@@ -57,12 +58,21 @@ export default function BottomNav() {
 
           {/* MARKET (Central FAB) */}
           <div className="relative -top-6">
-            <Link
-              href="/market"
+            <button
+              onClick={() => {
+                if (pathname === '/market' || pathname === '/market/') {
+                  // If on market page, trigger create modal via custom event
+                  // This works because router.push may not trigger useEffect on same route
+                  window.dispatchEvent(new CustomEvent('openCreateModal'));
+                } else {
+                  // Navigate normally to market
+                  router.push('/market');
+                }
+              }}
               className="w-16 h-16 bg-[#00ff55] rounded-[20px] flex items-center justify-center shadow-[0_0_20px_rgba(0,255,85,0.4)] hover:shadow-[0_0_30px_rgba(0,255,85,0.6)] hover:bg-[#33ff77] transition-all duration-300 active:scale-95 group"
             >
               <Terminal className="w-8 h-8 text-black stroke-[2.5] group-hover:rotate-12 transition-transform" />
-            </Link>
+            </button>
           </div>
 
           {/* INBOX */}

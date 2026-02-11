@@ -63,6 +63,54 @@ app.get('/health', (req, res) => {
     });
 });
 
+// 🔍 DEBUG ENDPOINT: Check Database Content
+app.get('/api/debug/db-check', async (req, res) => {
+    try {
+        console.log('🔍 Debug DB Check Initiated');
+
+        // Check if supabase is initialized
+        if (!supabase) {
+            return res.status(500).json({ error: 'Supabase client not initialized' });
+        }
+
+        // Simple Select to verify connectivity and RLS
+        const { data: simpleData, error: simpleError } = await supabase
+            .from('transactions')
+            .select('*')
+            .limit(5);
+
+        // Serialize error robustly
+        const formatError = (err) => {
+            if (!err) return null;
+            return {
+                message: err.message,
+                details: err.details,
+                hint: err.hint,
+                code: err.code,
+                name: err.name,
+                full: JSON.stringify(err, Object.getOwnPropertyNames(err))
+            };
+        };
+
+        res.json({
+            status: 'ok',
+            check_time: new Date().toISOString(),
+            query_result: {
+                data: simpleData,
+                count: simpleData ? simpleData.length : 0,
+                error: formatError(simpleError)
+            },
+            env: {
+                has_supabase: !!supabase,
+                service_role_loaded: true
+            }
+        });
+    } catch (e) {
+        console.error('Debug Check Failed:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // 1. Create Payment Intent (For Dashboard "Buy Credits" - Inline)
 app.post('/api/create-payment-intent', async (req, res) => {
     try {
@@ -151,13 +199,14 @@ app.post('/api/stripe/onboard', async (req, res) => {
         console.log(`🏦 Stripe onboarding request for user: ${userId}`);
 
         // Check if user already has a Stripe account
+        // FIX #4: Use correct field name (stripe_connect_account_id)
         const { data: existingProfile } = await supabase
             .from('profiles')
-            .select('stripe_account_id')
+            .select('stripe_connect_account_id')
             .eq('id', userId)
             .single();
 
-        let accountId = existingProfile?.stripe_account_id;
+        let accountId = existingProfile?.stripe_connect_account_id;
 
         // If account exists, create new link (resume onboarding)
         if (accountId) {
@@ -218,25 +267,90 @@ app.post('/api/stripe/onboard', async (req, res) => {
 
 // 3. Payout/Transfer (Pay the Agent)
 app.post('/api/stripe/transfer', async (req, res) => {
-    try {
-        const { amount, destinationAccountId } = req.body;
+    // Extract variables at the top level for error logging access
+    const { amount, destinationAccountId, deductFee = true, taskId } = req.body || {};
 
+    try {
         if (!amount || !destinationAccountId) {
-            return res.status(400).send({ error: 'Missing amount or destination' });
+            return res.status(400).json({ error: 'Missing amount or destination' });
         }
 
-        // Create a Transfer to the connected account
+        // Calculate commission (10% platform fee ON TOP of amount)
+        // Client pays: amount + 10%
+        // Worker receives: amount (full)
+        // Platform keeps: 10% of amount
+        const COMMISSION_RATE = 0.10;
+        const workerAmountCents = Math.round(amount * 100); // What worker receives
+        const platformFeeCents = deductFee ? Math.round(workerAmountCents * COMMISSION_RATE) : 0;
+        const clientPaysCents = workerAmountCents + platformFeeCents; // What client should pay
+
+        // Create a Transfer to the connected account (worker gets full amount)
         const transfer = await stripe.transfers.create({
-            amount: amount * 100, // cents
+            amount: workerAmountCents, // Worker receives full requested amount
             currency: 'usd',
             destination: destinationAccountId,
             metadata: {
-                reason: 'task_payout'
+                reason: 'task_payout',
+                taskId: taskId || 'unknown',
+                clientPays: clientPaysCents,
+                workerReceives: workerAmountCents,
+                platformFee: platformFeeCents,
+                type: 'direct_transfer'
             }
         });
 
-        console.log(`✅ Transfer successful: ${transfer.id} ($${amount} to ${destinationAccountId})`);
-        res.json({ transferId: transfer.id, status: 'success' });
+        console.log(`✅ Transfer successful: ${transfer.id}`);
+        console.log(`   Worker Receives: $${(workerAmountCents / 100).toFixed(2)}`);
+        console.log(`   Platform Fee (10%): $${(platformFeeCents / 100).toFixed(2)}`);
+        console.log(`   Client Should Pay: $${(clientPaysCents / 100).toFixed(2)}`);
+        console.log(`   Destination: ${destinationAccountId}`);
+
+        // Send transparency message to chat if taskId provided
+        if (taskId && taskId !== 'unknown') {
+            const messageContent = `💰 PAGO COMPLETADO
+
+✅ Worker recibe: $${(workerAmountCents / 100).toFixed(2)}
+📊 Desglose:
+   • Presupuesto de Tarea: $${(workerAmountCents / 100).toFixed(2)}
+   • Comisión Plataforma (10%): $${(platformFeeCents / 100).toFixed(2)}
+   • Total Pagado por Cliente: $${(clientPaysCents / 100).toFixed(2)}
+
+El worker recibe el monto completo de la tarea.
+La plataforma cobra 10% adicional al cliente.
+
+¡Gracias por usar Rentman! 🚀`;
+
+            await supabase
+                .from('messages')
+                .insert({
+                    task_id: taskId,
+                    sender_id: 'system',
+                    sender_type: 'system',
+                    content: messageContent,
+                    message_type: 'system',
+                    metadata: {
+                        type: 'payment_transfer',
+                        transfer_id: transfer.id,
+                        amounts: {
+                            clientPays: clientPaysCents,
+                            workerReceives: workerAmountCents,
+                            platformFee: platformFeeCents
+                        }
+                    }
+                });
+
+            console.log('✅ Transparency message sent to chat');
+        }
+        
+        res.json({ 
+            transferId: transfer.id, 
+            status: 'success',
+            amounts: {
+                clientPays: clientPaysCents / 100,
+                workerReceives: workerAmountCents / 100,
+                platformFee: platformFeeCents / 100
+            }
+        });
 
     } catch (e) {
         // Enhanced error logging for debugging payout issues
@@ -246,12 +360,18 @@ app.post('/api/stripe/transfer', async (req, res) => {
         console.error(`Error Type: ${e.type || 'Unknown'}`);
         console.error(`Error Code: ${e.code || 'N/A'}`);
         console.error(`Error Message: ${e.message}`);
-        console.error(`Destination Account: ${destinationAccountId}`);
-        console.error(`Amount: $${amount} USD`);
+        console.error(`Destination Account: ${destinationAccountId || 'N/A'}`);
+        console.error(`Amount: $${amount || 0} USD`);
         console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        res.status(500).send({
-            error: e.message,
+        // User-friendly error messages
+        let userMessage = e.message;
+        if (e.message && e.message.includes('insufficient')) {
+            userMessage = 'Platform has insufficient funds for this transfer. Please contact support.';
+        }
+
+        res.status(500).json({
+            error: userMessage,
             type: e.type,
             code: e.code
         });
@@ -727,28 +847,37 @@ app.post('/api/escrow/lock', async (req, res) => {
         }
 
         // 2. Create Stripe PaymentIntent with manual capture
-        const grossAmountCents = Math.round(task.budget_amount * 100);
+        // IMPORTANT: Client pays budget + 10% platform fee
+        const COMMISSION_RATE = 0.10; // 10% platform fee
+        const workerAmountCents = Math.round(task.budget_amount * 100); // What worker receives
+        const platformFeeCents = Math.round(workerAmountCents * COMMISSION_RATE); // Platform commission
+        const clientPaysCents = workerAmountCents + platformFeeCents; // Total client pays (110%)
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: grossAmountCents,
+            amount: clientPaysCents, // Client pays 110%
             currency: task.budget_currency?.toLowerCase() || 'usd',
             capture_method: 'manual',
             metadata: {
                 service: 'rentman_escrow',
                 taskId: taskId,
                 humanId: humanId,
-                requesterId: task.requester_id
+                requesterId: task.requester_id,
+                workerAmount: workerAmountCents,
+                platformFee: platformFeeCents,
+                clientPays: clientPaysCents
             }
         });
 
-        // 3. Insert escrow transaction
+        // 3. Insert escrow transaction with fee breakdown
         const { data: escrow, error: escrowError } = await supabase
             .from('escrow_transactions')
             .insert({
                 task_id: taskId,
                 requester_id: task.requester_id,
                 human_id: humanId,
-                gross_amount: grossAmountCents,
+                gross_amount: clientPaysCents, // Total charged to client
+                platform_fee_amount: platformFeeCents, // Platform keeps this
+                net_amount: workerAmountCents, // Worker receives this
                 status: 'held',
                 stripe_payment_intent_id: paymentIntent.id
             })
@@ -772,12 +901,20 @@ app.post('/api/escrow/lock', async (req, res) => {
             .eq('id', taskId);
 
         console.log('✅ Funds locked successfully:', escrow.id);
+        console.log(`   Task Budget (Worker receives): $${(workerAmountCents / 100).toFixed(2)}`);
+        console.log(`   Platform Fee (10%): $${(platformFeeCents / 100).toFixed(2)}`);
+        console.log(`   Client Pays Total: $${(clientPaysCents / 100).toFixed(2)}`);
 
         res.json({
             success: true,
             escrowId: escrow.id,
             message: 'Funds locked',
-            clientSecret: paymentIntent.client_secret
+            clientSecret: paymentIntent.client_secret,
+            amounts: {
+                workerReceives: workerAmountCents / 100,
+                platformFee: platformFeeCents / 100,
+                clientPays: clientPaysCents / 100
+            }
         });
 
     } catch (error) {
@@ -858,27 +995,47 @@ app.post('/api/escrow/release', async (req, res) => {
             return res.status(400).json({ error: 'Human must connect Stripe account first' });
         }
 
-        // 5. Capture payment
+        // 5. Capture payment from client (gross_amount includes 10% fee)
         await stripe.paymentIntents.capture(escrow.stripe_payment_intent_id);
 
-        // 6. Transfer to human (net amount after fees)
+        // 6. Transfer full task amount to worker
+        // escrow.net_amount = what worker should receive (original task budget)
+        // escrow.gross_amount = what client paid (net_amount + 10%)
+        // escrow.platform_fee_amount = our commission (10% of net_amount)
+        
+        const workerPayout = escrow.net_amount; // Worker gets full task budget
+        const platformFee = escrow.platform_fee_amount; // We keep the 10%
+        const clientPaid = escrow.gross_amount; // What client was charged
+
         const transfer = await stripe.transfers.create({
-            amount: escrow.net_amount,
+            amount: workerPayout, // Transfer full task budget to worker
             currency: task.budget_currency?.toLowerCase() || 'usd',
             destination: humanProfile.stripe_connect_account_id,
             metadata: {
                 taskId: taskId,
-                escrowId: escrow.id
+                escrowId: escrow.id,
+                clientPaid: clientPaid,
+                workerReceives: workerPayout,
+                platformFee: platformFee,
+                type: 'escrow_release'
             }
         });
 
-        // 7. Update escrow status
+        console.log(`✅ Escrow payment released: ${transfer.id}`);
+        console.log(`   Client Paid: $${(clientPaid / 100).toFixed(2)}`);
+        console.log(`   Worker Receives: $${(workerPayout / 100).toFixed(2)}`);
+        console.log(`   Platform Fee (10%): $${(platformFee / 100).toFixed(2)}`);
+        console.log(`   Destination: ${humanProfile.stripe_connect_account_id}`);
+
+        // 7. Update escrow status with commission details
         await supabase
             .from('escrow_transactions')
             .update({
                 status: 'released',
                 stripe_transfer_id: transfer.id,
-                released_at: new Date().toISOString()
+                released_at: new Date().toISOString(),
+                platform_fee: platformFee,
+                worker_payout: workerPayout
             })
             .eq('id', escrow.id);
 
@@ -892,13 +1049,51 @@ app.post('/api/escrow/release', async (req, res) => {
             })
             .eq('id', taskId);
 
+        // 9. Insert system message for transparency
+        const messageContent = `💰 PAGO COMPLETADO
+
+✅ Worker recibe: $${(workerPayout / 100).toFixed(2)}
+📊 Desglose:
+   • Presupuesto de Tarea: $${(workerPayout / 100).toFixed(2)}
+   • Comisión Plataforma (10%): $${(platformFee / 100).toFixed(2)}
+   • Total Pagado por Cliente: $${(clientPaid / 100).toFixed(2)}
+
+El worker recibe el monto completo de la tarea.
+La plataforma cobra 10% adicional al cliente.
+
+¡Gracias por usar Rentman! 🚀`;
+
+        await supabase
+            .from('messages')
+            .insert({
+                task_id: taskId,
+                sender_id: 'system',
+                sender_type: 'system',
+                content: messageContent,
+                message_type: 'system',
+                metadata: {
+                    type: 'payment_release',
+                    transfer_id: transfer.id,
+                    amounts: {
+                        clientPaid: clientPaid,
+                        workerReceives: workerPayout,
+                        platformFee: platformFee
+                    }
+                }
+            });
+
         console.log('✅ Payment released:', transfer.id);
+        console.log('✅ Transparency message sent to chat');
 
         res.json({
             success: true,
             message: 'Payment released to human',
             transferId: transfer.id,
-            amount: escrow.net_amount / 100
+            amounts: {
+                clientPaid: clientPaid / 100,
+                workerReceives: workerPayout / 100,
+                platformFee: platformFee / 100
+            }
         });
 
     } catch (error) {
