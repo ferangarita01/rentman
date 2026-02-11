@@ -47,12 +47,7 @@ _releases/
 .env*.local
 
 # Temporary Analysis Scripts
-check-*.js
-test-*.js
-diagnose-*.js
-investigate-*.js
-complete-audit.js
-realtime-logger.js
+# (Moved to scripts/analysis/ - now tracked)
 
 # Temporary Visual Artifacts
 *.png
@@ -60,6 +55,4 @@ realtime-logger.js
 
 # Debug Outputs
 debug_output/
-
-# PowerShell Automation
-*.ps1
+_archive/debug_logs/

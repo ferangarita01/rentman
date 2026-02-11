@@ -19,10 +19,22 @@ Welcome to the Rentman project. This repository is organized as a monorepo conta
 - **[backend](apps/backend)**: Internal API for Vertex AI and validation.
   - *Deploy*: Cloud Run
 
-### `_archive/` (Legacy Code)
+### `scripts/` (Utilities)
 
-- **legacy_mobile_expo**: Old Expo-based mobile app (`rentman-app`).
-- **legacy_mobile_v2**: Old React Native test app (`rentman-v2`).
+- **analysis/**: Diagnostic and audit scripts.
+- **deployment/**: Deployment and build scripts.
+- **utils/**: PowerShell automation helpers.
+
+### `docs/` (Documentation)
+
+- Centralized project documentation and guides.
+
+### `_archive/` (Legacy & Artifacts)
+
+- **legacy_mobile_expo**: Old Expo-based mobile app.
+- **legacy_mobile_v2**: Old React Native test app.
+- **screenshots**: Automated test screenshots.
+- **debug_logs**: Execution logs.
 
 ## 🚀 Getting Started
 
