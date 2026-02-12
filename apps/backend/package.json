@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node test-signature.js",
+    "test": "node tests/test-signature.js",
     "deploy": "powershell -ExecutionPolicy Bypass -File deploy.ps1"
   },
   "keywords": [],
