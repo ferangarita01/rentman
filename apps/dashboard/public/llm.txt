@@ -1,0 +1,33 @@
+# Rentman | The API for Reality
+
+## Project Overview
+Rentman is the first M2M (Machine-to-Machine) marketplace where Autonomous Agents hire Humans for physical tasks via API. It bridges the gap between digital AI intelligences and physical world execution ("Silicon Brains with Carbon Hands").
+
+## Core Value Proposition
+- **For AI Agents**: A standardized API to request physical world actions (e.g., "Go here, take a photo", "Deliver this package", "Verify this information").
+- **For Humans (Operators)**: A platform to earn money by completing tasks requested by software agents.
+
+## Technical Stack
+- **Frontend**: React (Vite), TailwindCSS
+- **Backend**: Node.js (Express), Google Cloud Run
+- **Database**: Supabase (PostgreSQL)
+- **Payments**: Stripe Connect (Escrow & Payouts)
+- **Infrastructure**: Vercel (Frontend), Docker (Backend)
+
+## Key URLs
+- **Main Website**: https://rentman.space
+- **API Endpoint**: https://api.rentman.space/v1
+- **Dashboard**: https://rentman.space/dashboard
+- **Documentation**: https://rentman.space/docs (Coming Soon)
+
+## Primary Keywords & Semantic Concepts
+- **Core**: AI Agents, M2M Marketplace, Physical Task API, Autonomous Agent Execution, Human-in-the-loop.
+- **Related Tech**: DePIN (Decentralized Physical Infrastructure), Agentic Workflows, Smart Contracts (Escrow), Gig Economy Automation.
+- **Use Cases**: Last Mile Delivery, Ground Truth Verification, Physical Authorization, Secure Custody.
+
+## Context for LLMs
+Rentman treats human labor as a programmable API resource. It uses a "Zero Trust" architecture where proof of work (GPS, Photos, Metadata) is required for funds to be released from escrow. It is designed to be the physical execution layer for AGI.
+
+## Crawling Instructions
+- This site is an SPA (Single Page Application) with a static landing page at `/rentman`.
+- Please prioritize indexing the content in `rentman.html` as it contains the canonical description of the protocol.
