@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Camera, FileText, MapPin, CheckCircle, DollarSign, AlertCircle, ArrowLeft, Upload, Send, Paperclip, ChevronRight } from 'lucide-react';
+import { Camera, FileText, MapPin, CheckCircle, DollarSign, AlertCircle, ArrowLeft, Upload, Send, ChevronRight, Loader2, Image as ImageIcon } from 'lucide-react';
 import {
     getTaskById,
     getTaskProofs,
@@ -10,8 +10,11 @@ import {
     reviewProof,
     getEscrowStatus,
     releasePayment,
+    getMessages,
+    sendMessage,
     Task,
     TaskProof,
+    Message,
     supabase
 } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,11 +28,16 @@ function ContractChatContent() {
 
     const [task, setTask] = useState<Task | null>(null);
     const [proofs, setProofs] = useState<TaskProof[]>([]);
-    const [escrowStatus, setEscrowStatus] = useState<any>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [escrowStatus, setEscrowStatus] = useState<{ grossAmount?: number; netAmount?: number; status?: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [showUploadMenu, setShowUploadMenu] = useState(false);
+    const [sendingMessage, setSendingMessage] = useState(false);
     const [message, setMessage] = useState('');
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const chatEndRef = useRef<HTMLDivElement>(null);
 
     // Hide navigation bar
     useEffect(() => {
@@ -41,37 +49,6 @@ function ContractChatContent() {
         };
     }, []);
 
-    useEffect(() => {
-        if (contractId) {
-            loadContractData();
-        }
-    }, [contractId]);
-
-    // Real-time subscription for proofs
-    useEffect(() => {
-        if (!contractId) return;
-
-        const channel = supabase
-            .channel(`proofs-${contractId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'task_proofs',
-                    filter: `task_id=eq.${contractId}`
-                },
-                () => {
-                    loadProofs();
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [contractId]);
-
     async function loadContractData() {
         setLoading(true);
 
@@ -79,6 +56,7 @@ function ContractChatContent() {
         if (taskData) setTask(taskData);
 
         await loadProofs();
+        await loadMessages();
 
         const { data: escrowData } = await getEscrowStatus(contractId);
         if (escrowData) setEscrowStatus(escrowData);
@@ -91,60 +69,247 @@ function ContractChatContent() {
         if (data) setProofs(data);
     }
 
-    async function handleUploadProof(type: 'photo' | 'location' | 'text') {
-        if (!user) return;
+    async function loadMessages() {
+        const { data } = await getMessages(contractId);
+        if (data) setMessages(data);
+    }
 
-        setUploading(true);
-        setShowUploadMenu(false);
+    // ── CAPTURE_IMG: Open device camera ──
+    function handleCapturePhoto() {
+        fileInputRef.current?.click();
+    }
+
+    async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+
+        setUploadingPhoto(true);
 
         try {
-            let title = '';
-            let fileUrl = '';
-            let locationData = null;
+            // Upload to Supabase Storage
+            const fileExt = file.name.split('.').pop() || 'jpg';
+            const fileName = `proofs/${contractId}/${user.id}_${Date.now()}.${fileExt}`;
 
-            if (type === 'photo') {
-                title = 'Photo Proof';
-                fileUrl = 'https://via.placeholder.com/400x300?text=Proof+Photo';
-            } else if (type === 'location') {
-                if (navigator.geolocation) {
-                    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject);
-                    });
-                    title = 'Location Proof';
-                    locationData = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                }
+            const { data: uploadData, error: uploadError } = await supabase
+                .storage
+                .from('proof-files')
+                .upload(fileName, file, { contentType: file.type });
+
+            let fileUrl = '';
+
+            if (uploadError) {
+                console.error('Storage upload error:', uploadError);
+                // Fallback: convert to base64 data URL for proof
+                const reader = new FileReader();
+                const dataUrl = await new Promise<string>((resolve) => {
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                });
+                fileUrl = dataUrl;
             } else {
-                title = prompt('Enter proof title:') || 'Text Proof';
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from('proof-files')
+                    .getPublicUrl(uploadData.path);
+                fileUrl = urlData.publicUrl;
             }
+
+            // Submit proof with real file URL
+            const { error } = await uploadProof(
+                contractId,
+                user.id,
+                'photo',
+                'Photo Proof',
+                `Photo captured at ${new Date().toLocaleTimeString()}`,
+                fileUrl
+            );
+
+            if (error) {
+                // Fallback: direct Supabase insert if backend fails
+                console.error('Backend proof upload failed, trying direct insert:', error);
+                await supabase.from('task_proofs').insert({
+                    task_id: contractId,
+                    human_id: user.id,
+                    proof_type: 'photo',
+                    title: 'Photo Proof',
+                    description: `Photo captured at ${new Date().toLocaleTimeString()}`,
+                    file_url: fileUrl,
+                    status: 'pending'
+                });
+            }
+
+            // Also send a system message to the chat
+            await sendMessage(contractId, user.id, '📸 Photo proof submitted', 'image', { file_url: fileUrl });
+
+            await loadProofs();
+            await loadMessages();
+            scrollToBottom();
+        } catch (err: unknown) {
+            console.error('Photo capture error:', err);
+            const errMsg = err instanceof Error ? err.message : 'Unknown error';
+            alert('Error uploading photo: ' + errMsg);
+        } finally {
+            setUploadingPhoto(false);
+            // Reset file input
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    }
+
+    // ── GEO_LOCATE: Send GPS coordinates as proof ──
+    async function handleGeoLocate() {
+        if (!user) return;
+        setUploading(true);
+
+        try {
+            if (!navigator.geolocation) {
+                alert('GPS not available on this device');
+                return;
+            }
+
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            });
+
+            const locationData = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                timestamp: new Date().toISOString()
+            };
 
             const { error } = await uploadProof(
                 contractId,
                 user.id,
-                type,
-                title,
-                'Proof of work completed',
-                fileUrl || undefined,
+                'location',
+                'Location Proof',
+                `GPS: ${locationData.lat.toFixed(6)}, ${locationData.lng.toFixed(6)}`,
+                undefined,
                 locationData
             );
 
             if (error) {
-                alert('Failed to upload proof: ' + error.message);
-            } else {
-                await loadProofs();
+                // Fallback: direct insert
+                console.error('Backend location proof failed, trying direct insert:', error);
+                await supabase.from('task_proofs').insert({
+                    task_id: contractId,
+                    human_id: user.id,
+                    proof_type: 'location',
+                    title: 'Location Proof',
+                    description: `GPS: ${locationData.lat.toFixed(6)}, ${locationData.lng.toFixed(6)}`,
+                    location_data: locationData,
+                    status: 'pending'
+                });
             }
-        } catch (error: any) {
-            alert('Error uploading proof: ' + error.message);
+
+            // Send location message to chat
+            await sendMessage(
+                contractId,
+                user.id,
+                `📍 Location proof: ${locationData.lat.toFixed(6)}, ${locationData.lng.toFixed(6)}`,
+                'location',
+                locationData
+            );
+
+            await loadProofs();
+            await loadMessages();
+            scrollToBottom();
+        } catch (err: unknown) {
+            console.error('Geolocation error:', err);
+            const errMsg = err instanceof Error ? err.message : 'GPS denied';
+            alert('Error getting location: ' + errMsg);
         } finally {
             setUploading(false);
         }
     }
 
-    async function handleApproveProof(proofId: string) {
+    // ── ATTACH_LOG: Submit text from the message input as a formal proof ──
+    async function handleAttachLog() {
         if (!user) return;
 
+        const textContent = message.trim();
+        if (!textContent) {
+            alert('Type your update in the message field first, then tap ATTACH_LOG');
+            return;
+        }
+
+        setUploading(true);
+
+        try {
+            const { error } = await uploadProof(
+                contractId,
+                user.id,
+                'text',
+                'Text Proof',
+                textContent
+            );
+
+            if (error) {
+                // Fallback: direct insert
+                console.error('Backend text proof failed, trying direct insert:', error);
+                await supabase.from('task_proofs').insert({
+                    task_id: contractId,
+                    human_id: user.id,
+                    proof_type: 'text',
+                    title: 'Text Proof',
+                    description: textContent,
+                    status: 'pending'
+                });
+            }
+
+            // Also send as chat message
+            await sendMessage(contractId, user.id, `📝 Proof: ${textContent}`, 'text');
+
+            setMessage('');
+            await loadProofs();
+            await loadMessages();
+            scrollToBottom();
+        } catch (err: unknown) {
+            console.error('Text proof error:', err);
+            const errMsg = err instanceof Error ? err.message : 'Unknown error';
+            alert('Error submitting text proof: ' + errMsg);
+        } finally {
+            setUploading(false);
+        }
+    }
+
+    // ── SEND MESSAGE: Regular chat message ──
+    async function handleSendMessage() {
+        if (!user || !message.trim()) return;
+
+        setSendingMessage(true);
+
+        try {
+            const { error } = await sendMessage(contractId, user.id, message.trim(), 'text');
+
+            if (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message');
+            } else {
+                setMessage('');
+                await loadMessages();
+                scrollToBottom();
+            }
+        } catch (err: unknown) {
+            console.error('Message send error:', err);
+        } finally {
+            setSendingMessage(false);
+        }
+    }
+
+    // Handle Enter key
+    function handleKeyDown(e: React.KeyboardEvent) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    }
+
+    async function handleApproveProof(proofId: string) {
+        if (!user) return;
         const { error } = await reviewProof(proofId, user.id, 'approve');
         if (error) {
             alert('Failed to approve proof: ' + error.message);
@@ -155,7 +320,6 @@ function ContractChatContent() {
 
     async function handleRejectProof(proofId: string, reason: string) {
         if (!user) return;
-
         const { error } = await reviewProof(proofId, user.id, 'reject', reason);
         if (error) {
             alert('Failed to reject proof: ' + error.message);
@@ -166,10 +330,7 @@ function ContractChatContent() {
 
     async function handleReleasePayment() {
         if (!user || !task) return;
-
-        if (!confirm('Release payment to human? This action cannot be undone.')) {
-            return;
-        }
+        if (!confirm('Release payment? This action cannot be undone.')) return;
 
         const { data, error } = await releasePayment(contractId, user.id);
         if (error) {
@@ -180,12 +341,78 @@ function ContractChatContent() {
         }
     }
 
+    function scrollToBottom() {
+        setTimeout(() => {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
+    }
+
+    // ── Build unified timeline ──
+    function buildTimeline() {
+        const timeline: Array<{ type: 'proof' | 'message'; data: TaskProof | Message; timestamp: string }> = [];
+
+        proofs.forEach(p => {
+            timeline.push({ type: 'proof', data: p, timestamp: p.created_at });
+        });
+
+        messages.forEach(m => {
+            timeline.push({ type: 'message', data: m, timestamp: m.created_at });
+        });
+
+        // Sort chronologically (oldest first)
+        timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+        return timeline;
+    }
+
+    useEffect(() => {
+        if (contractId) {
+            loadContractData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contractId]);
+
+    // Real-time subscriptions
+    useEffect(() => {
+        if (!contractId) return;
+
+        // Subscribe to proofs
+        const proofsChannel = supabase
+            .channel(`proofs-${contractId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'task_proofs',
+                filter: `task_id=eq.${contractId}`
+            }, () => { loadProofs(); })
+            .subscribe();
+
+        // Subscribe to messages
+        const messagesChannel = supabase
+            .channel(`messages-${contractId}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'messages',
+                filter: `task_id=eq.${contractId}`
+            }, () => {
+                loadMessages();
+                scrollToBottom();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(proofsChannel);
+            supabase.removeChannel(messagesChannel);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contractId]);
+
     const isRequester = user?.id === task?.requester_id;
     const isHuman = user?.id === task?.assigned_human_id;
     const allProofsApproved = proofs.length > 0 && proofs.every(p => p.status === 'approved');
     const canReleasePayment = isRequester && allProofsApproved && escrowStatus?.status === 'held';
 
-    // Get status text
     const getStatusText = () => {
         if (task?.status === 'COMPLETED') return 'COMPLETED';
         if (proofs.length === 0) return 'WAITING_FOR_PROOF';
@@ -194,10 +421,11 @@ function ContractChatContent() {
         return 'IN_PROGRESS';
     };
 
+    const timeline = buildTimeline();
+
     if (loading) {
         return (
             <div className="h-screen bg-[#050505] flex items-center justify-center">
-                {/* Scanline Effect */}
                 <div className="fixed inset-0 pointer-events-none overflow-hidden">
                     <div className="w-full h-[100px] bg-gradient-to-b from-transparent via-[#00ff88]/5 to-transparent animate-scanline" />
                 </div>
@@ -228,7 +456,17 @@ function ContractChatContent() {
 
     return (
         <div className="min-h-screen bg-[#050505] flex flex-col max-w-md mx-auto relative overflow-hidden">
-            {/* Background Grid Lines */}
+            {/* Hidden file input for camera */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileSelected}
+            />
+
+            {/* Background Grid */}
             <div
                 className="fixed inset-0 pointer-events-none opacity-30"
                 style={{
@@ -237,7 +475,7 @@ function ContractChatContent() {
                 }}
             />
 
-            {/* Scanline Animation */}
+            {/* Scanline */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-10">
                 <div
                     className="absolute w-full h-[100px] opacity-10"
@@ -249,7 +487,7 @@ function ContractChatContent() {
             </div>
 
             {/* Header */}
-            <header className="pt-12 pb-6 px-6 border-b border-white/10 backdrop-blur-xl bg-[#0f0f0f]/70 sticky top-0 z-20">
+            <header className="pt-12 pb-4 px-6 border-b border-white/10 backdrop-blur-xl bg-[#0f0f0f]/70 sticky top-0 z-20">
                 <div className="flex items-center justify-between mb-2">
                     <button
                         onClick={() => router.push('/inbox')}
@@ -273,7 +511,7 @@ function ContractChatContent() {
 
                 {/* Escrow Status Bar */}
                 {escrowStatus && (
-                    <div className="mt-4 grid grid-cols-3 gap-2 p-3 bg-black/40 border border-white/10 rounded">
+                    <div className="mt-3 grid grid-cols-3 gap-2 p-3 bg-black/40 border border-white/10 rounded">
                         <div className="text-center">
                             <p className="font-mono text-[9px] text-white/40 uppercase tracking-wider">GROSS</p>
                             <p className="font-mono font-bold text-white">${escrowStatus.grossAmount || task.budget_amount}</p>
@@ -290,92 +528,135 @@ function ContractChatContent() {
                 )}
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto pb-[200px]">
-                {proofs.length === 0 ? (
-                    /* Empty State - Evidence Preview Window */
+            {/* Main Content - Unified Timeline */}
+            <main className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto pb-[260px] z-1 relative">
+                {timeline.length === 0 ? (
+                    /* Empty State */
                     <div className="flex-1 min-h-[300px] backdrop-blur-xl bg-[#0f0f0f]/70 border border-[#00ff88]/10 rounded-lg flex flex-col items-center justify-center relative">
-                        {/* Corner Decorations */}
                         <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-[#00ff88]/40" />
                         <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-[#00ff88]/40" />
                         <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-[#00ff88]/40" />
                         <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-[#00ff88]/40" />
-
-                        {/* Label */}
                         <div className="absolute top-2 left-2 font-mono text-[9px] text-[#00ff88]/30 uppercase">EVIDENCE_PREVIEW_WINDOW</div>
-
-                        {/* Dots */}
-                        <div className="absolute top-2 right-2 flex space-x-1">
-                            <div className="w-1 h-1 bg-[#00ff88]/20" />
-                            <div className="w-1 h-1 bg-[#00ff88]/20" />
-                            <div className="w-1 h-1 bg-[#00ff88]/20" />
-                        </div>
-
                         <div className="flex flex-col items-center text-center px-8">
                             <div className="w-20 h-20 mb-6 flex items-center justify-center border-2 border-dashed border-[#00ff88]/20 rounded-full">
                                 <Upload className="w-10 h-10 text-[#00ff88]/30" />
                             </div>
-                            <h2 className="font-mono text-sm font-bold text-white mb-2 uppercase tracking-wide">No proofs submitted yet</h2>
-                            <p className="text-xs text-white/40 leading-relaxed max-w-[200px]">
-                                Upload mission proof to verify contract completion and release escrow funds.
+                            <h2 className="font-mono text-sm font-bold text-white mb-2 uppercase tracking-wide">No activity yet</h2>
+                            <p className="text-xs text-white/40 leading-relaxed max-w-[220px]">
+                                Use the buttons below to capture photos, share location, or send text updates as proof of work.
                             </p>
                         </div>
                     </div>
                 ) : (
-                    /* Proof Cards */
-                    <div className="space-y-4">
+                    /* Timeline entries */
+                    <div className="space-y-3">
                         <div className="font-mono text-[9px] text-[#00ff88]/50 uppercase tracking-wider mb-2">
-                            EVIDENCE_LOG [{proofs.length} ENTRIES]
+                            CONTRACT_TIMELINE [{timeline.length} ENTRIES]
                         </div>
-                        {proofs.map(proof => (
-                            <ProofCard
-                                key={proof.id}
-                                proof={proof}
-                                isRequester={isRequester}
-                                onApprove={handleApproveProof}
-                                onReject={handleRejectProof}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {/* Upload Buttons Grid */}
-                {isHuman && task.status !== 'COMPLETED' && (
-                    <div className="grid grid-cols-3 gap-3">
-                        <button
-                            onClick={() => handleUploadProof('photo')}
-                            disabled={uploading}
-                            className="flex flex-col items-center justify-center p-4 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
-                        >
-                            <Camera className="w-6 h-6 text-[#00ff88] mb-2 group-hover:scale-110 transition-transform" />
-                            <span className="font-mono text-[9px] text-white/60 tracking-wider uppercase">Capture_Img</span>
-                        </button>
-                        <button
-                            onClick={() => handleUploadProof('location')}
-                            disabled={uploading}
-                            className="flex flex-col items-center justify-center p-4 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
-                        >
-                            <MapPin className="w-6 h-6 text-[#00ff88] mb-2 group-hover:scale-110 transition-transform" />
-                            <span className="font-mono text-[9px] text-white/60 tracking-wider uppercase">Geo_Locate</span>
-                        </button>
-                        <button
-                            onClick={() => handleUploadProof('text')}
-                            disabled={uploading}
-                            className="flex flex-col items-center justify-center p-4 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
-                        >
-                            <FileText className="w-6 h-6 text-[#00ff88] mb-2 group-hover:scale-110 transition-transform" />
-                            <span className="font-mono text-[9px] text-white/60 tracking-wider uppercase">Attach_Log</span>
-                        </button>
+                        {timeline.map((entry, idx) => {
+                            if (entry.type === 'proof') {
+                                return (
+                                    <ProofCard
+                                        key={`proof-${entry.data.id}`}
+                                        proof={entry.data as TaskProof}
+                                        isRequester={isRequester}
+                                        onApprove={handleApproveProof}
+                                        onReject={handleRejectProof}
+                                    />
+                                );
+                            } else {
+                                // Message bubble
+                                const msg = entry.data as Message;
+                                const isMine = msg.sender_id === user?.id;
+                                return (
+                                    <div key={`msg-${msg.id || idx}`} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[80%] rounded-lg px-4 py-3 space-y-1 ${isMine
+                                            ? 'bg-[#00ff88]/10 border border-[#00ff88]/20'
+                                            : 'bg-white/5 border border-white/10'
+                                            }`}>
+                                            {/* Sender label */}
+                                            <div className="flex items-center gap-2">
+                                                <span className={`font-mono text-[9px] uppercase tracking-wider ${isMine ? 'text-[#00ff88]/60' : 'text-white/40'}`}>
+                                                    {isMine ? 'YOU' : msg.sender_type === 'system' ? 'SYSTEM' : 'ISSUER'}
+                                                </span>
+                                            </div>
+                                            {/* Message content */}
+                                            <p className={`text-sm font-mono ${isMine ? 'text-[#00ff88]/90' : 'text-white/80'}`}>
+                                                {msg.content}
+                                            </p>
+                                            {/* Image preview if it's an image message */}
+                                            {msg.message_type === 'image' && msg.metadata?.file_url && (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img
+                                                    src={msg.metadata.file_url}
+                                                    alt="Proof"
+                                                    className="w-full max-h-48 object-cover rounded mt-2 border border-white/10"
+                                                />
+                                            )}
+                                            {/* Timestamp */}
+                                            <p className="text-[9px] text-white/20 font-mono">
+                                                {new Date(msg.created_at).toLocaleTimeString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                        })}
+                        <div ref={chatEndRef} />
                     </div>
                 )}
             </main>
 
             {/* Footer */}
-            <footer className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 pt-4 space-y-4 backdrop-blur-xl bg-[#050505]/90 border-t border-white/10 z-30">
+            <footer className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 pt-3 space-y-3 backdrop-blur-xl bg-[#050505]/95 border-t border-white/10 z-30">
+                {/* Upload Buttons */}
+                {isHuman && task.status !== 'COMPLETED' && (
+                    <div className="grid grid-cols-3 gap-2">
+                        <button
+                            onClick={handleCapturePhoto}
+                            disabled={uploadingPhoto || uploading}
+                            className="flex flex-col items-center justify-center p-3 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
+                        >
+                            {uploadingPhoto ? (
+                                <Loader2 className="w-5 h-5 text-[#00ff88] mb-1 animate-spin" />
+                            ) : (
+                                <Camera className="w-5 h-5 text-[#00ff88] mb-1 group-hover:scale-110 transition-transform" />
+                            )}
+                            <span className="font-mono text-[8px] text-white/60 tracking-wider uppercase">
+                                {uploadingPhoto ? 'UPLOADING' : 'CAPTURE_IMG'}
+                            </span>
+                        </button>
+                        <button
+                            onClick={handleGeoLocate}
+                            disabled={uploading}
+                            className="flex flex-col items-center justify-center p-3 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
+                        >
+                            {uploading ? (
+                                <Loader2 className="w-5 h-5 text-[#00ff88] mb-1 animate-spin" />
+                            ) : (
+                                <MapPin className="w-5 h-5 text-[#00ff88] mb-1 group-hover:scale-110 transition-transform" />
+                            )}
+                            <span className="font-mono text-[8px] text-white/60 tracking-wider uppercase">GEO_LOCATE</span>
+                        </button>
+                        <button
+                            onClick={handleAttachLog}
+                            disabled={uploading || !message.trim()}
+                            className="flex flex-col items-center justify-center p-3 rounded bg-white/5 border border-white/10 hover:border-[#00ff88]/50 hover:bg-[#00ff88]/5 transition-all group disabled:opacity-50"
+                        >
+                            <FileText className="w-5 h-5 text-[#00ff88] mb-1 group-hover:scale-110 transition-transform" />
+                            <span className="font-mono text-[8px] text-white/60 tracking-wider uppercase">ATTACH_LOG</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Message Input */}
-                <div className="flex items-center space-x-3">
-                    <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
-                        <Paperclip className="w-5 h-5 text-white/60" />
+                <div className="flex items-center space-x-2">
+                    <button
+                        onClick={handleCapturePhoto}
+                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                        <ImageIcon className="w-5 h-5 text-white/60" />
                     </button>
                     <div className="flex-1 relative">
                         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -385,12 +666,21 @@ function ContractChatContent() {
                             type="text"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="TYPE_MESSAGE..."
                             className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-7 pr-4 text-xs font-mono text-[#00ff88] focus:ring-1 focus:ring-[#00ff88]/40 focus:border-[#00ff88]/40 placeholder:text-white/20 outline-none"
                         />
                     </div>
-                    <button className="p-2 bg-white/5 rounded-full hover:bg-[#00ff88]/20 transition-colors">
-                        <Send className="w-5 h-5 text-[#00ff88]" />
+                    <button
+                        onClick={handleSendMessage}
+                        disabled={!message.trim() || sendingMessage}
+                        className="p-2 bg-[#00ff88]/20 rounded-full hover:bg-[#00ff88]/30 transition-colors disabled:opacity-30"
+                    >
+                        {sendingMessage ? (
+                            <Loader2 className="w-5 h-5 text-[#00ff88] animate-spin" />
+                        ) : (
+                            <Send className="w-5 h-5 text-[#00ff88]" />
+                        )}
                     </button>
                 </div>
 
@@ -398,7 +688,7 @@ function ContractChatContent() {
                 {canReleasePayment ? (
                     <button
                         onClick={handleReleasePayment}
-                        className="w-full bg-[#00ff88] hover:bg-[#00e67a] active:scale-[0.98] transition-all py-4 px-6 rounded flex items-center justify-center space-x-2 group"
+                        className="w-full bg-[#00ff88] hover:bg-[#00e67a] active:scale-[0.98] transition-all py-3 px-6 rounded flex items-center justify-center space-x-2 group"
                         style={{ boxShadow: '0 0 15px rgba(0, 255, 136, 0.4)' }}
                     >
                         <DollarSign className="w-5 h-5 text-black" />
@@ -409,9 +699,8 @@ function ContractChatContent() {
                     </button>
                 ) : isHuman && task.status !== 'COMPLETED' ? (
                     <button
-                        onClick={() => { }}
                         disabled={proofs.length === 0 || proofs.some(p => p.status !== 'approved')}
-                        className="w-full bg-[#00ff88] hover:bg-[#00e67a] active:scale-[0.98] transition-all py-4 px-6 rounded flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-[#00ff88] hover:bg-[#00e67a] active:scale-[0.98] transition-all py-3 px-6 rounded flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ boxShadow: '0 0 15px rgba(0, 255, 136, 0.4)' }}
                     >
                         <span className="font-mono font-bold text-black tracking-[0.15em] text-sm uppercase">
@@ -420,7 +709,7 @@ function ContractChatContent() {
                         <ChevronRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
                     </button>
                 ) : task.status === 'COMPLETED' ? (
-                    <div className="w-full bg-[#00ff88]/10 border border-[#00ff88]/30 py-4 px-6 rounded flex items-center justify-center space-x-2">
+                    <div className="w-full bg-[#00ff88]/10 border border-[#00ff88]/30 py-3 px-6 rounded flex items-center justify-center space-x-2">
                         <CheckCircle className="w-5 h-5 text-[#00ff88]" />
                         <span className="font-mono font-bold text-[#00ff88] tracking-[0.15em] text-sm uppercase">
                             Contract_Completed
@@ -428,7 +717,7 @@ function ContractChatContent() {
                     </div>
                 ) : null}
 
-                {/* Bottom Indicator */}
+                {/* Bottom safe area */}
                 <div className="w-20 h-1 bg-white/10 mx-auto rounded-full" />
             </footer>
 
