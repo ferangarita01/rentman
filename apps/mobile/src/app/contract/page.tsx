@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getTaskById, acceptTask, Task, supabase, getAgentProfile, calculateTrustScore } from '@/lib/supabase-client';
+import { getTaskById, acceptTask, Task, getAgentProfile } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     ChevronLeft,
@@ -53,18 +53,7 @@ function ContractDetailsContent() {
     const { user } = useAuth();
     const userId = user?.id || null;
 
-    useEffect(() => {
-        if (contractId) {
-            loadTask();
-        }
-    }, [contractId]);
-
-    useEffect(() => {
-        if (task) {
-            loadIssuerData();
-            initializeGeolocation();
-        }
-    }, [task]);
+    // useEffects moved below function declarations
 
     async function loadTask() {
         if (!contractId) return;
@@ -131,6 +120,31 @@ function ContractDetailsContent() {
             return; // Don't navigate for system issuers
         }
         router.push(`/issuer?id=${issuerData.id}`);
+    }
+
+    function toRad(degrees: number): number {
+        return degrees * (Math.PI / 180);
+    }
+
+    function calculateHaversineDistance(
+        lat1: number,
+        lon1: number,
+        lat2: number,
+        lon2: number
+    ): number {
+        const R = 6371; // Earth's radius in km
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     function initializeGeolocation() {
@@ -203,30 +217,21 @@ function ContractDetailsContent() {
         );
     }
 
-    function calculateHaversineDistance(
-        lat1: number,
-        lon1: number,
-        lat2: number,
-        lon2: number
-    ): number {
-        const R = 6371; // Earth's radius in km
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
+    // useEffects after all function declarations
+    useEffect(() => {
+        if (contractId) {
+            loadTask();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contractId]);
 
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
-
-    function toRad(degrees: number): number {
-        return degrees * (Math.PI / 180);
-    }
+    useEffect(() => {
+        if (task) {
+            loadIssuerData();
+            initializeGeolocation();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [task]);
 
     function openNavigation(service: 'google' | 'waze') {
         if (!locationData.targetLat || !locationData.targetLng) {
@@ -255,7 +260,7 @@ function ContractDetailsContent() {
         if (!task) return;
 
         setAccepting(true);
-        const { data, error } = await acceptTask(task.id, userId);
+        const { error } = await acceptTask(task.id, userId);
 
         if (error) {
             alert('Error accepting contract: ' + error.message);
@@ -342,7 +347,10 @@ function ContractDetailsContent() {
                         <Terminal className="w-4 h-4 text-[#00ff88]" />
                         <h3 className="text-[#00ff88] text-sm font-mono font-bold tracking-widest uppercase">TECHNICAL SPECS</h3>
                     </div>
-                    <div className="bg-[#1a1a1a]/40 border border-[#333333] rounded-lg overflow-hidden">
+                    <div
+                        onClick={() => router.push(`/contract/chat?id=${contractId}`)}
+                        className="bg-[#1a1a1a]/40 border border-[#333333] rounded-lg overflow-hidden cursor-pointer active:scale-[0.98] transition-all hover:border-[#00ff88]/30"
+                    >
                         <div className="grid divide-y divide-[#333333]">
                             {task.required_skills && task.required_skills.length > 0 ? (
                                 task.required_skills.map((skill, index) => (
@@ -350,10 +358,11 @@ function ContractDetailsContent() {
                                         <div className="h-4 w-4 rounded-sm border border-[#00ff88]/50 flex items-center justify-center">
                                             <div className="w-2 h-2 bg-[#00ff88]"></div>
                                         </div>
-                                        <div className="flex flex-col">
+                                        <div className="flex flex-col flex-1">
                                             <span className="text-xs font-mono text-gray-500 uppercase">Constraint 0{index + 1}</span>
                                             <p className="text-white font-mono text-sm uppercase">{skill}</p>
                                         </div>
+                                        <ChevronLeft className="w-4 h-4 text-[#00ff88]/50 rotate-180" />
                                     </div>
                                 ))
                             ) : (
