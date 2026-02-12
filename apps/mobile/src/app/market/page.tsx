@@ -36,14 +36,15 @@ function MarketPageContent() {
             const { data: profileData } = await getProfile(user.id);
             setProfile(profileData);
 
-            // Fetch Wallet Transactions to get accurate balance
+            // Fetch Transactions to get accurate balance
             const { data: allTransactions } = await supabase
-                .from('wallet_transactions')
-                .select('amount')
+                .from('transactions')
+                .select('amount, status')
                 .eq('user_id', user.id);
 
             if (allTransactions) {
-                const total = allTransactions.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0);
+                const completed = allTransactions.filter((t: { amount: number; status: string }) => t.status === 'completed');
+                const total = completed.reduce((sum: number, t: { amount: number; status: string }) => sum + Number(t.amount), 0);
                 setRentmanCredits(Math.max(0, total));
             }
         }

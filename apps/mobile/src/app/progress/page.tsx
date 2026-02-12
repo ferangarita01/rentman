@@ -52,9 +52,9 @@ export default function ProgressPage() {
             const { data: profileData } = await getProfile(user.id);
             if (profileData) setProfile(profileData);
 
-            // 2. Get All Transactions from the Stripe Sync VIEW
+            // 2. Get All Transactions from the real transactions table
             const { data: allTransactions, error } = await supabase
-                .from('wallet_transactions')
+                .from('transactions')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false });
@@ -63,12 +63,27 @@ export default function ProgressPage() {
                 console.error('Error fetching transactions:', error);
                 toast.error('Failed to load wallet data');
             } else if (allTransactions && allTransactions.length > 0) {
-                const total = allTransactions.reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+                // Only count completed transactions for balance
+                const completedTxns = allTransactions.filter((t: Deposit) => t.status === 'completed');
+                const total = completedTxns.reduce((sum: number, t: Deposit) => sum + Number(t.amount), 0);
                 setRentmanCredits(Math.max(0, total));
                 setTransactions(allTransactions);
             } else {
                 setRentmanCredits(0);
                 setTransactions([]);
+            }
+
+            // 3. Also check escrow_transactions for held funds
+            const { data: escrowData } = await supabase
+                .from('escrow_transactions')
+                .select('amount, status')
+                .eq('requester_id', user.id)
+                .in('status', ['held', 'authorized']);
+
+            if (escrowData && escrowData.length > 0) {
+                const heldFunds = escrowData.reduce((sum: number, e: { amount: number }) => sum + Number(e.amount), 0);
+                // If there are held funds, we could display them separately
+                console.log('[WALLET] Held in escrow:', heldFunds);
             }
         } catch (e) {
             console.error('Wallet fetch error:', e);
