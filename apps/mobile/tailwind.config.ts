@@ -39,6 +39,7 @@ const config: Config = {
             },
             fontFamily: {
                 sans: ["var(--font-inter)", "sans-serif"],
+                grotesk: ["var(--font-space-grotesk)", "sans-serif"],
             },
             backgroundImage: {
                 "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
