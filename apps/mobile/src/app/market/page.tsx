@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useState, useMemo, startTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getTasks, Task, getProfile, Profile, supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,14 +60,14 @@ function MarketPageContent() {
     }, [user]);
 
     useEffect(() => {
-        loadData();
+        startTransition(() => { loadData(); });
     }, [loadData]);
 
     // Check for create query param
     useEffect(() => {
         const createParam = searchParams.get('create');
         if (createParam === 'true') {
-            setShowCreateModal(true);
+            startTransition(() => { setShowCreateModal(true); });
             // Cleanup URL without refresh
             const newUrl = new URL(window.location.href);
             newUrl.searchParams.delete('create');

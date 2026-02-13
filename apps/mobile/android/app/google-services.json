@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "346436028870",
+    "project_id": "agent-gen-1",
+    "storage_bucket": "agent-gen-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:346436028870:android:f512710bc871c868394ac7",
+        "android_client_info": {
+          "package_name": "com.rentman.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "346436028870-0nqo3f1j8u73lb9lgt57dop3dnfidoi2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8TyNDrjeJyDNb15T5Oo5nII7EtevlWBY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "346436028870-0nqo3f1j8u73lb9lgt57dop3dnfidoi2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

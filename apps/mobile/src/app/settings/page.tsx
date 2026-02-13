@@ -5,11 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     ChevronLeft,
-    Settings2,
     Video,
     MapPin,
     Fingerprint,
-    Network,
+    Network as NetworkIcon,
     Zap,
     ShieldCheck,
     TriangleAlert,
@@ -17,121 +16,216 @@ import {
     FileText,
     ExternalLink
 } from 'lucide-react';
-import { supabase, getSettings, updateSettings, UserSettings } from '@/lib/supabase-client';
+import { getSettings, updateSettings, UserSettings } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackPageView, trackSettingsChange, trackButtonClick } from '@/lib/analytics';
+import { useRentmanAssistant } from '@/contexts/RentmanAssistantContext';
+import { config } from '@/lib/config';
+
+// Capacitor Plugins
+import { Camera } from '@capacitor/camera';
+import { Geolocation } from '@capacitor/geolocation';
+import { Network } from '@capacitor/network';
+import { Device } from '@capacitor/device';
+import { Capacitor } from '@capacitor/core';
 
 export default function SettingsPage() {
     const router = useRouter();
-    const [userId, setUserId] = useState<string | null>(null);
+    const { user } = useAuth();
+    const { isConnected, connectToRealtime, disconnectFromRealtime } = useRentmanAssistant();
     const [loading, setLoading] = useState(true);
 
     // State for toggles
     const [hardware, setHardware] = useState({
-        camera: true,
-        gps: true,
+        camera: false,
+        gps: false,
         biometric: false,
     });
 
     const [comms, setComms] = useState({
-        aiLink: true,
-        neural: false,
+        aiLink: false,
+        neural: false, // Push notifications
+    });
+
+    // Diagnostics State
+    const [diagnostics, setDiagnostics] = useState({
+        ping: 0,
+        loss: 0,
+        temp: 32,
+        uplink: 'OFFLINE'
     });
 
     // Load settings on mount
+
     useEffect(() => {
         trackPageView('/settings', 'Settings');
-        loadUserSettings();
-    }, []);
 
-    async function loadUserSettings() {
-        try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
+        async function checkActualPermissions() {
+            if (Capacitor.getPlatform() === 'web') return;
 
-            if (userError || !user) {
-                console.error('User not logged in');
+            try {
+                const camStatus = await Camera.checkPermissions();
+                const geoStatus = await Geolocation.checkPermissions();
+
+                setHardware(prev => ({
+                    ...prev,
+                    camera: camStatus.camera === 'granted',
+                    gps: geoStatus.location === 'granted',
+                }));
+            } catch (err) {
+                console.error('Error checking permissions:', err);
+            }
+        }
+
+        async function loadUserSettings() {
+            if (!user) {
                 setLoading(false);
                 return;
             }
 
-            setUserId(user.id);
+            try {
+                // Fetch settings
+                const { data: settings } = await getSettings(user.id);
 
-            // Fetch settings
-            const { data: settings, error: settingsError } = await getSettings(user.id);
+                if (settings) {
+                    setHardware(prev => ({
+                        ...prev,
+                        biometric: settings.biometrics_enabled,
+                    }));
 
-            if (settingsError) {
-                console.error('Error loading settings:', settingsError);
-            } else if (settings) {
-                // Apply loaded settings to state
-                setHardware({
-                    camera: settings.camera_enabled,
-                    gps: settings.gps_enabled,
-                    biometric: settings.biometrics_enabled,
-                });
-                setComms({
-                    aiLink: settings.ai_link_enabled,
-                    neural: settings.neural_notifications,
-                });
+                    setComms({
+                        aiLink: settings.ai_link_enabled,
+                        neural: settings.neural_notifications,
+                    });
+                }
+                setLoading(false);
+            } catch (err) {
+                console.error('Error loading settings:', err);
+                setLoading(false);
             }
-
-            setLoading(false);
-        } catch (err) {
-            console.error('Error loading settings:', err);
-            setLoading(false);
         }
-    }
+
+        function startDiagnostics() {
+            const checkNetwork = async () => {
+                try {
+                    const status = await Network.getStatus();
+                    const isOnline = status.connected;
+
+                    let pingMs = 0;
+                    let loss = 0;
+                    if (isOnline) {
+                        const start = Date.now();
+                        try {
+                            await fetch(`${config.apiUrl}/health`, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                            pingMs = Date.now() - start;
+                        } catch {
+                            loss = 100;
+                        }
+                    }
+
+                    let batteryLevel = 1;
+                    if (Capacitor.isNativePlatform()) {
+                        const info = await Device.getBatteryInfo();
+                        batteryLevel = info.batteryLevel || 1;
+                    }
+                    const simulatedTemp = 30 + (Math.random() * 5) + (batteryLevel * 10);
+
+                    setDiagnostics({
+                        ping: pingMs,
+                        loss: loss,
+                        temp: Math.round(simulatedTemp),
+                        uplink: isOnline ? (loss > 0 ? 'UNSTABLE' : 'STABLE') : 'OFFLINE'
+                    });
+
+                } catch (err) {
+                    console.error('Diagnostics error:', err);
+                }
+            };
+
+            checkNetwork();
+            const interval = setInterval(checkNetwork, 5000);
+            return () => clearInterval(interval);
+        }
+
+        loadUserSettings();
+        const cleanup = startDiagnostics();
+        checkActualPermissions();
+
+        return cleanup;
+    }, [user]);
+
+    // Sync state with Realtime Context
+    useEffect(() => {
+        setComms(prev => ({ ...prev, aiLink: isConnected }));
+    }, [isConnected]);
+
+
 
     // Save settings to Supabase
     async function saveSettingsToDb(newSettings: Partial<UserSettings>) {
-        if (!userId) return;
-
-        const { error } = await updateSettings(userId, newSettings);
-
-        if (error) {
-            console.error('Failed to save settings:', error);
-            alert('Failed to save settings. Please try again.');
-        }
+        if (!user) return;
+        const { error } = await updateSettings(user.id, newSettings);
+        if (error) console.error('Failed to save settings:', error);
     }
 
-    // Toggle handlers with DB persistence
     const toggleHardware = async (key: keyof typeof hardware) => {
-        const newValue = !hardware[key];
-        setHardware(prev => ({ ...prev, [key]: newValue }));
+        const targetValue = !hardware[key];
 
-        // Track analytics
-        trackSettingsChange(`hardware_${key}`, newValue);
+        // 1. Handle Permissions
+        if (targetValue && Capacitor.isNativePlatform()) {
+            try {
+                if (key === 'camera') {
+                    const status = await Camera.requestPermissions();
+                    if (status.camera !== 'granted') throw new Error('Permission denied');
+                } else if (key === 'gps') {
+                    const status = await Geolocation.requestPermissions();
+                    if (status.location !== 'granted') throw new Error('Permission denied');
+                }
+            } catch (err) {
+                console.error(err);
+                alert(`ACCESS DENIED: Please enable ${key} permissions in system settings.`);
+                return; // Do not toggle state
+            }
+        }
 
-        // Map to DB field names
+        // 2. Update State & DB
+        setHardware(prev => ({ ...prev, [key]: targetValue }));
+        trackSettingsChange(`hardware_${key}`, targetValue);
+
         const dbFieldMap = {
             camera: 'camera_enabled',
             gps: 'gps_enabled',
             biometric: 'biometrics_enabled'
         };
-
-        await saveSettingsToDb({ [dbFieldMap[key]]: newValue } as Partial<UserSettings>);
+        await saveSettingsToDb({ [dbFieldMap[key]]: targetValue } as Partial<UserSettings>);
     };
 
     const toggleComms = async (key: keyof typeof comms) => {
-        const newValue = !comms[key];
-        setComms(prev => ({ ...prev, [key]: newValue }));
+        const targetValue = !comms[key];
 
-        // Track analytics
-        trackSettingsChange(`comms_${key}`, newValue);
+        // 1. Handle Logic
+        if (key === 'aiLink') {
+            if (targetValue) connectToRealtime();
+            else disconnectFromRealtime();
+        }
 
-        // Map to DB field names
+        // 2. Update State & DB
+        setComms(prev => ({ ...prev, [key]: targetValue }));
+        trackSettingsChange(`comms_${key}`, targetValue);
+
         const dbFieldMap = {
             aiLink: 'ai_link_enabled',
             neural: 'neural_notifications'
         };
-
-        await saveSettingsToDb({ [dbFieldMap[key]]: newValue } as Partial<UserSettings>);
+        await saveSettingsToDb({ [dbFieldMap[key]]: targetValue } as Partial<UserSettings>);
     };
 
     const handleReboot = () => {
         trackButtonClick('Emergency Reboot', 'Settings');
         if (confirm('REBOOT SYSTEM?')) {
             alert('SYSTEM REBOOT INITIATED...');
-            setTimeout(() => router.push('/'), 1000);
+            if (window.navigator?.vibrate) window.navigator.vibrate(200);
+            setTimeout(() => window.location.reload(), 1000);
         }
     };
 
@@ -141,7 +235,7 @@ export default function SettingsPage() {
         window.open(url, '_blank');
     };
 
-    // Inline styles for specific effects not in Tailwind by default
+    // Inline styles for cyberpunk execution
     const styles = {
         scanline: {
             background: 'linear-gradient(to bottom, rgba(0, 255, 136, 0.03) 50%, rgba(0, 0, 0, 0) 50%)',
@@ -152,6 +246,16 @@ export default function SettingsPage() {
         },
         textGlow: {
             textShadow: '0 0 8px rgba(0, 255, 136, 0.6)',
+        },
+        uplinkStable: {
+            color: '#00ff88',
+            borderColor: 'rgba(0, 255, 136, 0.2)',
+            backgroundColor: 'rgba(0, 255, 136, 0.1)',
+        },
+        uplinkDown: {
+            color: '#ff0055',
+            borderColor: 'rgba(255, 0, 85, 0.2)',
+            backgroundColor: 'rgba(255, 0, 85, 0.1)',
         }
     };
 
@@ -287,7 +391,7 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-4 border border-[#333333] bg-[#1a1a1a]/30 p-4 justify-between transition-colors hover:bg-[#1a1a1a]/50">
                             <div className="flex items-center gap-4">
                                 <div className="text-[#00ff88] flex items-center justify-center border border-[#00ff88]/20 bg-[#00ff88]/5 w-10 h-10">
-                                    <Network className="w-5 h-5" />
+                                    <NetworkIcon className="w-5 h-5" />
                                 </div>
                                 <div className="flex flex-col">
                                     <p className="text-sm font-bold tracking-tight">AI Direct Link</p>
@@ -362,7 +466,7 @@ export default function SettingsPage() {
                     <div className="space-y-[-1px]">
 
                         {/* Item: Privacy Policy */}
-                        <div 
+                        <div
                             onClick={() => openLegalDocument('privacy')}
                             className="flex items-center gap-4 border border-[#333333] bg-[#1a1a1a]/30 p-4 justify-between transition-colors hover:bg-[#1a1a1a]/50 cursor-pointer active:scale-[0.99]">
                             <div className="flex items-center gap-4">
@@ -378,7 +482,7 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Item: Terms of Service */}
-                        <div 
+                        <div
                             onClick={() => openLegalDocument('terms')}
                             className="flex items-center gap-4 border border-[#333333] bg-[#1a1a1a]/30 p-4 justify-between transition-colors hover:bg-[#1a1a1a]/50 cursor-pointer active:scale-[0.99]">
                             <div className="flex items-center gap-4">
@@ -415,20 +519,22 @@ export default function SettingsPage() {
                         <Activity className="w-4 h-4 text-[#00ff88] animate-pulse" />
                         <h4 className="font-mono text-[10px] tracking-widest uppercase text-white/60">System_Diagnostics</h4>
                     </div>
-                    <div className="font-mono text-[10px] text-[#00ff88] bg-[#00ff88]/10 px-2 py-0.5 border border-[#00ff88]/20">UPLINK_STABLE</div>
+                    <div className={`font-mono text-[10px] px-2 py-0.5 border ${diagnostics.uplink === 'STABLE' ? 'text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/20' : 'text-red-500 bg-red-500/10 border-red-500/20'}`}>
+                        UPLINK_{diagnostics.uplink}
+                    </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                     <div className="border border-[#333333] p-2 flex flex-col items-center">
                         <p className="font-mono text-[9px] text-white/30 uppercase">Ping</p>
-                        <p className="font-mono text-xs text-[#00ff88]">24ms</p>
+                        <p className="font-mono text-xs text-[#00ff88]">{diagnostics.ping}ms</p>
                     </div>
                     <div className="border border-[#333333] p-2 flex flex-col items-center">
                         <p className="font-mono text-[9px] text-white/30 uppercase">Loss</p>
-                        <p className="font-mono text-xs text-[#00ff88]">0.00%</p>
+                        <p className="font-mono text-xs text-[#00ff88]">{diagnostics.loss.toFixed(2)}%</p>
                     </div>
                     <div className="border border-[#333333] p-2 flex flex-col items-center">
                         <p className="font-mono text-[9px] text-white/30 uppercase">Temp</p>
-                        <p className="font-mono text-xs text-[#00ff88]">32°C</p>
+                        <p className="font-mono text-xs text-[#00ff88]">{diagnostics.temp}°C</p>
                     </div>
                 </div>
 

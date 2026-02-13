@@ -173,8 +173,8 @@ function ContractDetailsContent() {
                 if (task.geo_location) {
                     // Could be POINT type or JSONB with lat/lng
                     if (typeof task.geo_location === 'object') {
-                        targetLat = task.geo_location.lat || task.geo_location.latitude;
-                        targetLng = task.geo_location.lng || task.geo_location.longitude;
+                        targetLat = (task.geo_location as any).lat || (task.geo_location as any).latitude;
+                        targetLng = (task.geo_location as any).lng || (task.geo_location as any).longitude;
                     }
                 }
 

@@ -9,6 +9,7 @@ import { App, URLOpenListenerEvent } from '@capacitor/app';
 import toast from 'react-hot-toast';
 import { supabase, getProfile, Profile } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { config } from '@/lib/config';
 
 interface Deposit {
     id: string;
@@ -149,7 +150,7 @@ export default function ProgressPage() {
 
         const loadingToast = toast.loading('Opening Stripe Checkout...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+            const BACKEND_URL = config.apiUrl;
 
             const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
                 method: 'POST',
@@ -187,7 +188,7 @@ export default function ProgressPage() {
 
         const loadingToast = toast.loading('Connecting to Stripe...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+            const BACKEND_URL = config.apiUrl;
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
                 method: 'POST',
@@ -249,7 +250,7 @@ export default function ProgressPage() {
         setWithdrawing(true);
         const loadingToast = toast.loading('Processing Payout...');
         try {
-            const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+            const BACKEND_URL = config.apiUrl;
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/transfer`, {
                 method: 'POST',

@@ -1,5 +1,6 @@
 const { getSupabase } = require('../config/supabase');
 const { validateProofWithAI } = require('../services/aiService');
+const { sendNotification } = require('../services/notificationService');
 
 const uploadProof = async (req, res) => {
     try {
@@ -45,6 +46,14 @@ const uploadProof = async (req, res) => {
             return res.status(500).json({ error: 'Failed to save proof' });
         }
 
+        // NOTIFICATION: Notify Requester
+        await sendNotification(
+            task.requester_id,
+            'Nueva Prueba de Trabajo',
+            `El operador ha subido una prueba: ${title}`,
+            { taskId: taskId, type: 'proof_uploaded' }
+        );
+
         res.json({
             success: true,
             proofId: proof.id,
@@ -86,6 +95,15 @@ const reviewProof = async (req, res) => {
         }
 
         await supabase.from('task_proofs').update(updateData).eq('id', proofId);
+
+        // NOTIFICATION: Notify Worker
+        const statusMsg = action === 'approve' ? 'Aprobada ✅' : 'Rechazada ❌';
+        await sendNotification(
+            proof.human_id,
+            `Prueba ${statusMsg}`,
+            `Tu prueba "${proof.title}" ha sido ${action === 'approve' ? 'aprobada' : 'rechazada'}.`,
+            { taskId: proof.task_id, type: 'proof_reviewed' }
+        );
 
         res.json({ success: true, message: `Proof ${action}d`, proofId: proofId });
 

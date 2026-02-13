@@ -73,9 +73,14 @@ export default function ProofCard({ proof, isRequester, onApprove, onReject }: P
         setRejectionReason('');
     };
 
-    const autoApproveTime = new Date(proof.created_at);
-    autoApproveTime.setHours(autoApproveTime.getHours() + 24);
-    const hoursUntilAutoApprove = Math.max(0, Math.round((autoApproveTime.getTime() - Date.now()) / (1000 * 60 * 60)));
+    const [hoursUntilAutoApprove, setHoursUntilAutoApprove] = React.useState(0);
+
+    React.useEffect(() => {
+        const autoApproveTime = new Date(proof.created_at);
+        autoApproveTime.setHours(autoApproveTime.getHours() + 24);
+        const hours = Math.max(0, Math.round((autoApproveTime.getTime() - Date.now()) / (1000 * 60 * 60)));
+        setHoursUntilAutoApprove(hours);
+    }, [proof.created_at]);
 
     const statusConfig = getStatusConfig();
 
@@ -144,7 +149,7 @@ export default function ProofCard({ proof, isRequester, onApprove, onReject }: P
                         <div className="flex items-center gap-2 text-sm text-white/80">
                             <MapPin className="w-4 h-4 text-[#00ff88]" />
                             <span className="font-mono text-xs tracking-wide">
-                                {proof.location_data.lat?.toFixed(6)}, {proof.location_data.lng?.toFixed(6)}
+                                {proof.location_data?.lat?.toFixed(6)}, {proof.location_data?.lng?.toFixed(6)}
                             </span>
                         </div>
                         <div className="mt-2 font-mono text-[9px] text-white/30 uppercase tracking-wider">
@@ -167,14 +172,14 @@ export default function ProofCard({ proof, isRequester, onApprove, onReject }: P
                                     <div className="w-20 h-1.5 bg-black/40 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-[#00ff88]"
-                                            style={{ width: `${proof.ai_validation.confidence}%` }}
+                                            style={{ width: `${proof.ai_validation?.confidence}%` }}
                                         />
                                     </div>
-                                    <span className="text-white font-mono text-xs">{proof.ai_validation.confidence}%</span>
+                                    <span className="text-white font-mono text-xs">{proof.ai_validation?.confidence}%</span>
                                 </div>
                             </div>
-                            {proof.ai_validation.summary && (
-                                <p className="text-xs text-white/50 mt-2 font-mono">{proof.ai_validation.summary}</p>
+                            {proof.ai_validation?.summary && (
+                                <p className="text-xs text-white/50 mt-2 font-mono">{proof.ai_validation?.summary}</p>
                             )}
                         </div>
                     </div>

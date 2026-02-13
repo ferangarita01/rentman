@@ -3,9 +3,10 @@
  * Handles fetch requests with proper URL resolution for both web and native apps
  */
 
+import { config } from './config';
 import { Capacitor } from '@capacitor/core';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-mqadwgncoa-ue.a.run.app';
+const API_BASE_URL = config.apiUrl;
 
 /**
  * Resolves API URL - uses absolute URL for Capacitor native apps

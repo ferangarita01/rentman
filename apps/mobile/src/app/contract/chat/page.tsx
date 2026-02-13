@@ -365,7 +365,8 @@ function ContractChatContent() {
 
         const { data, error } = await releasePayment(contractId, user.id);
         if (error) {
-            alert('Failed to release payment: ' + error.message);
+            const errMsg = (error as any).message || String(error);
+            alert('Failed to release payment: ' + errMsg);
         } else {
             alert(`✅ Payment released! Amount: $${data.amount}`);
             await loadContractData();
@@ -616,13 +617,13 @@ function ContractChatContent() {
                                             </div>
                                             {/* Message content */}
                                             <p className={`text-sm font-mono ${isMine ? 'text-[#00ff88]/90' : 'text-white/80'}`}>
-                                                {msg.content}
+                                                {String(msg.content || '')}
                                             </p>
                                             {/* Image preview if it's an image message */}
-                                            {msg.message_type === 'image' && msg.metadata?.file_url && (
+                                            {msg.message_type === 'image' && (msg.metadata as any)?.file_url && (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={msg.metadata.file_url}
+                                                    src={(msg.metadata as any).file_url}
                                                     alt="Proof"
                                                     className="w-full max-h-48 object-cover rounded mt-2 border border-white/10"
                                                 />

@@ -1,9 +1,7 @@
 import { supabase as supabaseStart } from './supabase';
+import { config } from './config';
 
 export const supabase = supabaseStart;
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Task types
 export interface Task {
@@ -16,7 +14,7 @@ export interface Task {
   task_type: string;
   required_skills?: string[];
   location_address?: string;
-  geo_location?: { lat: number; lng: number } | { latitude: number; longitude: number } | any;
+  geo_location?: { lat: number; lng: number } | { latitude: number; longitude: number } | Record<string, unknown>;
   budget_amount: number;
   budget_currency: string;
   payment_type: string;
@@ -64,7 +62,7 @@ export interface Message {
   content: string;
   message_type: 'text' | 'image' | 'location' | 'system';
   read_at?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -293,7 +291,7 @@ export async function getThreads(userId: string) {
       console.error('Error fetching messages:', messagesError);
 
       // Check if it's a "table doesn't exist" error
-      const errorMessage = (messagesError as any).message || String(messagesError);
+      const errorMessage = (messagesError as { message: string }).message || String(messagesError);
       if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
         console.warn('Messages table does not exist. Returning threads without messages.');
 
@@ -375,7 +373,7 @@ export async function sendMessage(
   senderId: string,
   content: string,
   messageType: 'text' | 'image' | 'location' | 'system' = 'text',
-  metadata?: any
+  metadata?: Record<string, unknown>
 ) {
   const { data, error } = await supabase
     .from('messages')
@@ -571,7 +569,7 @@ export async function getAgentProfile(agentId: string) {
 /**
  * Calculate trust score based on completed missions
  */
-export function calculateTrustScore(missions: any[]): number {
+export function calculateTrustScore(missions: Array<{ rating?: number }>): number {
   if (!missions || missions.length === 0) return 50; // Default for new agents
 
   // Average rating (1-5 scale) converted to 0-80 range
@@ -598,12 +596,12 @@ export interface TaskProof {
   title: string;
   description?: string;
   file_url?: string;
-  location_data?: any;
+  location_data?: { lat?: number; lng?: number; latitude?: number; longitude?: number;[key: string]: any };
   status: 'pending' | 'approved' | 'rejected' | 'disputed';
   reviewed_by?: string;
   reviewed_at?: string;
   rejection_reason?: string;
-  ai_validation?: any;
+  ai_validation?: { confidence?: number; summary?: string; is_valid?: boolean;[key: string]: any };
   created_at: string;
   updated_at: string;
 }
@@ -641,10 +639,10 @@ export async function uploadProof(
   title: string,
   description?: string,
   fileUrl?: string,
-  locationData?: any
+  locationData?: Record<string, unknown>
 ) {
   try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    const BACKEND_URL = config.apiUrl;
 
     const response = await fetch(`${BACKEND_URL}/api/proofs/upload`, {
       method: 'POST',
@@ -666,7 +664,7 @@ export async function uploadProof(
     }
 
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error uploading proof:', error);
     return { data: null, error };
   }
@@ -700,7 +698,7 @@ export async function reviewProof(
   rejectionReason?: string
 ) {
   try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    const BACKEND_URL = config.apiUrl;
 
     const response = await fetch(`${BACKEND_URL}/api/proofs/review`, {
       method: 'POST',
@@ -719,7 +717,7 @@ export async function reviewProof(
     }
 
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error reviewing proof:', error);
     return { data: null, error };
   }
@@ -730,7 +728,7 @@ export async function reviewProof(
  */
 export async function getEscrowStatus(taskId: string) {
   try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    const BACKEND_URL = config.apiUrl;
 
     const response = await fetch(`${BACKEND_URL}/api/escrow/status/${taskId}`);
     const data = await response.json();
@@ -740,7 +738,7 @@ export async function getEscrowStatus(taskId: string) {
     }
 
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting escrow status:', error);
     return { data: null, error };
   }
@@ -751,7 +749,7 @@ export async function getEscrowStatus(taskId: string) {
  */
 export async function releasePayment(taskId: string, approverId: string) {
   try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    const BACKEND_URL = config.apiUrl;
 
     const response = await fetch(`${BACKEND_URL}/api/escrow/release`, {
       method: 'POST',
@@ -765,7 +763,7 @@ export async function releasePayment(taskId: string, approverId: string) {
     }
 
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error releasing payment:', error);
     return { data: null, error };
   }
@@ -776,7 +774,7 @@ export async function releasePayment(taskId: string, approverId: string) {
  */
 export async function initiateDispute(taskId: string, initiatorId: string, reason: string) {
   try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://rentman-backend-248563654890.us-central1.run.app';
+    const BACKEND_URL = config.apiUrl;
 
     const response = await fetch(`${BACKEND_URL}/api/escrow/dispute`, {
       method: 'POST',
@@ -790,7 +788,7 @@ export async function initiateDispute(taskId: string, initiatorId: string, reaso
     }
 
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error initiating dispute:', error);
     return { data: null, error };
   }
@@ -815,7 +813,7 @@ export interface CreateTaskParams {
  * Create a new task/contract in the Global Market
  */
 export async function createTask(params: CreateTaskParams) {
-  const taskData: any = {
+  const taskData: Record<string, unknown> = {
     title: params.title,
     description: params.description,
     budget_amount: params.budget_amount,
@@ -847,4 +845,39 @@ export async function createTask(params: CreateTaskParams) {
   }
 
   return { data: data as Task, error: null };
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PUSH NOTIFICATIONS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * Register a device push token
+ */
+export async function registerPushToken(
+  userId: string,
+  token: string,
+  deviceType: 'android' | 'ios'
+) {
+  try {
+    const { error } = await supabase
+      .from('user_push_tokens')
+      .upsert({
+        user_id: userId,
+        token: token,
+        device_type: deviceType,
+        last_updated: new Date().toISOString()
+      }, { onConflict: 'token' });
+
+    if (error) {
+      console.error('Error registering push token:', error);
+      return { error };
+    }
+
+    console.log('✅ Push token registered successfully');
+    return { error: null };
+  } catch (err) {
+    console.error('Exception registering push token:', err);
+    return { error: err };
+  }
 }

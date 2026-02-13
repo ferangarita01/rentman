@@ -1,6 +1,7 @@
 const { getStripe } = require('../config/stripe');
 const { getSupabase } = require('../config/supabase');
 const { generateDisputeSummary } = require('../services/aiService');
+const { sendNotification } = require('../services/notificationService');
 
 const lockFunds = async (req, res) => {
     try {
@@ -42,6 +43,14 @@ const lockFunds = async (req, res) => {
         await supabase.from('tasks').update({
             assigned_human_id: humanId, status: 'ASSIGNED', payment_status: 'escrowed', updated_at: new Date().toISOString()
         }).eq('id', taskId);
+
+        // NOTIFICATION: Notify Worker that funds are secured
+        await sendNotification(
+            humanId,
+            'Fondos en Garantía 🔒',
+            `El cliente ha depositado los fondos para la tarea "${task.title}". Puedes comenzar.`,
+            { taskId: taskId, type: 'funds_locked' }
+        );
 
         res.json({
             success: true, escrowId: escrow.id, message: 'Funds locked',
@@ -94,7 +103,13 @@ const releaseFunds = async (req, res) => {
 
         await supabase.from('tasks').update({ status: 'COMPLETED', payment_status: 'released', completed_at: new Date().toISOString() }).eq('id', taskId);
 
-        // System message code omitted for brevity but logic remains same...
+        // NOTIFICATION: Notify Worker of Payment
+        await sendNotification(
+            escrow.human_id,
+            'Pago Liberado 💰',
+            `Se han liberado $${(workerPayout / 100).toFixed(2)} a tu cuenta por la tarea "${task.title}".`,
+            { taskId: taskId, type: 'payment_released' }
+        );
 
         res.json({ success: true, message: 'Payment released', transferId: transfer.id });
 
@@ -123,6 +138,17 @@ const initiateDispute = async (req, res) => {
 
         const { data: proofs } = await supabase.from('task_proofs').select('*').eq('task_id', taskId);
         const disputeSummary = await generateDisputeSummary(taskId, task, reason, proofs);
+
+        // NOTIFICATION: Notify Counterparty
+        const counterpartyId = initiatorId === task.requester_id ? task.assigned_human_id : task.requester_id;
+        if (counterpartyId) {
+            await sendNotification(
+                counterpartyId,
+                'Disputa Iniciada ⚠️',
+                `Se ha abierto una disputa en la tarea "${task.title}". Razón: ${reason}`,
+                { taskId: taskId, type: 'dispute_opened' }
+            );
+        }
 
         res.json({ success: true, message: 'Dispute initiated', escrowId: escrow.id, aiSummary: disputeSummary });
 
