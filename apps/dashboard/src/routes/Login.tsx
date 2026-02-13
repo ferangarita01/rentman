@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LogoSVG from '../components/LogoSVG';
 import { supabase } from '../lib/supabase';
@@ -15,6 +15,23 @@ const Login: React.FC = () => {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
+
+    // WebMCP: Use ref to inject non-standard attributes without React warnings
+    const loginFormRef = useRef<HTMLFormElement>(null);
+    const resetFormRef = useRef<HTMLFormElement>(null);
+
+    useEffect(() => {
+        if (loginFormRef.current) {
+            loginFormRef.current.setAttribute('toolname', 'agent_login');
+            loginFormRef.current.setAttribute('tooldescription', 'Log in to the Rentman Dashboard');
+            loginFormRef.current.setAttribute('toolautosubmit', 'true');
+        }
+        if (resetFormRef.current) {
+            resetFormRef.current.setAttribute('toolname', 'reset_password');
+            resetFormRef.current.setAttribute('tooldescription', 'Request a password reset link');
+            resetFormRef.current.setAttribute('toolautosubmit', 'true');
+        }
+    }, [showForgotPassword]); // Re-run when view changes
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,7 +89,7 @@ const Login: React.FC = () => {
 
                 {!showForgotPassword ? (
                     <>
-                        <form onSubmit={handleLogin} className="space-y-6">
+                        <form ref={loginFormRef} onSubmit={handleLogin} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="block font-mono text-[9px] text-[#00ff88] uppercase tracking-widest">Operator / Client ID</label>
                                 <div className="relative group">
@@ -130,7 +147,7 @@ const Login: React.FC = () => {
                         </form>
 
                         <div className="mt-8 text-center">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowForgotPassword(true);
                                     setError(null);
@@ -144,7 +161,7 @@ const Login: React.FC = () => {
                 ) : (
                     <>
                         {!resetSuccess ? (
-                            <form onSubmit={handlePasswordReset} className="space-y-6">
+                            <form ref={resetFormRef} onSubmit={handlePasswordReset} className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="block font-mono text-[9px] text-[#00ff88] uppercase tracking-widest">Your ID (Email)</label>
                                     <div className="relative group">
@@ -194,7 +211,7 @@ const Login: React.FC = () => {
                         )}
 
                         <div className="mt-8 text-center">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowForgotPassword(false);
                                     setResetSuccess(false);

@@ -1,10 +1,17 @@
 import React from 'react';
 
 // UI Sub-components
-export const NavItem: React.FC<{ icon: string, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
+interface NavItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    icon: string;
+    label: string;
+    active: boolean;
+}
+
+export const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick, ...props }) => (
     <button
         onClick={onClick}
         className={`w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest transition-all ${active ? 'bg-[#00ff88]/10 text-[#00ff88] border-r-2 border-[#00ff88]' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+        {...props}
     >
         <span className="material-symbols-outlined text-lg min-w-[24px] text-center">{icon}</span>
         <span className="truncate text-left">{label}</span>

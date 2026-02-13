@@ -19,6 +19,20 @@ interface WalletPageProps {
 const WalletPage: React.FC<WalletPageProps> = ({ embedded = false }) => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
+    const walletFormRef = React.useRef<HTMLFormElement>(null);
+
+    useEffect(() => {
+        if (walletFormRef.current) {
+            if (!walletAddress) {
+                walletFormRef.current.setAttribute('toolname', 'connect_wallet');
+                walletFormRef.current.setAttribute('tooldescription', 'Connect Phantom Solana Wallet to the dashboard.');
+            } else {
+                walletFormRef.current.setAttribute('toolname', 'disconnect_wallet');
+                walletFormRef.current.setAttribute('tooldescription', 'Disconnect the currently connected wallet.');
+            }
+            walletFormRef.current.setAttribute('toolautosubmit', 'true');
+        }
+    }, [walletAddress]);
 
     // Real Data State
     const [credits, setCredits] = useState<number>(0);
@@ -207,30 +221,38 @@ const WalletPage: React.FC<WalletPageProps> = ({ embedded = false }) => {
                     <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6">
                         <h3 className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4">Crypto Wallet</h3>
 
-                        {!walletAddress ? (
-                            <button
-                                onClick={connectPhantom}
-                                className="w-full bg-[#00ff88]/10 hover:bg-[#00ff88]/20 border border-[#00ff88] text-[#00ff88] py-4 px-4 rounded-lg font-mono flex items-center justify-center gap-2 transition-all"
-                            >
-                                <Wallet size={20} />
-                                <span className="font-bold text-sm">Connect Phantom</span>
-                            </button>
-                        ) : (
-                            <div className="space-y-3">
-                                <div className="bg-black border border-white/10 rounded-lg p-3">
-                                    <p className="text-[10px] text-slate-500 font-mono mb-1">CONNECTED</p>
-                                    <p className="text-white text-xs font-mono break-all">
-                                        {walletAddress.substring(0, 8)}...{walletAddress.substring(walletAddress.length - 8)}
-                                    </p>
-                                </div>
+                        <form
+                            ref={walletFormRef}
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                !walletAddress ? connectPhantom() : disconnectWallet();
+                            }}
+                        >
+                            {!walletAddress ? (
                                 <button
-                                    onClick={disconnectWallet}
-                                    className="w-full py-2 text-sm text-red-500 hover:text-red-400 font-mono"
+                                    type="submit"
+                                    className="w-full bg-[#00ff88]/10 hover:bg-[#00ff88]/20 border border-[#00ff88] text-[#00ff88] py-4 px-4 rounded-lg font-mono flex items-center justify-center gap-2 transition-all"
                                 >
-                                    Disconnect
+                                    <Wallet size={20} />
+                                    <span className="font-bold text-sm">Connect Phantom</span>
                                 </button>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="bg-black border border-white/10 rounded-lg p-3">
+                                        <p className="text-[10px] text-slate-500 font-mono mb-1">CONNECTED</p>
+                                        <p className="text-white text-xs font-mono break-all">
+                                            {walletAddress.substring(0, 8)}...{walletAddress.substring(walletAddress.length - 8)}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full py-2 text-sm text-red-500 hover:text-red-400 font-mono"
+                                    >
+                                        Disconnect
+                                    </button>
+                                </div>
+                            )}
+                        </form>
 
                         <div className="mt-6 pt-6 border-t border-white/10">
                             <div className="flex items-center gap-2 mb-2">

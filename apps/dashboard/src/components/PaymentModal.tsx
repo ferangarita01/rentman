@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, CreditCard, Wallet } from 'lucide-react';
 import { connectWallet } from '../lib/solana';
 
@@ -16,6 +16,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [amount, setAmount] = useState<number>(10);
   const [loading, setLoading] = useState(false);
   const [walletAddr, setWalletAddr] = useState<string | null>(null);
+
+  // WebMCP: Form Reference
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (formRef.current) {
+      formRef.current.setAttribute('toolname', 'deposit_funds');
+      formRef.current.setAttribute('tooldescription', 'Deposit funds into the account via Card (Stripe) or Crypto (Solana)');
+      formRef.current.setAttribute('toolautosubmit', 'true');
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -41,12 +52,49 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
     }
   };
 
+  const handleCardPayment = async () => {
+    setLoading(true);
+    try {
+      const BACKEND_URL = import.meta.env.VITE_AGENT_GATEWAY_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+      const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          userId,
+          returnUrl: window.location.origin + '/wallet'
+        })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to init checkout');
+        setLoading(false);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Payment Error');
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (paymentMethod === 'card') {
+      handleCardPayment();
+    } else {
+      handleCryptoPayment();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl relative">
         {/* Close Button */}
         <button
           onClick={onClose}
+          type="button"
           className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10"
         >
           <X className="w-6 h-6" />
@@ -58,11 +106,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
           <p className="text-xs text-slate-500 mt-1 font-mono uppercase tracking-widest">Deposit Funds to Your Account</p>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
+        {/* Content as Form for WebMCP */}
+        <form ref={formRef} onSubmit={handleSubmit} className="p-6">
+          {/* Agent Context: Hidden Input to declarative state */}
+          <input type="hidden" name="payment_method" value={paymentMethod} />
+
           {/* Payment Method Tabs */}
           <div className="flex gap-2 mb-6">
             <button
+              type="button"
               onClick={() => setPaymentMethod('card')}
               className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${paymentMethod === 'card'
                 ? 'bg-[#00ff88] text-black border-[#00ff88]'
@@ -73,6 +125,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               Card
             </button>
             <button
+              type="button"
               onClick={() => setPaymentMethod('crypto')}
               className={`flex-1 py-3 px-4 rounded-lg border transition-all font-mono text-sm ${paymentMethod === 'crypto'
                 ? 'bg-[#00ff88] text-black border-[#00ff88]'
@@ -103,6 +156,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               ))}
             </div>
             <input
+              name="amount"
               type="number"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
@@ -129,32 +183,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               </div>
 
               <button
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    const BACKEND_URL = import.meta.env.VITE_AGENT_GATEWAY_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
-                    const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        amount,
-                        userId,
-                        returnUrl: window.location.origin + '/wallet'
-                      })
-                    });
-                    const data = await res.json();
-                    if (data.url) {
-                      window.location.href = data.url;
-                    } else {
-                      alert('Failed to init checkout');
-                      setLoading(false);
-                    }
-                  } catch (e) {
-                    console.error(e);
-                    alert('Payment Error');
-                    setLoading(false);
-                  }
-                }}
+                type="submit"
                 disabled={loading}
                 className="w-full py-4 bg-[#6772e5] text-white font-mono text-sm font-bold uppercase rounded-lg hover:bg-[#5469d4] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
@@ -183,7 +212,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               </div>
 
               <button
-                onClick={handleCryptoPayment}
+                type="submit"
                 disabled={loading}
                 className="w-full py-4 bg-[#00ff88] text-black font-mono text-sm font-bold uppercase rounded-lg hover:bg-[#33ff99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
@@ -191,10 +220,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               </button>
             </div>
           )}
-        </div>
+        </form>
       </div>
     </div>
   );
-}
+};
 
 export default PaymentModal;
