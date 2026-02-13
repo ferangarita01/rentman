@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:https": "next dev --experimental-https",
-    "build": "next build",
+    "dev": "npx tsx scripts/fetch-secrets.js && next dev",
+    "dev:https": "npx tsx scripts/fetch-secrets.js && next dev --experimental-https",
+    "build": "npx tsx scripts/fetch-secrets.js && next build",
     "start": "next start",
     "lint": "eslint",
     "cap:sync": "npx cap sync",
@@ -19,6 +19,7 @@
     "android:release": "npm run build && npx cap sync && cd android && .\\gradlew assembleRelease"
   },
   "dependencies": {
+    "@capacitor-firebase/performance": "^8.0.1",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor/browser": "^8.0.0",
@@ -31,6 +32,7 @@
     "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.0",
     "@capacitor/push-notifications": "^8.0.1",
+    "@google-cloud/secret-manager": "^6.1.1",
     "@google-cloud/vertexai": "^1.10.0",
     "@heroicons/react": "^2.2.0",
     "@next/third-parties": "^16.1.6",
@@ -39,6 +41,7 @@
     "bs58": "^6.0.0",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
+    "firebase": "^12.9.0",
     "framer-motion": "^12.27.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
@@ -57,6 +60,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

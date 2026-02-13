@@ -164,8 +164,25 @@ async function handlePaymentSucceeded(supabase: any, paymentIntent: any) {
             throw updateError
         }
 
-        // Log transaction (optional but recommended)
-        // await supabase.from('wallet_transactions').insert({ ... }) 
+        // 4. Log transaction for Mobile App Sync (Mobile sums transactions)
+        const { error: txnError } = await supabase.from('transactions').insert({
+            user_id: userId,
+            amount: amount,
+            currency: currency.toUpperCase(),
+            status: 'completed',
+            type: 'deposit',
+            description: 'Wallet Top-up',
+            metadata: {
+                payment_intent_id: paymentIntent.id,
+                service: 'rentman_credits'
+            }
+        })
+
+        if (txnError) {
+            console.error('Error logging transaction:', txnError)
+        } else {
+            console.log(`Transaction logged for user ${userId}`)
+        }
     }
 }
 

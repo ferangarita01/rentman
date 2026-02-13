@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "vercel-build": "vite build",
+    "build": "npx tsx scripts/fetch-secrets.ts && vite build",
+    "vercel-build": "npx tsx scripts/fetch-secrets.ts && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@google-cloud/secret-manager": "^6.1.1",
     "@solana/web3.js": "^1.98.4",
     "@stripe/react-stripe-js": "^5.6.0",
     "@stripe/stripe-js": "^8.7.0",
@@ -44,6 +45,7 @@
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",
     "sharp": "^0.34.5",
+    "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
