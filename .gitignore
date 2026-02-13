@@ -56,3 +56,6 @@ _releases/
 # Debug Outputs
 debug_output/
 _archive/debug_logs/
+
+# Service Account Credentials
+apps/backend/src/config/service-account.json
