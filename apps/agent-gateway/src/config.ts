@@ -28,6 +28,7 @@ const ConfigSchema = z.object({
   // Security
   JWT_SECRET: z.string().min(32),
   API_KEY_ENCRYPTION_SECRET: z.string().min(32),
+  API_KEY_SECRET: z.string().min(32),
 
   // Rate Limiting
   RATE_LIMIT_MAX: z.string().transform(Number).default('100'),

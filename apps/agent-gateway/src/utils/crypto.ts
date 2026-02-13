@@ -42,12 +42,17 @@ export function generateApiKey(prefix: 'live' | 'test' = 'live'): string {
   return `sk_${prefix}_${randomString}`;
 }
 
+
+import config from '../config.js';
+
 /**
  * Hash API key for storage
- * Never store plain API keys in database
+ * Uses HMAC-SHA256 with a secret pepper to prevent rainbow table attacks
  */
 export async function hashApiKey(key: string): Promise<string> {
-  return crypto.createHash('sha256').update(key).digest('hex');
+  const hmac = crypto.createHmac('sha256', config.API_KEY_SECRET);
+  hmac.update(key);
+  return hmac.digest('hex');
 }
 
 /**

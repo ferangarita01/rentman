@@ -11,31 +11,44 @@ import swaggerUi from '@fastify/swagger-ui';
 import websocket from '@fastify/websocket';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
-import config, { isDevelopment } from './config.js';
 import logger from './utils/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import RedisService from './services/redis.js';
+import { loadSecrets } from './utils/secrets.js';
 
 // Routes
 import { marketTasksRoutes } from './routes/market/tasks.js';
 import { marketHumansRoutes } from './routes/market/humans.js';
 import { agentRoutes } from './routes/agents/register.js';
 
-console.log('--- STARTING AGENT GATEWAY SERVER (REVISION TEST) ---');
+console.log('--- STARTING AGENT GATEWAY SERVER (CLOUD NATIVE) ---');
 
-const fastify = Fastify({
-  logger: true,
-  requestIdHeader: 'x-request-id',
-  requestIdLogLabel: 'request_id',
-  disableRequestLogging: !isDevelopment,
-  trustProxy: true,
-});
+async function bootstrap() {
+  await loadSecrets();
 
-// Set Zod compiler
-fastify.setValidatorCompiler(validatorCompiler);
-fastify.setSerializerCompiler(serializerCompiler);
+  // Now import config, which will validate process.env
+  const configModule = await import('./config.js');
+  const config = configModule.default;
+  const isDevelopment = configModule.isDevelopment;
+
+  const fastify = Fastify({
+    logger: true,
+    requestIdHeader: 'x-request-id',
+    requestIdLogLabel: 'request_id',
+    disableRequestLogging: !isDevelopment,
+    trustProxy: true,
+  });
+
+  // Set Zod compiler
+  fastify.setValidatorCompiler(validatorCompiler);
+  fastify.setSerializerCompiler(serializerCompiler);
+
+  return { fastify, config, isDevelopment };
+}
 
 async function buildServer() {
+  const { fastify, config, isDevelopment } = await bootstrap();
+
   // Security headers
   await fastify.register(helmet, {
     contentSecurityPolicy: {
@@ -133,7 +146,7 @@ async function buildServer() {
   });
 
   // Health check
-  fastify.get('/health', async (request, reply) => {
+  fastify.get('/health', async () => {
     return {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -143,7 +156,7 @@ async function buildServer() {
   });
 
   // Root endpoint
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async () => {
     return {
       name: 'Rentman Agent Gateway',
       version: '1.0.0',
@@ -169,12 +182,16 @@ async function buildServer() {
 async function start() {
   try {
     const server = await buildServer();
+    const port = Number(process.env.PORT) || 3001;
+    const host = process.env.HOST || '0.0.0.0';
 
     // Start server
     await server.listen({
-      port: config.PORT,
-      host: config.HOST,
+      port,
+      host,
     });
+
+    const mcpEnabled = process.env.MCP_ENABLED === 'true';
 
     logger.info(`
 ╔═══════════════════════════════════════════════════════════╗
@@ -183,14 +200,14 @@ async function start() {
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
 
-Environment:    ${config.NODE_ENV}
-Server:         http://${config.HOST}:${config.PORT}
-Documentation:  http://${config.HOST}:${config.PORT}/docs
-OpenAPI Spec:   http://${config.HOST}:${config.PORT}/docs/json
-Health Check:   http://${config.HOST}:${config.PORT}/health
+Environment:    ${process.env.NODE_ENV}
+Server:         http://${host}:${port}
+Documentation:  http://${host}:${port}/docs
+OpenAPI Spec:   http://${host}:${port}/docs/json
+Health Check:   http://${host}:${port}/health
 
-MCP Enabled:    ${config.MCP_ENABLED}
-${config.MCP_ENABLED ? `MCP Port:       ${config.MCP_PORT}` : ''}
+MCP Enabled:    ${mcpEnabled}
+${mcpEnabled ? `MCP Port:       ${process.env.MCP_PORT}` : ''}
 
 🚀 Ready to accept AI agent requests!
     `);
@@ -204,14 +221,10 @@ ${config.MCP_ENABLED ? `MCP Port:       ${config.MCP_PORT}` : ''}
 // Graceful shutdown
 async function shutdown() {
   logger.info('Shutting down gracefully...');
-
   try {
-    await fastify.close();
     await RedisService.disconnect();
-    logger.info('Server closed successfully');
     process.exit(0);
-  } catch (error) {
-    logger.error(error, 'Error during shutdown');
+  } catch (err) {
     process.exit(1);
   }
 }

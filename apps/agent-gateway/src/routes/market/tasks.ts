@@ -12,6 +12,7 @@ import { rateLimitByAgent } from '../../middleware/rateLimit.js';
 import { auditLog } from '../../middleware/audit.js';
 import { ValidationError, NotFoundError } from '../../utils/errors.js';
 import logger from '../../utils/logger.js';
+import { NotificationService } from '../../services/notification.js';
 
 export async function marketTasksRoutes(fastify: FastifyInstance) {
   // Prehandlers for all market routes
@@ -167,7 +168,14 @@ export async function marketTasksRoutes(fastify: FastifyInstance) {
       preHandler: requirePermission('read_tasks'),
     },
     async (request, reply) => {
-      const { status, task_type, min_budget, max_budget, page = 1, per_page = 20 } = request.query as any;
+      const { status, task_type, min_budget, max_budget, page = 1, per_page = 20 } = request.query as {
+        status?: string;
+        task_type?: string;
+        min_budget?: number;
+        max_budget?: number;
+        page?: number;
+        per_page?: number;
+      };
 
       let query = supabase
         .from('tasks')
@@ -309,7 +317,32 @@ export async function marketTasksRoutes(fastify: FastifyInstance) {
         .update({ status: 'pending_acceptance' })
         .eq('id', task_id);
 
-      // TODO: Notify human about contract offer
+      // Update task status
+      await supabase
+        .from('tasks')
+        .update({ status: 'pending_acceptance' })
+        .eq('id', task_id);
+
+      // Notify human about contract offer
+      const { data: humanProfile } = await supabase
+        .from('humans')
+        .select('auth_user_id')
+        .eq('id', human_id)
+        .single();
+
+      if (humanProfile?.auth_user_id) {
+        await NotificationService.send({
+          userId: humanProfile.auth_user_id,
+          type: 'hire_offer',
+          title: 'New Contract Offer',
+          message: `You have received an offer of ${offered_amount} for a new task.`,
+          data: {
+            contractId: contract.id,
+            taskId: task_id,
+            offerAmount: offered_amount
+          }
+        });
+      }
 
       return reply.status(201).send({
         success: true,
