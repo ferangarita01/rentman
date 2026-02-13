@@ -13,6 +13,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/wallet" element={<Wallet />} />
+        <Route path="/progress" element={<Wallet />} /> {/* Mobile App Redirect Target */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
