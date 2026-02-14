@@ -134,8 +134,8 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                 uniqueId: task.id,
                 lat: loc.lat,
                 lng: loc.lng,
-                size: task.status === 'ASSIGNED' ? 0.5 : 0.3,
-                color: task.status === 'ASSIGNED' ? NEON_GREEN : HOLOGRAPHIC_BLUE,
+                size: (task.status?.toUpperCase() === 'ASSIGNED' || task.status?.toUpperCase() === 'IN_PROGRESS') ? 0.5 : 0.3,
+                color: (task.status?.toUpperCase() === 'ASSIGNED' || task.status?.toUpperCase() === 'IN_PROGRESS') ? NEON_GREEN : HOLOGRAPHIC_BLUE,
                 label: `${task.title} - $${task.budget_amount}`,
                 globeStatus: task.status
             };
@@ -143,7 +143,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         setPoints(newPoints);
 
         const activeRings = newPoints
-            .filter(p => p.globeStatus === 'OPEN' || p.globeStatus === 'ASSIGNED')
+            .filter(p => p.globeStatus?.toUpperCase() === 'OPEN' || p.globeStatus?.toUpperCase() === 'ASSIGNED' || p.globeStatus?.toUpperCase() === 'IN_PROGRESS')
             .map(p => ({
                 lat: p.lat,
                 lng: p.lng,
