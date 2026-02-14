@@ -109,6 +109,8 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
             globe.controls().autoRotate = false;
             globe.controls().autoRotateSpeed = 0;
             globe.controls().enableZoom = false;
+            globe.controls().enableDamping = true;
+            globe.controls().dampingFactor = 0.05;
 
             // FTL Travel Zoom Effect
             // As user scrolls, we "zoom in" slightly or adjust altitude
