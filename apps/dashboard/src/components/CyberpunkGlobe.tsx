@@ -223,7 +223,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
 
                     // HTML Elements (Custom Markers)
                     htmlTransitionDuration={1000}
-                    htmlAltitude={0.02}
+                    htmlAltitude={0.01}
 
                     // Proximity Scanner (Hover Panel)
                     onPointHover={(point: any) => setHoverNode(point)}
@@ -284,6 +284,11 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                                     width: 1px; 
                                     height: 20px; 
                                 </div>
+                                <div style="
+                                    width: 1px; 
+                                    height: 4px; 
+                                    background: linear-gradient(to top, transparent, ${d.color});
+                                "></div>
                             </div>
                         `;
                         el.onclick = () => {
