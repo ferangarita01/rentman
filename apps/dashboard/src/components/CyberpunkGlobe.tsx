@@ -167,6 +167,48 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick }
                     arcDashGap={4}
                     arcDashAnimateTime={2000}
                     arcStroke={0.5}
+
+                    // HTML Elements (Custom Markers)
+                    htmlElementsData={points}
+                    htmlElement={(d: any) => {
+                        const el = document.createElement('div');
+                        el.innerHTML = `
+                            <div style="cursor: pointer; pointer-events: auto; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
+                                <div style="
+                                    width: 24px; 
+                                    height: 24px; 
+                                    background: rgba(0, 5, 5, 0.8); 
+                                    border: 1px solid ${d.color}; 
+                                    border-radius: 50%; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center;
+                                    box-shadow: 0 0 10px ${d.color};
+                                    animation: pulse 2s infinite;
+                                ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${d.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                                        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                                        <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+                                    </svg>
+                                </div>
+                                <div style="
+                                    width: 1px; 
+                                    height: 20px; 
+                                    background: linear-gradient(to top, transparent, ${d.color});
+                                "></div>
+                            </div>
+                        `;
+                        el.onclick = () => {
+                            if (onNodeClick) {
+                                const originalTask = missions.find(m => m.id === d.id);
+                                if (originalTask) onNodeClick(originalTask);
+                            }
+                        };
+                        return el;
+                    }}
+                    htmlTransitionDuration={1000}
+                    htmlAltitude={0.1} // Float slightly above surface
                 />
             )}
         </div>

@@ -363,6 +363,17 @@ const Dashboard: React.FC = () => {
                     />
                 )
             }
+            {
+                isAcceptanceModalOpen && selectedTask && (
+                    <ContractAcceptanceModal
+                        isOpen={isAcceptanceModalOpen}
+                        onClose={() => setIsAcceptanceModalOpen(false)}
+                        task={selectedTask}
+                        isProcessing={loading}
+                        onAccept={handleAcceptTask}
+                    />
+                )
+            }
         </div >
     );
 };

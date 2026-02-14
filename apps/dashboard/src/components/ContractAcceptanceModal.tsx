@@ -219,7 +219,7 @@ const ContractAcceptanceModal: React.FC<ContractAcceptanceModalProps> = ({ isOpe
                             {/* Verified Badge list */}
                             <div className="grid grid-cols-3 gap-2">
                                 <div className="aspect-square rounded bg-white/[0.03] border border-white/5 flex items-center justify-center" title="Network Verified">
-                                    <Hub className="text-[#00ff88]/60 w-5 h-5" />
+                                    <Share2 className="text-[#00ff88]/60 w-5 h-5" />
                                 </div>
                                 <div className="aspect-square rounded bg-white/[0.03] border border-white/5 flex items-center justify-center" title="Encrypted Agent">
                                     <Lock className="text-[#00ff88]/60 w-5 h-5" />

@@ -105,7 +105,7 @@ const CreateMissionModalV2: React.FC<CreateMissionModalProps> = ({ isOpen, onClo
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in zoom-in duration-300 overflow-y-auto">
-            <div className="w-full max-w-6xl glass-panel border border-[#1a2e25] shadow-2xl flex flex-col overflow-hidden bg-[#050505] text-white font-sans relative">
+            <div className="w-full max-w-6xl max-h-[90vh] glass-panel border border-[#1a2e25] shadow-2xl flex flex-col overflow-hidden bg-[#050505] text-white font-sans relative">
 
                 {/* Background Grid/Scanline */}
                 <div className="absolute inset-0 pointer-events-none opacity-10" style={{
@@ -170,8 +170,8 @@ const CreateMissionModalV2: React.FC<CreateMissionModalProps> = ({ isOpen, onClo
                                     type="button"
                                     onClick={() => setSelectedType(type.label)}
                                     className={`group flex flex-col items-center justify-center p-6 border transition-all aspect-square relative overflow-hidden ${selectedType === type.label
-                                            ? 'border-[#00ff88] bg-[#00ff88]/10'
-                                            : 'border-[#00ff88]/20 bg-white/5 hover:bg-[#00ff88]/10 hover:border-[#00ff88]'
+                                        ? 'border-[#00ff88] bg-[#00ff88]/10'
+                                        : 'border-[#00ff88]/20 bg-white/5 hover:bg-[#00ff88]/10 hover:border-[#00ff88]'
                                         }`}
                                 >
                                     <div className={`absolute top-1 right-1 text-[8px] font-mono ${selectedType === type.label ? 'text-[#00ff88]' : 'text-white/20'}`}>{type.id}</div>
