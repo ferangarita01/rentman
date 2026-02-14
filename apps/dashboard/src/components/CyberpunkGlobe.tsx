@@ -119,15 +119,15 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
     }, [dimensions, scrollOffset]);
 
     return (
-        <div ref={containerRef} className="absolute inset-0 z-0 opacity-40 pointer-events-auto w-full h-full flex items-center justify-center">
+        <div ref={containerRef} className="absolute inset-0 z-0 opacity-80 pointer-events-auto w-full h-full flex items-center justify-center">
             {dimensions.width > 0 && (
                 <Globe
                     ref={globeEl}
                     width={dimensions.width}
                     height={dimensions.height}
-                    globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-                    bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                    backgroundImageUrl="https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/cat-sky/night-sky.png"
+                    globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
+                    bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
+                    backgroundImageUrl="https://unpkg.com/three-globe/example/img/night-sky.png"
                     backgroundColor="rgba(0,0,0,1)"
                     atmosphereColor={NEON_GREEN}
                     atmosphereAltitude={0.15}
