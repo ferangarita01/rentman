@@ -256,6 +256,10 @@ const Dashboard: React.FC = () => {
                                     missions={missions}
                                     onNodeClick={handleNodeClick}
                                     scrollOffset={scrollPosition}
+                                    focusNode={selectedTask && (selectedTask.lat !== undefined && selectedTask.lng !== undefined)
+                                        ? { lat: selectedTask.lat, lng: selectedTask.lng }
+                                        : null
+                                    }
                                 />
 
                                 {/* Scanning Line Overlay */}

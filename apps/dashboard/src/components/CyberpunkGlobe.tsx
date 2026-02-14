@@ -38,14 +38,18 @@ interface CyberpunkGlobeProps {
     missions: Task[];
     onNodeClick?: (task: Task) => void;
     scrollOffset?: number;
+    focusNode?: { lat: number; lng: number } | null;
 }
 
-const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, scrollOffset = 0 }) => {
+const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, scrollOffset = 0, focusNode = null }) => {
     const globeEl = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [points, setPoints] = useState<any[]>([]);
     const [rings, setRings] = useState<any[]>([]);
+    const [hoverNode, setHoverNode] = useState<any>(null);
+    const [pings, setPings] = useState<any[]>([]);
+    const lastSectorRef = useRef(0);
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -120,6 +124,36 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         }
     }, [dimensions, scrollOffset]);
 
+    useEffect(() => {
+        // Area Pings on Sector Change
+        const currentSector = Math.floor(scrollOffset / 500);
+        if (currentSector !== lastSectorRef.current) {
+            lastSectorRef.current = currentSector;
+
+            // Trigger a global "ping" from the poles
+            const newPing = {
+                lat: 90, // North pole
+                lng: 0,
+                maxR: 100,
+                propagationSpeed: 5,
+                repeatPeriod: 0,
+                color: NEON_GREEN
+            };
+            setPings([newPing]);
+            setTimeout(() => setPings([]), 1000); // Clear after wave
+        }
+
+        // Handle Camera Focus on selected node
+        const globe = globeEl.current;
+        if (globe && focusNode) {
+            globe.pointOfView({
+                lat: focusNode.lat,
+                lng: focusNode.lng,
+                altitude: 1.8 // Zoom in slightly
+            }, 1000); // 1s transition
+        }
+    }, [focusNode]);
+
     return (
         <div ref={containerRef} className="absolute inset-0 z-0 opacity-80 pointer-events-auto w-full h-full flex items-center justify-center">
             {dimensions.width > 0 && (
@@ -138,7 +172,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     pointColor="color"
                     pointRadius="size"
                     pointsMerge={true}
-                    ringsData={rings}
+                    ringsData={[...rings, ...pings]}
                     ringColor="color"
                     ringMaxRadius="maxR"
                     ringPropagationSpeed="propagationSpeed"
@@ -158,17 +192,22 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     }}
                     pointLabel="label"
 
-                    // Holographic Arc Links (Visual Noise)
-                    arcsData={points.slice(0, 10).map((p, i) => {
-                        const next = points[(i + 1) % points.length];
-                        return {
-                            startLat: p.lat,
-                            startLng: p.lng,
-                            endLat: next.lat,
-                            endLng: next.lng,
-                            color: ['rgba(0,255,136,0.5)', 'rgba(0,0,0,0)']
-                        };
-                    })}
+                    // Holographic Arc Links (Live Network Flow)
+                    arcsData={useMemo(() => {
+                        const arcs = [];
+                        for (let i = 0; i < points.length; i += 3) {
+                            if (points[i + 1]) {
+                                arcs.push({
+                                    startLat: points[i].lat,
+                                    startLng: points[i].lng,
+                                    endLat: points[i + 1].lat,
+                                    endLng: points[i + 1].lng,
+                                    color: i % 2 === 0 ? [NEON_GREEN, 'transparent'] : [HOLOGRAPHIC_BLUE, 'transparent']
+                                });
+                            }
+                        }
+                        return arcs;
+                    }, [points])}
                     arcColor="color"
                     arcDashLength={0.4}
                     arcDashGap={4}
@@ -176,9 +215,44 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     arcStroke={0.5}
 
                     // HTML Elements (Custom Markers)
-                    htmlElementsData={points}
+                    htmlTransitionDuration={1000}
+                    htmlAltitude={0.1}
+
+                    // Proximity Scanner (Hover Panel)
+                    onPointHover={(point: any) => setHoverNode(point)}
+                    htmlElementsData={[...points, ...(hoverNode ? [{ ...hoverNode, isHover: true }] : [])]}
                     htmlElement={(d: any) => {
                         const el = document.createElement('div');
+                        if (d.isHover) {
+                            // Holographic Detail Panel
+                            el.innerHTML = `
+                                <div style="
+                                    background: rgba(0, 5, 5, 0.9);
+                                    border: 1px solid ${NEON_GREEN};
+                                    padding: 10px;
+                                    pointer-events: none;
+                                    transform: translate(20px, -50%);
+                                    font-family: monospace;
+                                    font-size: 10px;
+                                    color: white;
+                                    box-shadow: 0 0 20px ${NEON_GREEN}44;
+                                    min-width: 150px;
+                                    backdrop-filter: blur(5px);
+                                ">
+                                    <div style="color: ${NEON_GREEN}; border-bottom: 1px solid ${NEON_GREEN}44; padding-bottom: 4px; margin-bottom: 4px; font-weight: bold;">
+                                        NODE_SCAN: ${d.id.substring(0, 8)}
+                                    </div>
+                                    <div style="margin-bottom: 2px;">STATUS: ${d.globeStatus}</div>
+                                    <div style="margin-bottom: 2px;">BUDGET: $${d.budget_amount}</div>
+                                    <div style="margin-bottom: 2px;">LAT: ${d.lat.toFixed(2)}</div>
+                                    <div style="margin-bottom: 2px;">LNG: ${d.lng.toFixed(2)}</div>
+                                    <div style="margin-top: 4px; color: ${NEON_GREEN}; font-size: 8px;">[ENCRYPTED_SIGNAL_ACTIVE]</div>
+                                </div>
+                            `;
+                            return el;
+                        }
+
+                        // Regular Marker (kept same)
                         el.innerHTML = `
                             <div style="cursor: pointer; pointer-events: auto; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
                                 <div style="
@@ -214,8 +288,6 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                         };
                         return el;
                     }}
-                    htmlTransitionDuration={1000}
-                    htmlAltitude={0.1} // Float slightly above surface
                 />
             )}
         </div>
