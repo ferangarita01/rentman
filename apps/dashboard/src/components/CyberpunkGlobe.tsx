@@ -1,6 +1,7 @@
 
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import Globe from 'react-globe.gl';
+import * as THREE from 'three';
 import { supabase } from '../lib/supabase';
 
 // Neon Theme Constants
@@ -19,18 +20,13 @@ interface Task {
 }
 
 // Pseudo-random location generator based on hash of string
-// This simulates "real" locations until we have actual geocoding
 const getPseudoLocation = (id: string) => {
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
         hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
-
-    // Limits: lat -90 to 90, lng -180 to 180
-    // We focus on "populated" areas mostly to look good
     const lat = (hash % 140) - 70;
     const lng = (hash * 13 % 360) - 180;
-
     return { lat, lng };
 };
 
@@ -49,48 +45,42 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
     const [rings, setRings] = useState<any[]>([]);
     const [hoverNode, setHoverNode] = useState<any>(null);
     const [pings, setPings] = useState<any[]>([]);
+    const [pulse, setPulse] = useState(0);
     const lastSectorRef = useRef(0);
 
     useEffect(() => {
         if (!containerRef.current) return;
-
-        // Initial size
         setDimensions({
             width: containerRef.current.offsetWidth,
             height: containerRef.current.offsetHeight
         });
-
         const resizeObserver = new ResizeObserver(entries => {
             const { width, height } = entries[0].contentRect;
             setDimensions({ width, height });
         });
-
         resizeObserver.observe(containerRef.current);
         return () => resizeObserver.disconnect();
     }, []);
 
     useEffect(() => {
-        // Map tasks to points
         const newPoints = missions.map(task => {
             const loc = task.lat && task.lng
                 ? { lat: task.lat, lng: task.lng }
                 : getPseudoLocation(task.id);
 
             return {
-                ...task, // Keep original task data
-                uniqueId: task.id, // avoid id collision if any
+                ...task,
+                uniqueId: task.id,
                 lat: loc.lat,
                 lng: loc.lng,
                 size: task.status === 'ASSIGNED' ? 0.5 : 0.3,
                 color: task.status === 'ASSIGNED' ? NEON_GREEN : HOLOGRAPHIC_BLUE,
                 label: `${task.title} - $${task.budget_amount}`,
-                globeStatus: task.status // renaming to avoid conflict if any
+                globeStatus: task.status
             };
         });
-
         setPoints(newPoints);
 
-        // Create rings for active missions
         const activeRings = newPoints
             .filter(p => p.globeStatus === 'OPEN' || p.globeStatus === 'ASSIGNED')
             .map(p => ({
@@ -101,11 +91,9 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                 repeatPeriod: 1000,
                 color: p.color
             }));
-
         setRings(activeRings);
     }, [missions]);
 
-    // Holographic Arc Links (Live Network Flow)
     const arcs = useMemo(() => {
         const result = [];
         for (let i = 0; i < points.length; i += 3) {
@@ -122,49 +110,35 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         return result;
     }, [points]);
 
-    // Memoized labels for performance
     const htmlData = useMemo(() => {
         return [...points, ...(hoverNode ? [{ ...hoverNode, isHover: true }] : [])];
     }, [points, hoverNode]);
 
     useEffect(() => {
-        // Auto-rotate and scroll interaction
         const globe = globeEl.current;
         if (globe) {
             globe.controls().autoRotate = false;
             globe.controls().autoRotateSpeed = 0;
             globe.controls().enableZoom = true;
-            globe.controls().minDistance = 150; // Prevent going inside the planet
-            globe.controls().maxDistance = 800; // Prevent going too far
+            globe.controls().minDistance = 150;
+            globe.controls().maxDistance = 800;
             globe.controls().enableDamping = true;
             globe.controls().dampingFactor = 0.05;
 
-            // FTL Travel Zoom Effect (Only apply if not currently focused on a node)
             if (!focusNode) {
                 const baseAltitude = 2.5;
                 const altitudeOffset = (scrollOffset % 2000) / 4000;
                 globe.pointOfView({ altitude: baseAltitude - altitudeOffset }, 400);
             }
-
-            // Hex Shield Rotation (Accessing Three.js directly)
-            const scene = globe.scene();
-            const shield = scene.children.find((c: any) => c.name === 'hexShield');
-            if (shield) {
-                shield.rotation.y += 0.001;
-                shield.rotation.x += 0.0005;
-            }
         }
     }, [dimensions, scrollOffset, focusNode]);
 
     useEffect(() => {
-        // Area Pings on Sector Change
         const currentSector = Math.floor(scrollOffset / 500);
         if (currentSector !== lastSectorRef.current) {
             lastSectorRef.current = currentSector;
-
-            // Trigger a global "ping" from the poles
             const newPing = {
-                lat: 90, // North pole
+                lat: 90,
                 lng: 0,
                 maxR: 100,
                 propagationSpeed: 5,
@@ -172,77 +146,86 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                 color: NEON_GREEN
             };
             setPings([newPing]);
-            setTimeout(() => setPings([]), 1000); // Clear after wave
+            setTimeout(() => setPings([]), 1000);
         }
 
-        // Handle Camera Focus on selected node
         const globe = globeEl.current;
         if (globe && focusNode) {
             globe.pointOfView({
                 lat: focusNode.lat,
                 lng: focusNode.lng,
-                altitude: 1.5 // Zoom in closer for inspection
-            }, 1000); // 1s transition
+                altitude: 1.5
+            }, 1000);
         }
     }, [focusNode]);
 
+    // Animation Loop for rotation and pulse
+    useEffect(() => {
+        let frame = 0;
+        const animate = () => {
+            setPulse(Math.sin(Date.now() / 1500) * 0.03);
+
+            // Subtle rotation of the hex shield if found
+            const globe = globeEl.current;
+            if (globe) {
+                const scene = globe.scene();
+                const shield = scene.children.find((c: any) => c.name === 'hexShield');
+                if (shield) {
+                    shield.rotation.y += 0.002;
+                    shield.rotation.z += 0.001;
+                }
+            }
+
+            frame = requestAnimationFrame(animate);
+        };
+        animate();
+        return () => cancelAnimationFrame(frame);
+    }, []);
+
     return (
-        <div ref={containerRef} className="absolute inset-0 z-0 opacity-80 pointer-events-auto w-full h-full flex items-center justify-center">
+        <div ref={containerRef} className="absolute inset-0 z-0 opacity-100 pointer-events-auto w-full h-full flex items-center justify-center">
             {dimensions.width > 0 && (
                 <Globe
                     ref={globeEl}
                     width={dimensions.width}
                     height={dimensions.height}
-                    globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
+                    globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
                     bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
                     backgroundImageUrl="https://unpkg.com/three-globe/example/img/night-sky.png"
                     backgroundColor="rgba(0,0,0,1)"
+                    showAtmosphere={true}
+                    atmosphereColor={NEON_GREEN}
+                    atmosphereAltitude={0.15 + pulse + (scrollOffset / 10000)}
+
                     pointsData={points}
                     pointAltitude={0.07}
                     pointColor="color"
                     pointRadius="size"
                     pointsMerge={true}
+
                     ringsData={[...rings, ...pings]}
                     ringColor="color"
                     ringMaxRadius="maxR"
                     ringPropagationSpeed="propagationSpeed"
                     ringRepeatPeriod="repeatPeriod"
 
-                    // Advanced Aesthetics: Atmosphere Glow (Scroll-linked)
-                    atmosphereColor={NEON_GREEN}
-                    atmosphereAltitude={0.15 + (Math.sin(Date.now() / 1000) * 0.02) + (scrollOffset / 10000)}
-
-                    // Advanced Aesthetics: Hexagonal Shield Overlay
-                    customLayerData={[{ name: 'hexShield' }]}
-                    customLayerElement={(d: any) => {
-                        const geometry = new (window as any).THREE.SphereGeometry(101, 32, 32);
-                        const material = new (window as any).THREE.MeshPhongMaterial({
+                    // Hex Shield Overlay
+                    customLayerData={[{ id: 'shield' }]}
+                    customLayerElement={() => {
+                        const geometry = new THREE.IcosahedronGeometry(101, 2);
+                        const material = new THREE.MeshPhongMaterial({
                             color: HOLOGRAPHIC_BLUE,
                             wireframe: true,
                             transparent: true,
-                            opacity: 0.1 + (scrollOffset / 5000), // Intensify with scroll
-                            side: (window as any).THREE.DoubleSide
+                            opacity: 0.2,
+                            side: THREE.DoubleSide
                         });
-                        const mesh = new (window as any).THREE.Mesh(geometry, material);
-                        mesh.name = d.name;
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.name = 'hexShield';
                         return mesh;
                     }}
 
-                    // Interaction
-                    onPointClick={(point: any) => {
-                        if (onNodeClick) {
-                            // Reconstruct pure Task object or find strictly in original array if referenced
-                            // Since we spread ...task, point has all task props
-                            // We cast it back to Task for type safety in callback
-                            const { lat, lng, size, color, label, globeStatus, uniqueId, ...taskData } = point;
-                            // Or simpler: map find
-                            const originalTask = missions.find(m => m.id === point.id);
-                            if (originalTask) onNodeClick(originalTask);
-                        }
-                    }}
-                    pointLabel="label"
-
-                    // Holographic Arc Links (Live Network Flow)
+                    // Arcs
                     arcsData={arcs}
                     arcColor="color"
                     arcDashLength={0.4}
@@ -250,17 +233,13 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     arcDashAnimateTime={2000}
                     arcStroke={0.5}
 
-                    // HTML Elements (Custom Markers)
-                    htmlTransitionDuration={1000}
-                    htmlAltitude={0.01}
-
-                    // Proximity Scanner (Hover Panel)
+                    // Hover & HTML Markers
                     onPointHover={(point: any) => setHoverNode(point)}
                     htmlElementsData={htmlData}
+                    htmlAltitude={0.01}
                     htmlElement={(d: any) => {
                         const el = document.createElement('div');
                         if (d.isHover) {
-                            // Holographic Detail Panel
                             el.innerHTML = `
                                 <div style="
                                     background: rgba(0, 5, 5, 0.9);
@@ -280,15 +259,12 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                                     </div>
                                     <div style="margin-bottom: 2px;">STATUS: ${d.globeStatus}</div>
                                     <div style="margin-bottom: 2px;">BUDGET: $${d.budget_amount}</div>
-                                    <div style="margin-bottom: 2px;">LAT: ${d.lat.toFixed(2)}</div>
-                                    <div style="margin-bottom: 2px;">LNG: ${d.lng.toFixed(2)}</div>
-                                    <div style="margin-top: 4px; color: ${NEON_GREEN}; font-size: 8px;">[ENCRYPTED_SIGNAL_ACTIVE]</div>
+                                    <div style="margin-bottom: 4px; color: ${NEON_GREEN}; font-size: 8px;">[ENCRYPTED_SIGNAL_ACTIVE]</div>
                                 </div>
                             `;
                             return el;
                         }
 
-                        // Regular Marker (kept same)
                         el.innerHTML = `
                             <div style="cursor: pointer; pointer-events: auto; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
                                 <div style="
@@ -309,11 +285,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                                         <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
                                     </svg>
                                 </div>
-                                <div style="
-                                    width: 1px; 
-                                    height: 6px; 
-                                    background: linear-gradient(to top, transparent, ${d.color});
-                                "></div>
+                                <div style="width: 1px; height: 6px; background: linear-gradient(to top, transparent, ${d.color});"></div>
                             </div>
                         `;
                         el.onclick = () => {
