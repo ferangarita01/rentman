@@ -146,27 +146,47 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         const satCount = 150;
 
         for (let i = 0; i < satCount; i++) {
+            // Un satélite ahora es un Grupo (Cuerpo + Paneles)
+            const satObject = new THREE.Group();
+
+            const satColor = Math.random() > 0.5 ? NEON_GREEN : HOLOGRAPHIC_BLUE;
             const satMaterial = new THREE.MeshBasicMaterial({
-                color: Math.random() > 0.5 ? NEON_GREEN : HOLOGRAPHIC_BLUE,
+                color: satColor,
                 transparent: true,
-                opacity: 0.4 + Math.random() * 0.4
+                opacity: 0.6 + Math.random() * 0.4
             });
-            const sat = new THREE.Mesh(satGeometry, satMaterial);
+
+            // Cuerpo del satélite (Cubo central)
+            const bodyGeom = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+            const body = new THREE.Mesh(bodyGeom, satMaterial);
+            satObject.add(body);
+
+            // Paneles solares (Barras laterales finas)
+            const panelGeom = new THREE.BoxGeometry(3, 0.4, 0.1);
+            const panels = new THREE.Mesh(panelGeom, satMaterial);
+            satObject.add(panels);
+
+            // Antena / Detalle superior
+            const antGeom = new THREE.CylinderGeometry(0.05, 0.05, 1);
+            const antenna = new THREE.Mesh(antGeom, satMaterial);
+            antenna.position.y = 0.6;
+            satObject.add(antenna);
 
             // Random orbit
-            const radius = 130 + Math.random() * 40;
+            const radius = 135 + Math.random() * 35;
             const phi = Math.acos(-1 + (2 * i) / satCount);
             const theta = Math.sqrt(satCount * Math.PI) * phi;
 
-            sat.position.setFromSphericalCoords(radius, phi, theta);
+            satObject.position.setFromSphericalCoords(radius, phi, theta);
+            satObject.lookAt(0, 0, 0); // Orientar hacia el planeta
 
             // Custom speed property
-            (sat as any).userData = {
-                speed: 0.0005 + Math.random() * 0.001,
+            (satObject as any).userData = {
+                speed: 0.0003 + Math.random() * 0.0008,
                 axis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize()
             };
 
-            satelliteGroup.add(sat);
+            satelliteGroup.add(satObject);
         }
         scene.add(satelliteGroup);
         // ------------------------------------
