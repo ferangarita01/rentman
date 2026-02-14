@@ -15,6 +15,7 @@ interface Task {
     agent_id?: string;
     lat?: number;
     lng?: number;
+    type?: string;
 }
 
 const getPseudoLocation = (id: string) => {
@@ -62,6 +63,30 @@ const createSatelliteTexture = (color: string) => {
 
     const texture = new THREE.CanvasTexture(canvas);
     return texture;
+};
+
+// Mapeo de iconos por tipo de misión
+const getMissionIcon = (type: string = 'general') => {
+    const t = type.toLowerCase();
+    switch (t) {
+        case 'delivery':
+            return '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-4-4h-3v10"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>';
+        case 'digital':
+            return '<path d="M2 12a10 10 0 0 1 18-6"/><path d="M5 15a7 7 0 0 1 12-4"/><path d="M8 18a4 4 0 0 1 6-3"/><path d="M11 21a1 1 0 0 1 0-2"/><path d="M12 2a12 12 0 0 0-10 16"/><path d="M22 12a10 10 0 0 0-10-10"/>';
+        case 'cleaning':
+            return '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>';
+        case 'maintenance':
+            return '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.77 3.77Z"/>';
+        case 'verification':
+            return '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>';
+        case 'security':
+            return '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>';
+        case 'logistics':
+            return '<path d="M16.5 9.4 7.5 4.21"/><path d="m21 16-9 5.25L3 16V7l9-5.25L21 7v9Z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/>';
+        case 'general':
+        default:
+            return '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.27a1 1 0 0 0 0 1.83l8.57 4.09a2 2 0 0 0 1.66 0l8.57-4.09a1 1 0 0 0 0-1.83Z"/><path d="m12.83 14.18a2 2 0 0 0-1.66 0L2.6 18.27a1 1 0 0 0 0 1.83l8.57 4.09a2 2 0 0 0 1.66 0l8.57-4.09a1 1 0 0 0 0-1.83Z"/><path d="m20.65 7.18-7.82 3.73a2 2 0 0 1-1.66 0L3.35 7.18"/>';
+    }
 };
 
 interface CyberpunkGlobeProps {
@@ -320,7 +345,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                             <div style="cursor: pointer; pointer-events: auto; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
                                 <div style="width: 24px; height: 24px; background: rgba(0, 5, 5, 0.8); border: 1px solid ${d.color}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px ${d.color}; animation: pulse 2s infinite;">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${d.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+                                        ${getMissionIcon(d.type)}
                                     </svg>
                                 </div>
                                 <div style="width: 1px; height: 6px; background: linear-gradient(to top, transparent, ${d.color});"></div>
