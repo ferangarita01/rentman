@@ -19,6 +19,7 @@
     "android:release": "npm run build && npx cap sync && cd android && .\\gradlew assembleRelease"
   },
   "dependencies": {
+    "@capacitor-firebase/analytics": "^8.0.1",
     "@capacitor-firebase/performance": "^8.0.1",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
