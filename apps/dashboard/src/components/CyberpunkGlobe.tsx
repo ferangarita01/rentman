@@ -106,8 +106,8 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         // Auto-rotate and scroll interaction
         const globe = globeEl.current;
         if (globe) {
-            globe.controls().autoRotate = true;
-            globe.controls().autoRotateSpeed = 0.5 + (scrollOffset / 1000); // Speed up as we scroll
+            globe.controls().autoRotate = false;
+            globe.controls().autoRotateSpeed = 0;
             globe.controls().enableZoom = false;
 
             // FTL Travel Zoom Effect
