@@ -208,15 +208,6 @@ const SpaceBackground: React.FC = () => {
                     <div className={`absolute inset-0 m-auto w-1 h-1 bg-white rounded-full shadow-[0_0_20px_10px_white] transition-opacity duration-500 ${loading ? 'opacity-100 animate-ping' : 'opacity-50'}`}></div>
                 </div>
 
-                {/* Panel de Información */}
-                <div className="mt-8 max-w-sm text-center p-4 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-700 pointer-events-auto hover:bg-black/60">
-                    <p className={`text-sm font-light italic leading-tight tracking-wide transition-all duration-500 ${loading ? 'opacity-20 scale-95 blur-sm' : 'opacity-100 scale-100'}`}>
-                        "{insight}"
-                    </p>
-                    <div className="mt-2 text-[8px] opacity-30 tracking-[0.2em] uppercase">
-                        Sincronización Cuántica: {loading ? 'Procesando...' : 'Estable'}
-                    </div>
-                </div>
             </div>
 
             <style>{`
