@@ -45,7 +45,6 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
     const [rings, setRings] = useState<any[]>([]);
     const [hoverNode, setHoverNode] = useState<any>(null);
     const [pings, setPings] = useState<any[]>([]);
-    const [pulse, setPulse] = useState(0);
     const lastSectorRef = useRef(0);
 
     useEffect(() => {
@@ -159,28 +158,50 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         }
     }, [focusNode]);
 
-    // Animation Loop for rotation and pulse
+    // Memoize customLayerElement to avoid recreating on every render
+    const shieldElement = useMemo(() => {
+        return () => {
+            const geometry = new THREE.IcosahedronGeometry(103, 2);
+            const material = new THREE.MeshBasicMaterial({
+                color: HOLOGRAPHIC_BLUE,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.5,
+                side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.name = 'hexShield';
+            return mesh;
+        };
+    }, []);
+
+    // Animation Loop for rotation and atmosphere pulse (direct manipulation to avoid re-renders)
     useEffect(() => {
         let frame = 0;
         const animate = () => {
-            setPulse(Math.sin(Date.now() / 1500) * 0.03);
-
-            // Subtle rotation of the hex shield if found
             const globe = globeEl.current;
             if (globe) {
+                // Update atmosphere altitude directly
+                const p = Math.sin(Date.now() / 1500) * 0.03;
+                const newAlt = 0.15 + p + (scrollOffset / 10000);
+                globe.atmosphereAltitude(newAlt);
+
+                // Update rotation of special objects
                 const scene = globe.scene();
-                const shield = scene.children.find((c: any) => c.name === 'hexShield');
-                if (shield) {
-                    shield.rotation.y += 0.002;
-                    shield.rotation.z += 0.001;
+                if (scene) {
+                    scene.traverse((obj: any) => {
+                        if (obj.name === 'hexShield') {
+                            obj.rotation.y += 0.002;
+                            obj.rotation.z += 0.001;
+                        }
+                    });
                 }
             }
-
             frame = requestAnimationFrame(animate);
         };
         animate();
         return () => cancelAnimationFrame(frame);
-    }, []);
+    }, [scrollOffset]);
 
     return (
         <div ref={containerRef} className="absolute inset-0 z-0 opacity-100 pointer-events-auto w-full h-full flex items-center justify-center">
@@ -195,7 +216,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     backgroundColor="rgba(0,0,0,1)"
                     showAtmosphere={true}
                     atmosphereColor={NEON_GREEN}
-                    atmosphereAltitude={0.15 + pulse + (scrollOffset / 10000)}
+                    atmosphereAltitude={0.15 + (scrollOffset / 10000)} // pulse added via ref loop
 
                     pointsData={points}
                     pointAltitude={0.07}
@@ -211,19 +232,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
 
                     // Hex Shield Overlay
                     customLayerData={[{ id: 'shield' }]}
-                    customLayerElement={() => {
-                        const geometry = new THREE.IcosahedronGeometry(101, 2);
-                        const material = new THREE.MeshPhongMaterial({
-                            color: HOLOGRAPHIC_BLUE,
-                            wireframe: true,
-                            transparent: true,
-                            opacity: 0.2,
-                            side: THREE.DoubleSide
-                        });
-                        const mesh = new THREE.Mesh(geometry, material);
-                        mesh.name = 'hexShield';
-                        return mesh;
-                    }}
+                    customLayerElement={shieldElement}
 
                     // Arcs
                     arcsData={arcs}
