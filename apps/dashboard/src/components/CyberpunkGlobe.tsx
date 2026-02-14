@@ -139,12 +139,53 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         shield.name = 'hexShield';
         scene.add(shield);
 
+        // --- NEW: Orbital Satellite Swarm ---
+        const satelliteGroup = new THREE.Group();
+        satelliteGroup.name = 'orbitalSwarm';
+        const satGeometry = new THREE.SphereGeometry(0.2, 4, 4);
+        const satCount = 150;
+
+        for (let i = 0; i < satCount; i++) {
+            const satMaterial = new THREE.MeshBasicMaterial({
+                color: Math.random() > 0.5 ? NEON_GREEN : HOLOGRAPHIC_BLUE,
+                transparent: true,
+                opacity: 0.4 + Math.random() * 0.4
+            });
+            const sat = new THREE.Mesh(satGeometry, satMaterial);
+
+            // Random orbit
+            const radius = 130 + Math.random() * 40;
+            const phi = Math.acos(-1 + (2 * i) / satCount);
+            const theta = Math.sqrt(satCount * Math.PI) * phi;
+
+            sat.position.setFromSphericalCoords(radius, phi, theta);
+
+            // Custom speed property
+            (sat as any).userData = {
+                speed: 0.0005 + Math.random() * 0.001,
+                axis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize()
+            };
+
+            satelliteGroup.add(sat);
+        }
+        scene.add(satelliteGroup);
+        // ------------------------------------
+
         let frameId: number;
         const animate = () => {
             if (shield) {
                 shield.rotation.y += 0.001;
                 shield.rotation.z += 0.0005;
             }
+
+            if (satelliteGroup) {
+                satelliteGroup.rotation.y += 0.0002;
+                satelliteGroup.children.forEach(sat => {
+                    const data = sat.userData;
+                    sat.rotateOnAxis(data.axis, data.speed);
+                });
+            }
+
             frameId = requestAnimationFrame(animate);
         };
         animate();
@@ -201,7 +242,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     height={dimensions.height}
                     globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
                     bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
-                    backgroundImageUrl="https://unpkg.com/three-globe/example/img/night-sky.png"
+                    backgroundImageUrl="https://images.unsplash.com/photo-1464802686167-b939a6910659?q=80&w=2070&auto=format&fit=crop" // High-res Nebula
                     backgroundColor="rgba(0,0,0,1)"
                     showAtmosphere={true}
                     atmosphereColor={NEON_GREEN}
