@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import WalletPage from './Wallet';
 import CreateMissionModalV2 from '../components/CreateMissionModalV2';
 import TaskActionModal from '../components/TaskActionModal';
+import ContractAcceptanceModal from '../components/ContractAcceptanceModal';
 import CyberpunkGlobe from '../components/CyberpunkGlobe';
 
 type View = 'overview' | 'wallet' | 'agents' | 'missions';
@@ -29,6 +30,7 @@ const Dashboard: React.FC = () => {
     const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+    const [isAcceptanceModalOpen, setIsAcceptanceModalOpen] = useState(false);
 
     // State
     const [credits, setCredits] = useState(0);
@@ -111,7 +113,42 @@ const Dashboard: React.FC = () => {
 
     const handleNodeClick = (task: Task) => {
         setSelectedTask(task);
-        setIsActionModalOpen(true);
+        // Logic: If I own it, open Action Modal. If not, open Acceptance Modal.
+        // For simple demo, if status is OPEN -> Acceptance.
+        if (task.status === 'open' || !task.agent_id) {
+            setIsAcceptanceModalOpen(true);
+        } else {
+            setIsActionModalOpen(true);
+        }
+    };
+
+    const handleAcceptTask = async () => {
+        if (!selectedTask || !userId) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .update({
+                    status: 'assigned',
+                    agent_id: userId, // Assign to current user (acting as agent/worker)
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', selectedTask.id);
+
+            if (error) throw error;
+
+            // Update local state
+            setMissions(prev => prev.map(t =>
+                t.id === selectedTask.id ? { ...t, status: 'assigned', agent_id: userId } : t
+            ));
+
+            setIsAcceptanceModalOpen(false);
+            // Optional: Notify success
+        } catch (err) {
+            console.error('Error accepting task:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -225,7 +262,7 @@ const Dashboard: React.FC = () => {
                             {currentView === 'missions' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {missions.map(task => (
-                                        <div key={task.id} onClick={() => { setSelectedTask(task); setIsActionModalOpen(true); }} className="border border-cyber-border p-5 space-y-4 hover:border-cyber-green transition-all bg-black/40 cursor-pointer">
+                                        <div key={task.id} onClick={() => handleNodeClick(task)} className="border border-cyber-border p-5 space-y-4 hover:border-cyber-green transition-all bg-black/40 cursor-pointer">
                                             <div className="flex justify-between items-start">
                                                 <h3 className="font-mono text-sm font-bold uppercase tracking-tight text-white">{task.title}</h3>
                                                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${task.status === 'completed' ? 'bg-cyber-green/20 text-cyber-green' : 'bg-zinc-800 text-zinc-400'}`}>{task.status}</span>
@@ -260,7 +297,7 @@ const Dashboard: React.FC = () => {
                             {/* Map real missions here */}
                             {missions.slice(0, 5).map(task => (
                                 <article key={task.id} className="border border-cyber-border p-5 space-y-4 hover:border-cyber-green transition-all bg-black/40 cursor-pointer group"
-                                    onClick={() => { setSelectedTask(task); setIsActionModalOpen(true); }}>
+                                    onClick={() => handleNodeClick(task)}>
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-[10px] font-mono text-cyber-green">[VERIFIED_ISSUER]</p>
