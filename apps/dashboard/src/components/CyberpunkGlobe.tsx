@@ -143,7 +143,15 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
             if (!focusNode) {
                 const baseAltitude = 2.5;
                 const altitudeOffset = (scrollOffset % 2000) / 4000;
-                globe.pointOfView({ altitude: baseAltitude - altitudeOffset }, 400); // Add a short transition for smoothness
+                globe.pointOfView({ altitude: baseAltitude - altitudeOffset }, 400);
+            }
+
+            // Hex Shield Rotation (Accessing Three.js directly)
+            const scene = globe.scene();
+            const shield = scene.children.find((c: any) => c.name === 'hexShield');
+            if (shield) {
+                shield.rotation.y += 0.001;
+                shield.rotation.x += 0.0005;
             }
         }
     }, [dimensions, scrollOffset, focusNode]);
@@ -189,10 +197,8 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
                     backgroundImageUrl="https://unpkg.com/three-globe/example/img/night-sky.png"
                     backgroundColor="rgba(0,0,0,1)"
-                    atmosphereColor={NEON_GREEN}
-                    atmosphereAltitude={0.15}
                     pointsData={points}
-                    pointAltitude={0.05}
+                    pointAltitude={0.07}
                     pointColor="color"
                     pointRadius="size"
                     pointsMerge={true}
@@ -201,6 +207,26 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     ringMaxRadius="maxR"
                     ringPropagationSpeed="propagationSpeed"
                     ringRepeatPeriod="repeatPeriod"
+
+                    // Advanced Aesthetics: Atmosphere Glow (Scroll-linked)
+                    atmosphereColor={NEON_GREEN}
+                    atmosphereAltitude={0.15 + (Math.sin(Date.now() / 1000) * 0.02) + (scrollOffset / 10000)}
+
+                    // Advanced Aesthetics: Hexagonal Shield Overlay
+                    customLayerData={[{ name: 'hexShield' }]}
+                    customLayerElement={(d: any) => {
+                        const geometry = new (window as any).THREE.SphereGeometry(101, 32, 32);
+                        const material = new (window as any).THREE.MeshPhongMaterial({
+                            color: HOLOGRAPHIC_BLUE,
+                            wireframe: true,
+                            transparent: true,
+                            opacity: 0.1 + (scrollOffset / 5000), // Intensify with scroll
+                            side: (window as any).THREE.DoubleSide
+                        });
+                        const mesh = new (window as any).THREE.Mesh(geometry, material);
+                        mesh.name = d.name;
+                        return mesh;
+                    }}
 
                     // Interaction
                     onPointClick={(point: any) => {
