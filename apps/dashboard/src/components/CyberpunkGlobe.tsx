@@ -161,12 +161,12 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
     // Memoize customLayerElement to avoid recreating on every render
     const shieldElement = useMemo(() => {
         return () => {
-            const geometry = new THREE.IcosahedronGeometry(103, 2);
+            const geometry = new THREE.IcosahedronGeometry(105, 2); // Increased radius to 105
             const material = new THREE.MeshBasicMaterial({
                 color: HOLOGRAPHIC_BLUE,
                 wireframe: true,
                 transparent: true,
-                opacity: 0.5,
+                opacity: 0.8, // Very visible
                 side: THREE.DoubleSide
             });
             const mesh = new THREE.Mesh(geometry, material);
@@ -175,17 +175,12 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         };
     }, []);
 
-    // Animation Loop for rotation and atmosphere pulse (direct manipulation to avoid re-renders)
+    // Animation Loop for rotation (avoiding direct atmosphereAltitude call)
     useEffect(() => {
         let frame = 0;
         const animate = () => {
             const globe = globeEl.current;
             if (globe) {
-                // Update atmosphere altitude directly
-                const p = Math.sin(Date.now() / 1500) * 0.03;
-                const newAlt = 0.15 + p + (scrollOffset / 10000);
-                globe.atmosphereAltitude(newAlt);
-
                 // Update rotation of special objects
                 const scene = globe.scene();
                 if (scene) {
@@ -201,7 +196,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         };
         animate();
         return () => cancelAnimationFrame(frame);
-    }, [scrollOffset]);
+    }, []);
 
     return (
         <div ref={containerRef} className="absolute inset-0 z-0 opacity-100 pointer-events-auto w-full h-full flex items-center justify-center">
