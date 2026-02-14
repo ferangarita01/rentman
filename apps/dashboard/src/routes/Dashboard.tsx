@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import WalletPage from './Wallet';
-import CreateMissionModal from '../components/CreateMissionModal';
+import CreateMissionModalV2 from '../components/CreateMissionModalV2';
 import TaskActionModal from '../components/TaskActionModal';
 import CyberpunkGlobe from '../components/CyberpunkGlobe';
 
@@ -19,6 +19,8 @@ interface Task {
     proof_notes?: string;
     agent_id?: string;
     user_id?: string;
+    lat?: number;
+    lng?: number;
 }
 
 const Dashboard: React.FC = () => {
@@ -107,6 +109,11 @@ const Dashboard: React.FC = () => {
         };
     }, [navigate]);
 
+    const handleNodeClick = (task: Task) => {
+        setSelectedTask(task);
+        setIsActionModalOpen(true);
+    };
+
     return (
         <div className="bg-cyber-black text-white font-sans min-h-screen overflow-hidden selection:bg-cyber-green selection:text-black">
             {/* Main Layout Wrapper */}
@@ -186,7 +193,7 @@ const Dashboard: React.FC = () => {
 
                             {/* Holographic Globe Visualization Area */}
                             <div className="relative w-full h-full flex items-center justify-center" id="globe-container">
-                                <CyberpunkGlobe missions={missions} />
+                                <CyberpunkGlobe missions={missions} onNodeClick={handleNodeClick} />
 
                                 {/* Scanning Line Overlay */}
                                 <div className="absolute left-0 right-0 bg-gradient-to-b from-transparent via-cyber-green/10 to-transparent h-1 w-full scan-line pointer-events-none z-10"></div>
@@ -264,30 +271,6 @@ const Dashboard: React.FC = () => {
                                             <p className="text-[10px] font-mono">{task.id.substring(0, 8)}</p>
                                         </div>
                                     </div>
-                                    <div className="relative w-full h-32 bg-zinc-900 border border-zinc-800 overflow-hidden">
-                                        {/* Placeholder Image or Gen Art */}
-                                        <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-black flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-4xl text-zinc-700 group-hover:text-cyber-green transition-colors">code_blocks</span>
-                                        </div>
-                                        <div className="absolute top-2 right-2 flex gap-1">
-                                            <span className="text-cyber-green text-xs">▲</span>
-                                            <span className="text-cyber-green text-xs">▲</span>
-                                            <span className="text-zinc-700 text-xs">▲</span>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 border-t border-cyber-border/30 pt-4">
-                                        <div>
-                                            <p className="text-[9px] font-mono text-zinc-500 uppercase">Reward</p>
-                                            <p className="text-xl font-mono text-cyber-green">${Number(task.budget_amount).toFixed(2)}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[9px] font-mono text-zinc-500 uppercase">Status</p>
-                                            <p className="text-xs font-mono text-white">{task.status.toUpperCase()}</p>
-                                        </div>
-                                    </div>
-                                    <button className="w-full py-3 bg-cyber-green text-black font-mono text-xs font-bold uppercase hover:bg-white transition-colors mt-2">
-                                        EXECUTE_ACCEPT_PROTOCOL
-                                    </button>
                                 </article>
                             ))}
                         </div>
@@ -322,24 +305,28 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Modals */}
-            {userId && (
-                <CreateMissionModal
-                    isOpen={isMissionModalOpen}
-                    onClose={() => setIsMissionModalOpen(false)}
-                    onSuccess={() => { }}
-                    userId={userId}
-                />
-            )}
-            {isActionModalOpen && selectedTask && userId && (
-                <TaskActionModal
-                    isOpen={isActionModalOpen}
-                    onClose={() => setIsActionModalOpen(false)}
-                    task={selectedTask}
-                    isEmployer={true}
-                    onUpdate={() => { }}
-                />
-            )}
-        </div>
+            {
+                userId && (
+                    <CreateMissionModalV2
+                        isOpen={isMissionModalOpen}
+                        onClose={() => setIsMissionModalOpen(false)}
+                        onSuccess={() => { }}
+                        userId={userId}
+                    />
+                )
+            }
+            {
+                isActionModalOpen && selectedTask && userId && (
+                    <TaskActionModal
+                        isOpen={isActionModalOpen}
+                        onClose={() => setIsActionModalOpen(false)}
+                        task={selectedTask}
+                        isEmployer={true}
+                        onUpdate={() => { }}
+                    />
+                )
+            }
+        </div >
     );
 };
 

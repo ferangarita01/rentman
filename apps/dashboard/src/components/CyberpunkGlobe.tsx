@@ -34,10 +34,35 @@ const getPseudoLocation = (id: string) => {
     return { lat, lng };
 };
 
-const CyberpunkGlobe: React.FC<{ missions: Task[] }> = ({ missions }) => {
+interface CyberpunkGlobeProps {
+    missions: Task[];
+    onNodeClick?: (task: Task) => void;
+}
+
+const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick }) => {
     const globeEl = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [points, setPoints] = useState<any[]>([]);
     const [rings, setRings] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        // Initial size
+        setDimensions({
+            width: containerRef.current.offsetWidth,
+            height: containerRef.current.offsetHeight
+        });
+
+        const resizeObserver = new ResizeObserver(entries => {
+            const { width, height } = entries[0].contentRect;
+            setDimensions({ width, height });
+        });
+
+        resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
 
     useEffect(() => {
         // Map tasks to points
@@ -47,13 +72,14 @@ const CyberpunkGlobe: React.FC<{ missions: Task[] }> = ({ missions }) => {
                 : getPseudoLocation(task.id);
 
             return {
-                id: task.id,
+                ...task, // Keep original task data
+                uniqueId: task.id, // avoid id collision if any
                 lat: loc.lat,
                 lng: loc.lng,
                 size: task.status === 'ASSIGNED' ? 0.5 : 0.3,
                 color: task.status === 'ASSIGNED' ? NEON_GREEN : HOLOGRAPHIC_BLUE,
-                title: `${task.title} - $${task.budget_amount}`,
-                status: task.status
+                label: `${task.title} - $${task.budget_amount}`,
+                globeStatus: task.status // renaming to avoid conflict if any
             };
         });
 
@@ -61,7 +87,7 @@ const CyberpunkGlobe: React.FC<{ missions: Task[] }> = ({ missions }) => {
 
         // Create rings for active missions
         const activeRings = newPoints
-            .filter(p => p.status === 'OPEN' || p.status === 'ASSIGNED')
+            .filter(p => p.globeStatus === 'OPEN' || p.globeStatus === 'ASSIGNED')
             .map(p => ({
                 lat: p.lat,
                 lng: p.lng,
@@ -82,49 +108,67 @@ const CyberpunkGlobe: React.FC<{ missions: Task[] }> = ({ missions }) => {
             globe.controls().autoRotate = true;
             globe.controls().autoRotateSpeed = 0.5;
             globe.controls().enableZoom = false; // Keep it clean for dashboard bg
+
+            // Adjust camera distance if needed
+            globe.pointOfView({ altitude: 2.5 });
         }
-    }, []);
+    }, [dimensions]); // Re-adjust when dimensions change
 
     return (
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-auto">
-            <Globe
-                ref={globeEl}
-                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-                bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                backgroundColor="rgba(0,0,0,0)"
-                atmosphereColor={NEON_GREEN}
-                atmosphereAltitude={0.15}
-                pointsData={points}
-                pointAltitude={0.05}
-                pointColor="color"
-                pointRadius="size"
-                pointsMerge={true}
-                ringsData={rings}
-                ringColor="color"
-                ringMaxRadius="maxR"
-                ringPropagationSpeed="propagationSpeed"
-                ringRepeatPeriod="repeatPeriod"
+        <div ref={containerRef} className="absolute inset-0 z-0 opacity-40 pointer-events-auto w-full h-full flex items-center justify-center">
+            {dimensions.width > 0 && (
+                <Globe
+                    ref={globeEl}
+                    width={dimensions.width}
+                    height={dimensions.height}
+                    globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+                    bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+                    backgroundColor="rgba(0,0,0,0)"
+                    atmosphereColor={NEON_GREEN}
+                    atmosphereAltitude={0.15}
+                    pointsData={points}
+                    pointAltitude={0.05}
+                    pointColor="color"
+                    pointRadius="size"
+                    pointsMerge={true}
+                    ringsData={rings}
+                    ringColor="color"
+                    ringMaxRadius="maxR"
+                    ringPropagationSpeed="propagationSpeed"
+                    ringRepeatPeriod="repeatPeriod"
 
-                // Holographic Arc Links (Visual Noise)
-                arcsData={points.slice(0, 10).map((p, i) => {
-                    const next = points[(i + 1) % points.length];
-                    return {
-                        startLat: p.lat,
-                        startLng: p.lng,
-                        endLat: next.lat,
-                        endLng: next.lng,
-                        color: ['rgba(0,255,136,0.5)', 'rgba(0,0,0,0)']
-                    };
-                })}
-                arcColor="color"
-                arcDashLength={0.4}
-                arcDashGap={4}
-                arcDashAnimateTime={2000}
-                arcStroke={0.5}
+                    // Interaction
+                    onPointClick={(point: any) => {
+                        if (onNodeClick) {
+                            // Reconstruct pure Task object or find strictly in original array if referenced
+                            // Since we spread ...task, point has all task props
+                            // We cast it back to Task for type safety in callback
+                            const { lat, lng, size, color, label, globeStatus, uniqueId, ...taskData } = point;
+                            // Or simpler: map find
+                            const originalTask = missions.find(m => m.id === point.id);
+                            if (originalTask) onNodeClick(originalTask);
+                        }
+                    }}
+                    pointLabel="label"
 
-                width={window.innerWidth}
-                height={window.innerHeight}
-            />
+                    // Holographic Arc Links (Visual Noise)
+                    arcsData={points.slice(0, 10).map((p, i) => {
+                        const next = points[(i + 1) % points.length];
+                        return {
+                            startLat: p.lat,
+                            startLng: p.lng,
+                            endLat: next.lat,
+                            endLng: next.lng,
+                            color: ['rgba(0,255,136,0.5)', 'rgba(0,0,0,0)']
+                        };
+                    })}
+                    arcColor="color"
+                    arcDashLength={0.4}
+                    arcDashGap={4}
+                    arcDashAnimateTime={2000}
+                    arcStroke={0.5}
+                />
+            )}
         </div>
     );
 };
