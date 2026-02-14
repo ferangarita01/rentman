@@ -282,11 +282,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                                 </div>
                                 <div style="
                                     width: 1px; 
-                                    height: 20px; 
-                                </div>
-                                <div style="
-                                    width: 1px; 
-                                    height: 4px; 
+                                    height: 6px; 
                                     background: linear-gradient(to top, transparent, ${d.color});
                                 "></div>
                             </div>
