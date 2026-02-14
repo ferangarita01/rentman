@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { supabase } from '../lib/supabase';
 
 interface StripeCardFormProps {
     amount: number;
@@ -25,10 +26,15 @@ export default function StripeCardForm({ amount, userId, onSuccess, onError }: S
         // 1. Create a PaymentIntent on the backend
         try {
             const BACKEND_URL = import.meta.env.VITE_AGENT_GATEWAY_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
             const { clientSecret } = await fetch(`${BACKEND_URL}/api/create-payment-intent`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ amount, userId }), // Pass userId
             }).then(r => r.json());
 

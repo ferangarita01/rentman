@@ -60,9 +60,18 @@ try {
     error.errors.forEach(err => {
       console.error(`  - ${err.path.join('.')}: ${err.message}`);
     });
-    process.exit(1);
+
+    // Debug Mode: Allow startup even with invalid config
+    if (process.env.FAIL_ON_CONFIG_ERROR === 'false') {
+      console.warn('⚠️ PROCEEDING DESPITE CONFIG ERRORS (FAIL_ON_CONFIG_ERROR=false)');
+      // Cast process.env to Config to satisfy type, though it might blow up later
+      config = process.env as unknown as Config;
+    } else {
+      process.exit(1);
+    }
+  } else {
+    throw error;
   }
-  throw error;
 }
 
 export default config;

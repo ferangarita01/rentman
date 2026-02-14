@@ -3,9 +3,11 @@ const { lockFunds, releaseFunds, initiateDispute, getEscrowStatus } = require('.
 
 const router = express.Router();
 
-router.post('/api/escrow/lock', lockFunds);
-router.post('/api/escrow/release', releaseFunds);
-router.post('/api/escrow/dispute', initiateDispute);
-router.get('/api/escrow/status/:taskId', getEscrowStatus);
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/api/escrow/lock', authMiddleware, lockFunds);
+router.post('/api/escrow/release', authMiddleware, releaseFunds);
+router.post('/api/escrow/dispute', authMiddleware, initiateDispute);
+router.get('/api/escrow/status/:taskId', authMiddleware, getEscrowStatus);
 
 module.exports = router;

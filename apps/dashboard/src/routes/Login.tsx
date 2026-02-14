@@ -144,6 +144,34 @@ const Login: React.FC = () => {
                                     'Initialize Session'
                                 )}
                             </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-white/10"></div>
+                                <span className="flex-shrink-0 mx-4 text-xs text-slate-500 font-mono uppercase">Or</span>
+                                <div className="flex-grow border-t border-white/10"></div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    setLoading(true);
+                                    const { error } = await supabase.auth.signInWithOAuth({
+                                        provider: 'google',
+                                        options: {
+                                            redirectTo: `${window.location.origin}/dashboard`
+                                        }
+                                    });
+                                    if (error) {
+                                        setError(error.message);
+                                        setLoading(false);
+                                    }
+                                }}
+                                disabled={loading}
+                                className="w-full bg-white/5 border border-white/10 text-white font-mono text-xs font-bold uppercase py-4 rounded hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                            >
+                                <IconifyIcon icon="logos:google-icon" width="18"></IconifyIcon>
+                                Access with Google
+                            </button>
                         </form>
 
                         <div className="mt-8 text-center">

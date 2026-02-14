@@ -3,8 +3,10 @@ const { healthCheck, rootCheck, debugDbCheck } = require('../controllers/monitor
 
 const router = express.Router();
 
+const authMiddleware = require('../middleware/authMiddleware');
+
 router.get('/', rootCheck);
 router.get('/health', healthCheck);
-router.get('/api/debug/db-check', debugDbCheck);
+router.get('/api/debug/db-check', authMiddleware, debugDbCheck);
 
 module.exports = router;

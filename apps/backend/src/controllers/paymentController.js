@@ -4,10 +4,10 @@ const { getSupabase } = require('../config/supabase');
 const createPaymentIntent = async (req, res) => {
     try {
         const stripe = getStripe();
-        const { amount, userId, currency = 'usd' } = req.body;
+        const { amount, currency = 'usd' } = req.body;
+        const userId = req.user.id; // From Auth Middleware
 
         if (!amount) return res.status(400).send({ error: 'Amount required' });
-        if (!userId) return res.status(400).send({ error: 'User ID required' });
 
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount * 100,
@@ -26,10 +26,10 @@ const createPaymentIntent = async (req, res) => {
 const createCheckoutSession = async (req, res) => {
     try {
         const stripe = getStripe();
-        const { amount, userId, returnUrl } = req.body;
+        const { amount, returnUrl } = req.body;
+        const userId = req.user.id; // From Auth Middleware
 
         if (!amount) return res.status(400).send({ error: 'Amount required' });
-        if (!userId) return res.status(400).send({ error: 'User ID required' });
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -45,8 +45,8 @@ const createCheckoutSession = async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `${returnUrl || 'https://rentman.space/wallet'}?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${returnUrl || 'https://rentman.space/wallet'}?canceled=true`,
+            success_url: `${returnUrl || process.env.APP_URL + '/wallet'}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${returnUrl || process.env.APP_URL + '/wallet'}?canceled=true`,
             payment_intent_data: {
                 metadata: { service: 'rentman_credits', userId: userId }
             },
@@ -64,10 +64,13 @@ const onboardUser = async (req, res) => {
     try {
         const stripe = getStripe();
         const supabase = getSupabase();
-        const { userId, email, firstName, lastName } = req.body;
+        const { email, firstName, lastName } = req.body;
+        // userId comes from token, email MUST match token email for security (or just trust token)
+        const userId = req.user.id;
+        const userEmail = req.user.email || email; // Prefer token email
 
-        if (!userId || !email) {
-            return res.status(400).json({ error: 'userId and email required' });
+        if (!userEmail) {
+            return res.status(400).json({ error: 'Email required' });
         }
 
         const { data: existingProfile } = await supabase
@@ -81,8 +84,8 @@ const onboardUser = async (req, res) => {
         if (accountId) {
             const accountLink = await stripe.accountLinks.create({
                 account: accountId,
-                refresh_url: 'https://rentman.space/progress?refresh=true',
-                return_url: 'https://rentman.space/progress?success=true',
+                refresh_url: `${process.env.APP_URL}/progress?refresh=true`,
+                return_url: `${process.env.APP_URL}/progress?success=true`,
                 type: 'account_onboarding',
             });
             return res.json({ url: accountLink.url, accountId: accountId, resumed: true });
@@ -91,7 +94,7 @@ const onboardUser = async (req, res) => {
         const accountParams = {
             type: 'express',
             country: 'US',
-            email: email,
+            email: userEmail,
             capabilities: { transfers: { requested: true } },
             business_type: 'individual',
             metadata: { rentman_user_id: userId }
@@ -105,8 +108,8 @@ const onboardUser = async (req, res) => {
 
         const accountLink = await stripe.accountLinks.create({
             account: account.id,
-            refresh_url: 'https://rentman.space/progress?refresh=true',
-            return_url: 'https://rentman.space/progress?success=true',
+            refresh_url: `${process.env.APP_URL}/progress?refresh=true`,
+            return_url: `${process.env.APP_URL}/progress?success=true`,
             type: 'account_onboarding',
         });
 
@@ -123,8 +126,27 @@ const transferFunds = async (req, res) => {
         const supabase = getSupabase();
         const { amount, destinationAccountId, deductFee = true, taskId } = req.body || {};
 
+        // Security Check: Ideally we should verify if req.user.id is allowed to initiate this transfer
+        // For 'Withdrawal' (self-transfer), destinationAccountId should belong to req.user.id
+        // For 'Payout' (task completion), this is typically triggered by System or Client approval via Escrow Release
+        // This endpoint seems to be a generic transfer utility. 
+        // IMPORTANT: If this is client-facing for withdrawals, we must ensure user owns the destination account.
+
         if (!amount || !destinationAccountId) {
             return res.status(400).json({ error: 'Missing amount or destination' });
+        }
+
+        // Verify ownership of destination account for withdrawals
+        if (!taskId) { // Assuming no taskId means manual withdrawal
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('stripe_connect_account_id')
+                .eq('id', req.user.id)
+                .single();
+
+            if (profile?.stripe_connect_account_id !== destinationAccountId) {
+                return res.status(403).json({ error: 'Unauthorized transfer destination' });
+            }
         }
 
         const COMMISSION_RATE = 0.10;
@@ -142,7 +164,8 @@ const transferFunds = async (req, res) => {
                 clientPays: clientPaysCents,
                 workerReceives: workerAmountCents,
                 platformFee: platformFeeCents,
-                type: 'direct_transfer'
+                type: 'direct_transfer',
+                initiatorId: req.user.id
             }
         });
 

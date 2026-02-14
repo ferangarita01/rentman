@@ -11,25 +11,33 @@ import swaggerUi from '@fastify/swagger-ui';
 import websocket from '@fastify/websocket';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
-import logger from './utils/logger.js';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import RedisService from './services/redis.js';
-import { loadSecrets } from './utils/secrets.js';
 
-// Routes
-import { marketTasksRoutes } from './routes/market/tasks.js';
-import { marketHumansRoutes } from './routes/market/humans.js';
-import { agentRoutes } from './routes/agents/register.js';
+// Utils
+import logger from './utils/logger.js';
+import { loadSecrets } from './utils/secrets.js';
 
 console.log('--- STARTING AGENT GATEWAY SERVER (CLOUD NATIVE) ---');
 
+let RedisService: any;
+
 async function bootstrap() {
+  // 1. Load Secrets FIRST
   await loadSecrets();
 
-  // Now import config, which will validate process.env
+  // 2. Import Config & Dependencies dynamically (after secrets are present)
   const configModule = await import('./config.js');
   const config = configModule.default;
   const isDevelopment = configModule.isDevelopment;
+
+  // Import Services & Middleware dynamically
+  const { errorHandler, notFoundHandler } = await import('./middleware/errorHandler.js');
+  const redisModule = await import('./services/redis.js');
+  RedisService = redisModule.default;
+
+  // Import Routes dynamically
+  const { marketTasksRoutes } = await import('./routes/market/tasks.js');
+  const { marketHumansRoutes } = await import('./routes/market/humans.js');
+  const { agentRoutes } = await import('./routes/agents/register.js');
 
   const fastify = Fastify({
     logger: true,
@@ -43,11 +51,30 @@ async function bootstrap() {
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.setSerializerCompiler(serializerCompiler);
 
-  return { fastify, config, isDevelopment };
+  // Return everything needed for buildServer
+  return {
+    fastify,
+    config,
+    isDevelopment,
+    errorHandler,
+    notFoundHandler,
+    marketTasksRoutes,
+    marketHumansRoutes,
+    agentRoutes
+  };
 }
 
 async function buildServer() {
-  const { fastify, config, isDevelopment } = await bootstrap();
+  const {
+    fastify,
+    config,
+    isDevelopment,
+    errorHandler,
+    notFoundHandler,
+    marketTasksRoutes,
+    marketHumansRoutes,
+    agentRoutes
+  } = await bootstrap();
 
   // Security headers
   await fastify.register(helmet, {
@@ -182,8 +209,8 @@ async function buildServer() {
 async function start() {
   try {
     const server = await buildServer();
-    const port = Number(process.env.PORT) || 3001;
-    const host = process.env.HOST || '0.0.0.0';
+    const port = Number(process.env.PORT) || 8080;
+    const host = '0.0.0.0'; // Force 0.0.0.0 for Cloud Run
 
     // Start server
     await server.listen({

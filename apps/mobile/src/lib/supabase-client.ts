@@ -643,10 +643,15 @@ export async function uploadProof(
 ) {
   try {
     const BACKEND_URL = config.apiUrl;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     const response = await fetch(`${BACKEND_URL}/api/proofs/upload`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         taskId,
         humanId,
@@ -699,10 +704,15 @@ export async function reviewProof(
 ) {
   try {
     const BACKEND_URL = config.apiUrl;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     const response = await fetch(`${BACKEND_URL}/api/proofs/review`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         proofId,
         reviewerId,
@@ -729,8 +739,14 @@ export async function reviewProof(
 export async function getEscrowStatus(taskId: string) {
   try {
     const BACKEND_URL = config.apiUrl;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
-    const response = await fetch(`${BACKEND_URL}/api/escrow/status/${taskId}`);
+    const response = await fetch(`${BACKEND_URL}/api/escrow/status/${taskId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     const data = await response.json();
 
     if (!response.ok) {
@@ -750,10 +766,15 @@ export async function getEscrowStatus(taskId: string) {
 export async function releasePayment(taskId: string, approverId: string) {
   try {
     const BACKEND_URL = config.apiUrl;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     const response = await fetch(`${BACKEND_URL}/api/escrow/release`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ taskId, approverId })
     });
 
@@ -775,10 +796,15 @@ export async function releasePayment(taskId: string, approverId: string) {
 export async function initiateDispute(taskId: string, initiatorId: string, reason: string) {
   try {
     const BACKEND_URL = config.apiUrl;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     const response = await fetch(`${BACKEND_URL}/api/escrow/dispute`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ taskId, initiatorId, reason })
     });
 

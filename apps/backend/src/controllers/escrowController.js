@@ -8,11 +8,18 @@ const lockFunds = async (req, res) => {
         const stripe = getStripe();
         const supabase = getSupabase();
         const { taskId, humanId } = req.body;
+        const requesterId = req.user.id; // From Auth Middleware
 
         if (!taskId || !humanId) return res.status(400).json({ error: 'taskId and humanId required' });
 
         const { data: task, error: taskError } = await supabase.from('tasks').select('*').eq('id', taskId).single();
         if (taskError || !task) return res.status(404).json({ error: 'Task not found' });
+
+        // Security Check: Only the task requester can lock funds
+        if (task.requester_id !== requesterId) {
+            return res.status(403).json({ error: 'Unauthorized: Only the requester can lock funds' });
+        }
+
         if (task.status !== 'OPEN') return res.status(400).json({ error: 'Task is not available' });
 
         const COMMISSION_RATE = 0.10;
@@ -24,12 +31,12 @@ const lockFunds = async (req, res) => {
             amount: clientPaysCents,
             currency: task.budget_currency?.toLowerCase() || 'usd',
             capture_method: 'manual',
-            metadata: { service: 'rentman_escrow', taskId, humanId, requesterId: task.requester_id }
+            metadata: { service: 'rentman_escrow', taskId, humanId, requesterId: requesterId }
         });
 
         const { data: escrow, error: escrowError } = await supabase.from('escrow_transactions').insert({
             task_id: taskId,
-            requester_id: task.requester_id,
+            requester_id: requesterId,
             human_id: humanId,
             gross_amount: clientPaysCents,
             platform_fee_amount: platformFeeCents,
@@ -68,12 +75,15 @@ const releaseFunds = async (req, res) => {
     try {
         const stripe = getStripe();
         const supabase = getSupabase();
-        const { taskId, approverId } = req.body;
+        const { taskId } = req.body;
+        const approverId = req.user.id; // From Auth Middleware
 
-        if (!taskId || !approverId) return res.status(400).json({ error: 'taskId and approverId required' });
+        if (!taskId) return res.status(400).json({ error: 'taskId required' });
 
         const { data: task } = await supabase.from('tasks').select('*').eq('id', taskId).single();
         if (!task) return res.status(404).json({ error: 'Task not found' });
+
+        // Security Check
         if (task.requester_id !== approverId) return res.status(403).json({ error: 'Only requester can approve' });
 
         const { data: proofs } = await supabase.from('task_proofs').select('*').eq('task_id', taskId);
@@ -122,12 +132,15 @@ const releaseFunds = async (req, res) => {
 const initiateDispute = async (req, res) => {
     try {
         const supabase = getSupabase();
-        const { taskId, initiatorId, reason } = req.body;
+        const { taskId, reason } = req.body;
+        const initiatorId = req.user.id; // From Auth Middleware
 
-        if (!taskId || !initiatorId || !reason) return res.status(400).json({ error: 'Missing fields' });
+        if (!taskId || !reason) return res.status(400).json({ error: 'Missing fields' });
 
         const { data: task } = await supabase.from('tasks').select('*').eq('id', taskId).single();
         if (!task) return res.status(404).json({ error: 'Task not found' });
+
+        // Security Check
         if (task.requester_id !== initiatorId && task.assigned_human_id !== initiatorId) return res.status(403).json({ error: 'Not participant' });
 
         const { data: escrow } = await supabase.from('escrow_transactions').update({

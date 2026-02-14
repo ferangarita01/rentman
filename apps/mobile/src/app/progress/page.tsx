@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import WalletConnect from '@/components/WalletConnect';
 import { ArrowUpRight, ArrowDownLeft, DollarSign, Building, Plus, RefreshCw } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
@@ -21,7 +21,7 @@ interface Deposit {
     description: string;
     created_at: string;
     processed_at?: string; // Added to match transactions table
-    metadata?: any;
+    metadata?: Record<string, unknown>;
 }
 
 export default function ProgressPage() {
@@ -42,7 +42,7 @@ export default function ProgressPage() {
     const [withdrawing, setWithdrawing] = useState(false);
 
     // Fetch deposits & profile
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!user) {
             setLoading(false);
             return;
@@ -53,7 +53,18 @@ export default function ProgressPage() {
             const { data: profileData } = await getProfile(user.id);
             if (profileData) setProfile(profileData);
 
-            // 2. Get All Transactions from the real transactions table
+            // 2. Get Credits from Stripe Sync Engine (same source as Dashboard)
+            const { data: deposits } = await supabase.rpc('get_my_deposits');
+
+            if (deposits && deposits.length > 0) {
+                const totalCredits = deposits.reduce((sum: number, d: { amount: number }) => sum + Number(d.amount), 0);
+                setRentmanCredits(totalCredits);
+                console.log('[WALLET] Loaded Balance via RPC:', totalCredits);
+            } else {
+                setRentmanCredits(0);
+            }
+
+            // 3. Get All Transactions for History Display
             const { data: allTransactions, error } = await supabase
                 .from('transactions')
                 .select('*')
@@ -62,15 +73,10 @@ export default function ProgressPage() {
 
             if (error) {
                 console.error('Error fetching transactions:', error);
-                toast.error('Failed to load wallet data');
-            } else if (allTransactions && allTransactions.length > 0) {
-                // Only count completed transactions for balance
-                const completedTxns = allTransactions.filter((t: Deposit) => t.status === 'completed');
-                const total = completedTxns.reduce((sum: number, t: Deposit) => sum + Number(t.amount), 0);
-                setRentmanCredits(Math.max(0, total));
+                // Don't toast error if just history failed but balance succeeded
+            } else if (allTransactions) {
                 setTransactions(allTransactions);
             } else {
-                setRentmanCredits(0);
                 setTransactions([]);
             }
 
@@ -91,15 +97,15 @@ export default function ProgressPage() {
         }
         setLoading(false);
         setRefreshing(false);
-    };
+    }, [user]);
 
     useEffect(() => {
         fetchData();
-    }, [user]);
+    }, [fetchData]);
 
     // Deep link listener for Stripe Connect redirect
     useEffect(() => {
-        let listenerHandle: any;
+        let listenerHandle: { remove: () => void } | undefined;
 
         const setupListener = async () => {
             const handleDeepLink = (event: URLOpenListenerEvent) => {
@@ -151,15 +157,18 @@ export default function ProgressPage() {
         const loadingToast = toast.loading('Opening Stripe Checkout...');
         try {
             const BACKEND_URL = config.apiUrl;
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
             const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    userId: user.id,
                     amount: 100, // Default $100
-                    successUrl: 'https://rentman.space/progress?success=true',
-                    cancelUrl: 'https://rentman.space/progress?canceled=true'
+                    returnUrl: 'https://rentman.space/progress' // userId is now inferred from token
                 })
             });
 
@@ -173,9 +182,9 @@ export default function ProgressPage() {
             } else {
                 throw new Error('No checkout URL returned');
             }
-        } catch (e: any) {
+        } catch (e) {
             toast.dismiss(loadingToast);
-            toast.error('Checkout failed: ' + e.message);
+            toast.error('Checkout failed: ' + (e instanceof Error ? e.message : 'Unknown error'));
         }
     };
 
@@ -189,13 +198,18 @@ export default function ProgressPage() {
         const loadingToast = toast.loading('Connecting to Stripe...');
         try {
             const BACKEND_URL = config.apiUrl;
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/onboard`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    userId: user.id,
                     email: user.email,
+                    // userId is now inferred from token
                 })
             });
 
@@ -216,9 +230,9 @@ export default function ProgressPage() {
             } else {
                 throw new Error('No URL returned');
             }
-        } catch (e: any) {
+        } catch (e) {
             toast.dismiss(loadingToast);
-            toast.error('Connect failed: ' + e.message);
+            toast.error('Connect failed: ' + (e instanceof Error ? e.message : 'Unknown error'));
         }
     };
 
@@ -251,10 +265,15 @@ export default function ProgressPage() {
         const loadingToast = toast.loading('Processing Payout...');
         try {
             const BACKEND_URL = config.apiUrl;
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
             const res = await fetch(`${BACKEND_URL}/api/stripe/transfer`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     amount: amount,
                     destinationAccountId: profile.stripe_account_id
@@ -293,9 +312,9 @@ export default function ProgressPage() {
             setWithdrawAmount('');
             fetchData(); // Update balance
 
-        } catch (e: any) {
+        } catch (e) {
             toast.dismiss(loadingToast);
-            toast.error('Withdraw failed: ' + e.message);
+            toast.error('Withdraw failed: ' + (e instanceof Error ? e.message : 'Unknown error'));
         } finally {
             setWithdrawing(false);
         }

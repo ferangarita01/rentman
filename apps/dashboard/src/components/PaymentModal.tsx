@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, CreditCard, Wallet } from 'lucide-react';
 import { connectWallet } from '../lib/solana';
+import { supabase } from '../lib/supabase';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -56,9 +57,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
     setLoading(true);
     try {
       const BACKEND_URL = import.meta.env.VITE_AGENT_GATEWAY_URL || 'https://rentman-backend-346436028870.us-east1.run.app';
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const res = await fetch(`${BACKEND_URL}/api/create-checkout-session`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           amount,
           userId,

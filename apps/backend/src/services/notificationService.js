@@ -14,8 +14,16 @@ try {
     console.error('❌ Error initializing Firebase Admin:', error);
 }
 
-// Initialize Supabase Admin for fetching tokens
-const supabase = createClient(secrets.SUPABASE_URL, secrets.SUPABASE_SERVICE_KEY);
+// Initialize Supabase Admin lazily
+let supabase;
+
+async function getSupabase() {
+    if (supabase) return supabase;
+    const url = await secrets.getSecret('SUPABASE_URL');
+    const key = await secrets.getSecret('SUPABASE_SERVICE_ROLE_KEY');
+    supabase = createClient(url, key);
+    return supabase;
+}
 
 /**
  * Send a push notification to a user
@@ -27,7 +35,8 @@ const supabase = createClient(secrets.SUPABASE_URL, secrets.SUPABASE_SERVICE_KEY
 async function sendNotification(userId, title, body, data = {}) {
     try {
         // 1. Get user tokens
-        const { data: tokens, error } = await supabase
+        const client = await getSupabase();
+        const { data: tokens, error } = await client
             .from('user_push_tokens')
             .select('token')
             .eq('user_id', userId);
@@ -66,7 +75,8 @@ async function sendNotification(userId, title, body, data = {}) {
 
             // Optional: Delete invalid tokens
             if (failedTokens.length > 0) {
-                await supabase.from('user_push_tokens').delete().in('token', failedTokens);
+                const client = await getSupabase();
+                await client.from('user_push_tokens').delete().in('token', failedTokens);
             }
         }
 

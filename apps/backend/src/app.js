@@ -7,7 +7,6 @@ const webhookRoutes = require('./routes/webhookRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const escrowRoutes = require('./routes/escrowRoutes');
-const escrowRoutes = require('./routes/escrowRoutes');
 const cronRoutes = require('./routes/cronRoutes');
 const { sendNotification } = require('./services/notificationService');
 

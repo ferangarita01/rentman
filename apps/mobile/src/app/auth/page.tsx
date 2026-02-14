@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { config } from '@/lib/config';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Browser } from '@capacitor/browser';
@@ -18,7 +19,10 @@ export default function AuthPage() {
 
     useEffect(() => {
         trackPageView('/auth', 'Authentication');
-        
+
+        trackPageView('/auth', 'Authentication');
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let listenerHandle: any;
         const setupDeepLinkListener = async () => {
             listenerHandle = await CapacitorApp.addListener('appUrlOpen', async (data) => {
@@ -32,7 +36,7 @@ export default function AuthPage() {
                     const accessToken = hashParams.get('access_token');
                     const refreshToken = hashParams.get('refresh_token');
                     if (accessToken && refreshToken) {
-                        const { data: { session }, error } = await supabase.auth.setSession({
+                        const { data: { session } } = await supabase.auth.setSession({
                             access_token: accessToken,
                             refresh_token: refreshToken,
                         });
@@ -50,10 +54,12 @@ export default function AuthPage() {
         };
     }, [router]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleGoogleLogin = async () => {
         setLoading(true);
         trackAuthEvent('login', 'google');
         try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const isCapacitor = typeof (window as any).Capacitor !== 'undefined';
             if (isCapacitor) {
                 const { data, error } = await supabase.auth.signInWithOAuth({
@@ -71,12 +77,13 @@ export default function AuthPage() {
                     options: { redirectTo: `${window.location.origin}/auth/callback` },
                 });
             }
-        } catch (error: any) {
-            trackAuthEvent('login_failed', 'google', { error: error.message });
+        } catch (error) {
+            const err = error as Error;
+            trackAuthEvent('login_failed', 'google', { error: err.message });
             if (process.env.NODE_ENV === 'development') {
-                console.error('GOOGLE_AUTH_ERROR:', error);
+                console.error('GOOGLE_AUTH_ERROR:', err);
             }
-            toast.error(error.message);
+            toast.error(err.message);
             setLoading(false);
         }
     };
@@ -102,19 +109,22 @@ export default function AuthPage() {
                     password: accessKey,
                 });
                 if (error) throw error;
-                
+
                 if (process.env.NODE_ENV === 'development') {
                     console.log('✅ Login successful:', data.user?.email);
                 }
                 toast.success('Access Granted');
+                // Navigate to home screen
+                router.push('/');
                 setLoading(false);
             }
-        } catch (error: any) {
-            trackAuthEvent('login_failed', 'email', { error: error.message });
+        } catch (error) {
+            const err = error as Error;
+            trackAuthEvent('login_failed', 'email', { error: err.message });
             if (process.env.NODE_ENV === 'development') {
-                console.error('Auth error:', error.message);
+                console.error('Auth error:', err.message);
             }
-            toast.error(`Access Denied: ${error.message}`);
+            toast.error(`Access Denied: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -227,6 +237,17 @@ export default function AuthPage() {
                                 {loading ? 'INITIALIZING...' : 'INITIALIZE SESSION'}
                                 <span className="material-symbols-outlined text-sm">bolt</span>
                             </button>
+
+                            {/* Google Sign-In Button */}
+                            <button
+                                className="w-full font-bold text-sm tracking-[0.2em] h-14 rounded-sm active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 mt-4 border border-white/20 hover:bg-white/5"
+                                onClick={handleGoogleLogin}
+                                disabled={loading}
+                                style={{ color: 'white' }}
+                            >
+                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                                ACCESS_WITH_GOOGLE
+                            </button>
                         </div>
 
                         <div className="flex justify-between items-center px-1">
@@ -245,11 +266,12 @@ export default function AuthPage() {
                             onClick={async () => {
                                 try {
                                     const start = Date.now();
-                                    const res = await fetch('https://zezzmppfqdbnbpggpivg.supabase.co/auth/v1/health');
+                                    const res = await fetch(`${config.supabase.url}/auth/v1/health`);
                                     const ms = Date.now() - start;
                                     toast.success(`Ping: ${ms}ms | Status: ${res.status}`);
-                                } catch (e: any) {
-                                    toast.error(`Net Error: ${e.name} - ${e.message}`);
+                                } catch (e) {
+                                    const err = e as Error;
+                                    toast.error(`Net Error: ${err.name} - ${err.message}`);
                                 }
                             }}
                             className="w-full mt-4 text-[8px] opacity-30 hover:opacity-100"

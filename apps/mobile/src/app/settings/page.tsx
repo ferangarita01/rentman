@@ -16,7 +16,7 @@ import {
     FileText,
     ExternalLink
 } from 'lucide-react';
-import { getSettings, updateSettings, UserSettings } from '@/lib/supabase-client';
+import { getSettings, updateSettings, UserSettings, supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackPageView, trackSettingsChange, trackButtonClick } from '@/lib/analytics';
 import { useRentmanAssistant } from '@/contexts/RentmanAssistantContext';
@@ -501,12 +501,25 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Danger Zone */}
-                <div className="mt-10 px-4 mb-8">
+                <div className="mt-10 px-4 mb-4 space-y-3">
                     <button
-                        onClick={handleReboot}
+                        onClick={async () => {
+                            trackButtonClick('Logout', 'Settings');
+                            if (confirm('TERMINATE UPLINK? Session will be closed.')) {
+                                await supabase.auth.signOut();
+                                router.replace('/auth');
+                            }
+                        }}
                         className="w-full border border-red-500/30 bg-red-500/5 py-4 text-red-500 font-mono text-[10px] tracking-widest uppercase flex items-center justify-center gap-2 hover:bg-red-500/20 transition-all active:scale-95">
                         <TriangleAlert className="w-4 h-4" />
-                        Emergency System Reboot
+                        TERMINATE SESSION
+                    </button>
+
+                    <button
+                        onClick={handleReboot}
+                        className="w-full border border-orange-500/30 bg-orange-500/5 py-4 text-orange-500 font-mono text-[10px] tracking-widest uppercase flex items-center justify-center gap-2 hover:bg-orange-500/20 transition-all active:scale-95">
+                        <Activity className="w-4 h-4" />
+                        System Reboot
                     </button>
                 </div>
 

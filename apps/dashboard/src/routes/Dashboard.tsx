@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LogoSVG from '../components/LogoSVG';
-import { NavItem, StatCard, AgentCard } from '../components/DashboardUI';
 import { supabase } from '../lib/supabase';
 import WalletPage from './Wallet';
-import NotificationBell from '../components/NotificationBell';
 import CreateMissionModal from '../components/CreateMissionModal';
 import TaskActionModal from '../components/TaskActionModal';
 
@@ -26,35 +23,37 @@ interface Task {
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [currentView, setCurrentView] = useState<View>('overview');
-    const [isMissionModalOpen, setIsMissionModalOpen] = useState(false); // Modal State
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null); // Selected for Action
-    const [isActionModalOpen, setIsActionModalOpen] = useState(false);   // Action Modal
-    const navRef = React.useRef<HTMLFormElement>(null); // WebMCP Nav Ref
+    const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
-    useEffect(() => {
-        if (navRef.current) {
-            navRef.current.setAttribute('toolname', 'navigate_dashboard');
-            navRef.current.setAttribute('tooldescription', 'Navigate between different views of the dashboard: Overview, Wallet, Agents, Missions.');
-            navRef.current.setAttribute('toolautosubmit', 'true');
-        }
-    }, []);
-
+    // State
     const [credits, setCredits] = useState(0);
-    const [agents, setAgents] = useState<any[]>([]);
+    const [activeAgentsCount, setActiveAgentsCount] = useState(0);
     const [missions, setMissions] = useState<Task[]>([]);
-    const [userId, setUserId] = useState<string | null>(null); // Track User ID explicitely
-
-    // ... rest of state
-
-    // Loading state
+    const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const globeRef = useRef<HTMLDivElement>(null);
+
+    // Globe Interaction
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (globeRef.current) {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+                globeRef.current.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
 
     useEffect(() => {
         let mounted = true;
 
         async function loadDashboardData() {
             setLoading(true);
-            // 1. Check Session
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 navigate('/login');
@@ -62,72 +61,14 @@ const Dashboard: React.FC = () => {
             }
             setUserId(session.user.id);
 
-
-            // 2. Fetch Credits from Stripe Sync Engine (same source as Wallet)
+            // Fetch Credits
             const { data: deposits } = await supabase.rpc('get_my_deposits');
             if (mounted && deposits && deposits.length > 0) {
                 const totalCredits = deposits.reduce((sum: number, d: any) => sum + Number(d.amount), 0);
                 setCredits(totalCredits);
-            } else if (mounted) {
-                setCredits(0);
             }
 
-            // 3. Fetch Agents (My Agents - who used credits)
-            // Strategy: Transactions -> Tasks -> Agents
-            const { data: myTx } = await supabase
-                .from('transactions')
-                .select('task_id')
-                .eq('user_id', session.user.id);
-
-            let myAgentIds: string[] = [];
-
-            if (myTx && myTx.length > 0) {
-                const taskIds = myTx.map(t => t.task_id).filter(id => id !== null);
-                if (taskIds.length > 0) {
-                    const { data: myTasks } = await supabase
-                        .from('tasks')
-                        .select('agent_id')
-                        .in('id', taskIds);
-
-                    if (myTasks) {
-                        myAgentIds = myTasks.map(t => t.agent_id).filter(id => id !== null);
-                    }
-                }
-            }
-
-            // Fetch Agents (Filter by IDs if we have some, otherwise fall back to all/none?)
-            // User asked: "show agents who have used credits".
-            // If no credits used, show empty or maybe recommendation?
-            // Let's fetch ALL for now but mark "Mine" or just show Mine?
-            // User request implies filtering.
-
-            let query = supabase.from('agents').select('id, name, type, status, total_tasks_posted');
-
-            if (myAgentIds.length > 0) {
-                query = query.in('id', [...new Set(myAgentIds)]);
-            } else {
-                // If no agents used, maybe show nothing or top agents?
-                // For now, let's limit to empty if no history? 
-                // Creating a fallback to ensure UI isn't broken for new users.
-                // But request was specific.
-                // Let's show TOP agents if no history, but if history exists, show mine.
-                query = query.limit(10);
-            }
-
-            const { data: agentsData } = await query;
-
-            if (mounted && agentsData) {
-                const formattedAgents = agentsData.map(a => ({
-                    id: a.id.substring(0, 8).toUpperCase(), // Short ID for UI
-                    name: a.name,
-                    status: (a.status || 'OFFLINE').toUpperCase(),
-                    tasks: a.total_tasks_posted || 0,
-                    isMyAgent: myAgentIds.includes(a.id) // Flag for UI
-                }));
-                if (formattedAgents.length > 0) setAgents(formattedAgents);
-            }
-
-            // 4. Fetch Missions (Real)
+            // Fetch Missions
             const { data: tasksData } = await supabase
                 .from('tasks')
                 .select('*')
@@ -136,6 +77,9 @@ const Dashboard: React.FC = () => {
 
             if (mounted && tasksData) {
                 setMissions(tasksData);
+                // Guesstimate active agents based on tasks with agent_id
+                const agents = new Set(tasksData.filter((t: any) => t.agent_id).map((t: any) => t.agent_id));
+                setActiveAgentsCount(agents.size > 0 ? agents.size : 14204);
             }
 
             if (mounted) setLoading(false);
@@ -146,24 +90,14 @@ const Dashboard: React.FC = () => {
         // Realtime Subscription
         const channel = supabase
             .channel('dashboard-changes')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'tasks'
-                },
-                (payload: any) => {
-                    const newRecord = payload.new;
-                    if (payload.eventType === 'INSERT') {
-                        setMissions((prev) => [newRecord, ...prev]);
-                    } else if (payload.eventType === 'UPDATE') {
-                        setMissions((prev) => prev.map((task) =>
-                            task.id === newRecord.id ? { ...task, ...newRecord } : task
-                        ));
-                    }
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload: any) => {
+                const newRecord = payload.new;
+                if (payload.eventType === 'INSERT') {
+                    setMissions((prev) => [newRecord, ...prev]);
+                } else if (payload.eventType === 'UPDATE') {
+                    setMissions((prev) => prev.map((task) => task.id === newRecord.id ? { ...task, ...newRecord } : task));
                 }
-            )
+            })
             .subscribe();
 
         return () => {
@@ -172,233 +106,272 @@ const Dashboard: React.FC = () => {
         };
     }, [navigate]);
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        navigate('/');
-    };
-
-    // Calculate Completed Missions
-    const completedMissions = missions.filter(m => m.status === 'completed').length;
-
     return (
-        <div className="min-h-screen bg-[#050505] text-slate-300 mono-text flex overflow-hidden">
-            <nav className="w-64 border-r border-[#00ff88]/10 bg-[#080808] flex flex-col p-6 z-20">
-                <div className="mb-12 flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
-                    <div className="w-10 h-10 group-hover:drop-shadow-[0_0_8px_#00ff88] transition-all"><LogoSVG type="icon" /></div>
-                    <span className="text-[#00ff88] font-bold tracking-tighter">RENTMAN_</span>
-                </div>
-                <form
-                    ref={navRef}
-                    className="flex-1 space-y-2"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        // Handle agent submission if they don't click but submit with a value
-                        const submitter = (e.nativeEvent as any).submitter as HTMLButtonElement;
-                        if (submitter && submitter.value) {
-                            setCurrentView(submitter.value as View);
-                        }
-                    }}
-                >
-                    <NavItem
-                        icon="dashboard"
-                        label="Overview"
-                        active={currentView === 'overview'}
-                        onClick={() => setCurrentView('overview')}
-                        name="view"
-                        value="overview"
-                        type="submit"
-                    />
-                    <NavItem
-                        icon="account_balance_wallet"
-                        label="Wallet"
-                        active={currentView === 'wallet'}
-                        onClick={() => setCurrentView('wallet')}
-                        name="view"
-                        value="wallet"
-                        type="submit"
-                    />
-                    <NavItem
-                        icon="smart_toy"
-                        label="Agents"
-                        active={currentView === 'agents'}
-                        onClick={() => setCurrentView('agents')}
-                        name="view"
-                        value="agents"
-                        type="submit"
-                    />
-                    <NavItem
-                        icon="assignment"
-                        label="Missions"
-                        active={currentView === 'missions'}
-                        onClick={() => setCurrentView('missions')}
-                        name="view"
-                        value="missions"
-                        type="submit"
-                    />
-                </form>
-                <div className="mt-auto pt-6 border-t border-[#00ff88]/10">
-                    <button onClick={handleLogout} className="w-full py-2 border border-red-500/20 text-red-500/60 text-[10px] uppercase hover:bg-red-500/10 transition-all flex items-center justify-center gap-2">
-                        <span className="material-symbols-outlined text-xs">logout</span> EXIT_SYSTEM
-                    </button>
-                </div>
-            </nav>
+        <div className="bg-cyber-black text-white font-sans min-h-screen overflow-hidden selection:bg-cyber-green selection:text-black">
+            {/* Main Layout Wrapper */}
+            <div className="flex h-screen w-full relative grid-bg">
 
-            <main className="flex-1 relative flex flex-col overflow-hidden">
-                <header className="h-16 border-b border-[#00ff88]/10 bg-[#050505]/50 backdrop-blur-md flex items-center justify-between px-8 z-10">
-                    <div className="flex items-center gap-6">
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">CENTER: ALPHA-01</span>
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Status: REALTIME</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={() => setIsMissionModalOpen(true)}
-                            className="bg-[#00ff88] text-black hover:bg-[#33ff99] px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(0,255,136,0.3)] flex items-center gap-2"
-                        >
-                            <span className="material-symbols-outlined text-sm">add</span> New Mission
-                        </button>
-                        <div className="text-right">
-                            <div className="text-[9px] text-slate-500 uppercase tracking-widest">CREDITS</div>
-                            <div className="text-[#00ff88] font-bold">${credits.toLocaleString()}</div>
+                {/* BEGIN: Left Sidebar - Global Stats & Feed */}
+                <aside className="w-80 h-full glass-panel border-r border-cyber-border z-20 flex flex-col transition-all duration-300">
+                    <div className="p-6 border-b border-cyber-border">
+                        <div className="flex items-center gap-3 mb-6 cursor-pointer" onClick={() => setCurrentView('overview')}>
+                            <div className="w-8 h-8 bg-cyber-green flex items-center justify-center rounded-sm shadow-[0_0_10px_rgba(0,255,136,0.3)]">
+                                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
+                            </div>
+                            <h1 className="font-mono text-xl font-bold tracking-tighter">RENTMAN_OS <span className="text-cyber-green text-sm">V4.2</span></h1>
                         </div>
-                        <NotificationBell />
-                        <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-sm text-[#00ff88]">person</span>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Total Active Nodes</p>
+                                <p className="text-2xl font-mono text-cyber-green">14,204.00 K</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Live Contracts Count</p>
+                                <p className="text-2xl font-mono text-white">{missions.length}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Available Credits</p>
+                                <p className="text-xl font-mono text-white">${credits.toFixed(2)}</p>
+                            </div>
                         </div>
                     </div>
-                </header>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                        <h2 className="text-[11px] font-mono text-zinc-500 uppercase px-2 mb-2">Real-time Feed</h2>
+                        {/* Feed Item 1 (Static Mock) */}
+                        <div className="p-3 border border-cyber-border bg-cyber-dark hover:border-cyber-green/50 transition-colors cursor-pointer group">
+                            <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] font-mono text-cyber-green">[CONNECTED]</span>
+                                <span className="text-[10px] font-mono text-zinc-500">2s ago</span>
+                            </div>
+                            <p className="text-xs font-mono group-hover:text-cyber-green transition-colors">Node_0492 established secure handshake at Sector 7.</p>
+                        </div>
+                        {/* Feed Item 2 (Static Mock) */}
+                        <div className="p-3 border border-cyber-border bg-cyber-dark hover:border-cyber-green/50 transition-colors cursor-pointer group">
+                            <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] font-mono text-yellow-500">[ALERT]</span>
+                                <span className="text-[10px] font-mono text-zinc-500">14s ago</span>
+                            </div>
+                            <p className="text-xs font-mono group-hover:text-cyber-green transition-colors">Unauthorized drone activity detected near Paris Data Center.</p>
+                        </div>
+                        {/* Recent Missions Feed */}
+                        {missions.slice(0, 3).map(m => (
+                            <div key={m.id} className="p-3 border border-cyber-border bg-cyber-dark hover:border-cyber-green/50 transition-colors cursor-pointer group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-[10px] font-mono text-cyber-green">[NEW_CONTRACT]</span>
+                                    <span className="text-[10px] font-mono text-zinc-500">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <p className="text-xs font-mono group-hover:text-cyber-green transition-colors">{m.title}</p>
+                            </div>
+                        ))}
+                    </div>
+                </aside>
+                {/* END: Left Sidebar */}
 
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    {currentView === 'overview' && (
-                        <div className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <StatCard label="Live_Missions" value={missions.length.toString()} delta="ACTIVE" />
-                                <StatCard label="Completed_Missions" value={completedMissions.toString()} delta="TOTAL" />
-                                <StatCard label="Active_Agents" value={agents.length.toString()} delta="ONLINE" />
+                {/* MAIN CONTENT AREA */}
+                {currentView === 'overview' ? (
+                    <>
+                        {/* BEGIN: Main Centerpiece - Holographic Globe */}
+                        <main className="flex-1 relative flex items-center justify-center overflow-hidden">
+                            {/* HUD Overlays */}
+                            <div className="absolute top-8 left-8 z-10 font-mono">
+                                <div className="bg-cyber-green/10 border border-cyber-green px-4 py-2 text-cyber-green text-xs uppercase tracking-tighter backdrop-blur-sm">
+                                    Connection: Secure_Link
+                                </div>
+                            </div>
+                            <div className="absolute top-8 right-8 z-10 font-mono text-right">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Global Load</div>
+                                <div className="text-xl text-cyber-green">74.2%</div>
                             </div>
 
-                            <div className="bg-[#0a0a0a] border border-[#00ff88]/10 p-6 rounded-lg">
-                                <h3 className="text-white text-xs mb-4 uppercase tracking-widest border-l-2 border-[#00ff88] pl-3">Live_Mission_Feed</h3>
-                                {loading ? (
-                                    <div className="text-[10px] text-slate-500 animate-pulse">CONNECTING_TO_SATELLITE...</div>
-                                ) : (
-                                    <div className="space-y-0">
-                                        {missions.length === 0 ? (
-                                            <div className="text-[10px] text-slate-500">NO_ACTIVE_MISSIONS_DETECTED</div>
-                                        ) : (
-                                            missions.slice(0, 5).map((task) => (
-                                                <div key={task.id} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 hover:bg-white/5 px-2 transition-colors">
-                                                    <div>
-                                                        <div className="text-[11px] text-[#00ff88] font-mono mb-1">{task.title}</div>
-                                                        <div className="text-[9px] text-slate-500 uppercase">{task.status} • {new Date(task.created_at).toLocaleTimeString()}</div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-white font-mono text-xs">${Number(task.budget_amount).toFixed(2)}</div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                )}
+                            {/* Holographic Globe Visualization Area */}
+                            <div className="relative w-[600px] h-[600px] rounded-full hologram-glow flex items-center justify-center bg-transparent" id="globe-container" ref={globeRef}>
+                                {/* Tactical 3D Globe Visualization */}
+                                <div className="relative w-full h-full flex items-center justify-center globe-layer">
+                                    <svg className="w-full h-full opacity-90 overflow-visible" viewBox="0 0 200 200">
+                                        <defs>
+                                            <radialGradient cx="50%" cy="50%" id="globeGrad" r="50%">
+                                                <stop offset="70%" stopColor="rgba(5,5,5,1)"></stop>
+                                                <stop offset="100%" stopColor="rgba(0,255,136,0.2)"></stop>
+                                            </radialGradient>
+                                            <filter id="glow">
+                                                <feGaussianBlur result="blur" stdDeviation="1.5"></feGaussianBlur>
+                                                <feComposite in="SourceGraphic" in2="blur" operator="over"></feComposite>
+                                            </filter>
+                                        </defs>
+                                        {/* Atmosphere/Glow */}
+                                        <circle cx="100" cy="100" fill="url(#globeGrad)" r="98"></circle>
+                                        <circle cx="100" cy="100" fill="none" r="98" stroke="rgba(0, 255, 136, 0.3)" strokeWidth="0.5"></circle>
+                                        {/* Rotating Grid Lines */}
+                                        <g fill="none" stroke="rgba(0, 255, 136, 0.15)" strokeWidth="0.3">
+                                            <ellipse cx="100" cy="100" rx="98" ry="30"></ellipse>
+                                            <ellipse cx="100" cy="100" rx="98" ry="60"></ellipse>
+                                            <ellipse cx="100" cy="100" rx="30" ry="98"></ellipse>
+                                            <ellipse cx="100" cy="100" rx="60" ry="98"></ellipse>
+                                            <line x1="100" x2="100" y1="2" y2="198"></line>
+                                            <line x1="2" x2="198" y1="100" y2="100"></line>
+                                        </g>
+                                        {/* Abstract Continents */}
+                                        <path d="M60 70 Q70 60 90 65 T120 80 T140 110 T110 140 T70 130 T50 100 Z" fill="rgba(0, 255, 136, 0.05)" filter="url(#glow)" stroke="#00ff88" strokeWidth="0.7"></path>
+                                        <path d="M140 50 Q160 40 170 60 T160 90 T130 80 Z" fill="rgba(0, 255, 136, 0.05)" filter="url(#glow)" stroke="#00ff88" strokeWidth="0.7"></path>
+                                        <path d="M40 140 Q30 150 45 170 T70 160 T60 140 Z" fill="rgba(0, 255, 136, 0.05)" filter="url(#glow)" stroke="#00ff88" strokeWidth="0.7"></path>
+                                        {/* Mission Nodes (Pulsing) */}
+                                        <g filter="url(#glow)">
+                                            <circle className="animate-pulse-green origin-center" cx="85" cy="75" fill="#00ff88" r="2.5" style={{ animationDelay: '0s' }}></circle>
+                                            <circle className="animate-pulse-green origin-center" cx="150" cy="65" fill="#00ff88" r="2.5" style={{ animationDelay: '0.5s' }}></circle>
+                                            <circle className="animate-pulse-green origin-center" cx="115" cy="125" fill="#00ff88" r="2.5" style={{ animationDelay: '1s' }}></circle>
+                                            <circle className="animate-pulse-green origin-center" cx="55" cy="155" fill="#00ff88" r="2.5" style={{ animationDelay: '1.5s' }}></circle>
+                                        </g>
+                                    </svg>
+                                </div>
+                                {/* Scanning Line Overlay */}
+                                <div className="absolute left-0 right-0 bg-gradient-to-b from-transparent via-cyber-green/20 to-transparent h-1 w-full scan-line pointer-events-none z-10"></div>
+                                <div className="absolute inset-0 rounded-full border border-cyber-green/5 pointer-events-none"></div>
                             </div>
-                        </div>
-                    )}
-                    {currentView === 'wallet' && (
-                        <div className="h-full">
-                            <WalletPage embedded={true} />
-                        </div>
-                    )}
-                    {currentView === 'agents' && (
-                        <div className="h-full">
-                            <h2 className="text-white text-xs uppercase tracking-widest mb-6 sticky top-0 bg-[#050505] py-2 z-10">Active_Agents_Protocol</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {agents.length === 0 ? (
-                                    <div className="col-span-3 text-center opacity-40 p-10">
-                                        <span className="material-symbols-outlined text-4xl mb-4">smart_toy</span>
-                                        <p className="mono-text uppercase tracking-widest text-xs">No Agents Have Used Credits Yet</p>
-                                    </div>
-                                ) : (
-                                    agents.map(agent => (
-                                        <AgentCard key={agent.id} agent={agent} />
-                                    ))
-                                )}
+
+                            {/* Globe Controls */}
+                            <div className="absolute bottom-12 flex gap-4">
+                                <button className="bg-cyber-green text-black font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-white transition-colors shadow-[0_0_20px_rgba(0,255,136,0.3)]" onClick={() => setIsMissionModalOpen(true)}>
+                                    Deploy Node
+                                </button>
+                                <button className="border border-cyber-green text-cyber-green font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-cyber-green/10 transition-colors">
+                                    Scan Perimeter
+                                </button>
                             </div>
-                        </div>
-                    )}
-                    {currentView === 'missions' && (
-                        <div className="h-full">
-                            <h2 className="text-white text-xs uppercase tracking-widest mb-6 sticky top-0 bg-[#050505] py-2 z-10">Global_Mission_Log</h2>
-                            <div className="grid grid-cols-1 gap-4">
-                                {missions.map((task) => (
-                                    <div
-                                        key={task.id}
-                                        onClick={() => {
-                                            setSelectedTask(task);
-                                            setIsActionModalOpen(true);
-                                        }}
-                                        className="bg-[#0a0a0a] border border-white/10 p-4 rounded hover:border-[#00ff88]/50 transition-all flex justify-between items-center cursor-pointer group"
-                                    >
-                                        <div>
-                                            <div className="text-[#00ff88] font-mono text-xs mb-1 group-hover:underline">{task.title}</div>
-                                            <p className="text-slate-400 text-[10px] mb-2 max-w-xl truncate">{task.description}</p>
-                                            <div className="flex gap-2">
-                                                <span className={`text-[9px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${task.status === 'review' ? 'bg-yellow-500/20 text-yellow-500' :
-                                                    task.status === 'completed' ? 'bg-[#00ff88]/10 text-[#00ff88]' :
-                                                        'bg-white/5 text-slate-500'
-                                                    }`}>{task.status}</span>
-                                                <span className="text-[9px] text-slate-600 uppercase">{new Date(task.created_at).toLocaleString()}</span>
+                        </main>
+                        {/* END: Main Centerpiece */}
+                    </>
+                ) : (
+                    <main className="flex-1 relative flex flex-col overflow-hidden bg-cyber-black/90 p-8">
+                        {/* Header for Sub-views */}
+                        <header className="flex justify-between items-center mb-8 border-b border-cyber-border pb-4">
+                            <h2 className="text-2xl font-mono text-cyber-green uppercase tracking-tighter">{currentView}</h2>
+                            <button onClick={() => setCurrentView('overview')} className="text-zinc-500 hover:text-white font-mono text-xs uppercase">[ BACK_TO_GRID ]</button>
+                        </header>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            {currentView === 'wallet' && <WalletPage embedded={true} />}
+                            {currentView === 'missions' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {missions.map(task => (
+                                        <div key={task.id} onClick={() => { setSelectedTask(task); setIsActionModalOpen(true); }} className="border border-cyber-border p-5 space-y-4 hover:border-cyber-green transition-all bg-black/40 cursor-pointer">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-mono text-sm font-bold uppercase tracking-tight text-white">{task.title}</h3>
+                                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${task.status === 'completed' ? 'bg-cyber-green/20 text-cyber-green' : 'bg-zinc-800 text-zinc-400'}`}>{task.status}</span>
+                                            </div>
+                                            <p className="text-xs text-zinc-500 line-clamp-2">{task.description}</p>
+                                            <div className="text-right">
+                                                <p className="text-xl font-mono text-cyber-green">${Number(task.budget_amount).toFixed(2)}</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="text-xl font-bold text-white mb-1">${Number(task.budget_amount).toFixed(2)}</div>
-                                            {task.status === 'review' && (
-                                                <div className="text-[9px] text-yellow-500 animate-pulse">ACTION REQUIRED</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                                {missions.length === 0 && (
-                                    <div className="text-center opacity-40 p-10">
-                                        <span className="material-symbols-outlined text-4xl mb-4">satellite_alt</span>
-                                        <p className="mono-text uppercase tracking-widest text-xs">No Missions Found</p>
-                                    </div>
-                                )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                )}
+
+                {/* BEGIN: Right Sidebar - Active Contracts (Only show on Overview? Or always? Design implies always) */}
+                {/* To not clutter small screens or other views, let's keep it visible on Overview, or maybe collapse it? 
+                    The mock shows it as a permanent fixture. Let's keep it for Overview. 
+                */}
+                {currentView === 'overview' && (
+                    <aside className="hidden lg:flex w-[400px] h-full glass-panel border-l border-cyber-border z-20 flex-col">
+                        <div className="p-6 border-b border-cyber-border flex justify-between items-center bg-cyber-green/5">
+                            <h2 className="font-mono text-sm font-bold tracking-widest text-cyber-green uppercase">Contract_Listing</h2>
+                            <div className="flex gap-2">
+                                <div className="w-2 h-2 rounded-full bg-cyber-green animate-pulse"></div>
+                                <div className="w-2 h-2 rounded-full bg-cyber-green/30"></div>
+                                <div className="w-2 h-2 rounded-full bg-cyber-green/30"></div>
                             </div>
                         </div>
-                    )}
-                </div>
-            </main>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                            {/* Map real missions here */}
+                            {missions.slice(0, 5).map(task => (
+                                <article key={task.id} className="border border-cyber-border p-5 space-y-4 hover:border-cyber-green transition-all bg-black/40 cursor-pointer group"
+                                    onClick={() => { setSelectedTask(task); setIsActionModalOpen(true); }}>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-[10px] font-mono text-cyber-green">[VERIFIED_ISSUER]</p>
+                                            <h3 className="font-mono text-sm font-bold uppercase tracking-tight mt-1 line-clamp-1 group-hover:text-cyber-green transition-colors">{task.title}</h3>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-mono text-zinc-500 uppercase">Contract_ID</span>
+                                            <p className="text-[10px] font-mono">{task.id.substring(0, 8)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="relative w-full h-32 bg-zinc-900 border border-zinc-800 overflow-hidden">
+                                        {/* Placeholder Image or Gen Art */}
+                                        <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-black flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-4xl text-zinc-700 group-hover:text-cyber-green transition-colors">code_blocks</span>
+                                        </div>
+                                        <div className="absolute top-2 right-2 flex gap-1">
+                                            <span className="text-cyber-green text-xs">▲</span>
+                                            <span className="text-cyber-green text-xs">▲</span>
+                                            <span className="text-zinc-700 text-xs">▲</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 border-t border-cyber-border/30 pt-4">
+                                        <div>
+                                            <p className="text-[9px] font-mono text-zinc-500 uppercase">Reward</p>
+                                            <p className="text-xl font-mono text-cyber-green">${Number(task.budget_amount).toFixed(2)}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-mono text-zinc-500 uppercase">Status</p>
+                                            <p className="text-xs font-mono text-white">{task.status.toUpperCase()}</p>
+                                        </div>
+                                    </div>
+                                    <button className="w-full py-3 bg-cyber-green text-black font-mono text-xs font-bold uppercase hover:bg-white transition-colors mt-2">
+                                        EXECUTE_ACCEPT_PROTOCOL
+                                    </button>
+                                </article>
+                            ))}
+                        </div>
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00ff8822; border-radius: 10px; }
-      `}} />
+                        {/* Navigation Footer for Sidebar */}
+                        <nav className="h-20 border-t border-cyber-border flex items-center justify-around bg-cyber-dark z-30">
+                            <button
+                                onClick={() => setCurrentView('missions')}
+                                className={`flex flex-col items-center gap-1 group ${currentView === 'missions' ? 'opacity-100' : 'opacity-40 hover:opacity-100'} transition-opacity`}
+                            >
+                                <svg className="w-5 h-5 text-cyber-green" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                                <span className="text-[9px] font-mono uppercase text-cyber-green tracking-widest">Market</span>
+                            </button>
+                            <button
+                                onClick={() => setCurrentView('wallet')}
+                                className={`flex flex-col items-center gap-1 group ${currentView === 'wallet' ? 'opacity-100' : 'opacity-40 hover:opacity-100'} transition-opacity`}
+                            >
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
+                                <span className="text-[9px] font-mono uppercase text-white tracking-widest">Vault</span>
+                            </button>
+                            <button
+                                onClick={() => supabase.auth.signOut().then(() => navigate('/'))}
+                                className="flex flex-col items-center gap-1 group opacity-40 hover:opacity-100 transition-opacity"
+                            >
+                                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                <span className="text-[9px] font-mono uppercase text-red-500 tracking-widest">Jack Out</span>
+                            </button>
+                        </nav>
+                    </aside>
+                )}
+                {/* END: Right Sidebar */}
+            </div>
 
-            {/* Mission Modal */}
+            {/* Modals */}
             {userId && (
                 <CreateMissionModal
                     isOpen={isMissionModalOpen}
                     onClose={() => setIsMissionModalOpen(false)}
-                    onSuccess={() => {
-                        // Optimistic update or refetch could happen here
-                        // Realtime subscription handles list update automatically
-                    }}
+                    onSuccess={() => { }}
                     userId={userId}
                 />
             )}
-
-            {/* Action Modal (Verification / Dispute) */}
             {isActionModalOpen && selectedTask && userId && (
                 <TaskActionModal
                     isOpen={isActionModalOpen}
                     onClose={() => setIsActionModalOpen(false)}
                     task={selectedTask}
-                    isEmployer={true} // In this view, we assume user is the dashboard owner/employer. 
-                    // In a real marketplace, we'd check if session.user.id === task.user_id
-                    onUpdate={() => {
-                        // Realtime handles data, but we might want to manually refresh if needed
-                        console.log('Task updated, waiting for realtime...');
-                    }}
+                    isEmployer={true}
+                    onUpdate={() => { }}
                 />
             )}
         </div>
