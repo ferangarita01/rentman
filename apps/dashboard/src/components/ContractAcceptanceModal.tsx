@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     ShieldCheck, Activity, Wifi, Cpu, Lock, Info as InfoIcon,
     CheckCircle, Share2, Zap, ChevronsRight, X, User, Database, Globe,
@@ -25,12 +25,22 @@ interface ContractAcceptanceModalProps {
 }
 
 const ContractAcceptanceModal: React.FC<ContractAcceptanceModalProps> = ({ isOpen, onClose, task, onAccept, isProcessing }) => {
+    // WebMCP: Tool Reference for Agent Discovery
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isOpen && containerRef.current && task) {
+            containerRef.current.setAttribute('toolname', 'accept_contract_v4');
+            containerRef.current.setAttribute('tooldescription', `Accept contract ${task.id}: ${task.title}. Review specs and initiate protocol.`);
+        }
+    }, [isOpen, task]);
+
     if (!isOpen || !task) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in zoom-in duration-300">
             {/* Main Dossier Modal Container */}
-            <div className="relative w-full max-w-6xl aspect-[16/10] md:aspect-auto md:h-[90vh] flex flex-col border border-white/10 rounded-lg bg-[#050505] overflow-hidden shadow-2xl glow-border">
+            <div ref={containerRef} className="relative w-full max-w-6xl aspect-[16/10] md:aspect-auto md:h-[90vh] flex flex-col border border-white/10 rounded-lg bg-[#050505] overflow-hidden shadow-2xl glow-border">
 
                 {/* Close Button (Added for usability) */}
                 <button onClick={onClose} className="absolute top-4 right-4 z-50 text-white/40 hover:text-white transition-colors">
