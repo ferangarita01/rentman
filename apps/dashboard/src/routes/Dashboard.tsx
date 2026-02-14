@@ -31,6 +31,7 @@ const Dashboard: React.FC = () => {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
     const [isAcceptanceModalOpen, setIsAcceptanceModalOpen] = useState(false);
+    const [scrollPosition, setScrollPosition] = useState(0);
 
     // State
     const [credits, setCredits] = useState(0);
@@ -151,6 +152,10 @@ const Dashboard: React.FC = () => {
         }
     };
 
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        setScrollPosition(e.currentTarget.scrollTop);
+    };
+
     return (
         <div className="bg-cyber-black text-white font-sans min-h-screen overflow-hidden selection:bg-cyber-green selection:text-black">
             {/* Main Layout Wrapper */}
@@ -159,7 +164,12 @@ const Dashboard: React.FC = () => {
                 {/* BEGIN: Left Sidebar - Global Stats & Feed */}
                 <aside className="w-80 h-full glass-panel border-r border-cyber-border z-20 flex flex-col transition-all duration-300">
                     <div className="p-6 border-b border-cyber-border">
-                        <div className="flex items-center gap-3 mb-6 cursor-pointer" onClick={() => setCurrentView('overview')}>
+                        <div
+                            className="flex items-center gap-3 mb-6 cursor-pointer"
+                            onClick={() => setCurrentView('overview')}
+                            toolname="nav_overview"
+                            tooldescription="Navigate to the main Overview grid."
+                        >
                             <div className="w-8 h-8 bg-cyber-green flex items-center justify-center rounded-sm shadow-[0_0_10px_rgba(0,255,136,0.3)]">
                                 <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
                             </div>
@@ -216,33 +226,61 @@ const Dashboard: React.FC = () => {
                 {currentView === 'overview' ? (
                     <>
                         {/* BEGIN: Main Centerpiece - Holographic Globe */}
-                        <main className="flex-1 relative flex items-center justify-center overflow-hidden">
+                        <main
+                            onScroll={handleScroll}
+                            className="flex-1 relative flex items-center justify-center overflow-y-auto custom-scrollbar"
+                        >
+                            {/* Universe Telemetry HUD (Gamification) */}
+                            <div className="fixed top-8 right-8 z-30 font-mono text-[10px] text-cyber-green/60 space-y-1 pointer-events-none text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                    <span>SECTOR: 0x{Math.floor(scrollPosition / 500).toString(16).toUpperCase()}</span>
+                                    <div className="w-1 h-1 bg-cyber-green animate-pulse"></div>
+                                </div>
+                                <div className="text-white/40">DISTANCE: {(scrollPosition * 1.5).toLocaleString()} LY</div>
+                                <div className="text-white/40">VELOCITY: {(Math.min(99.9, (scrollPosition % 100) / 10 + 0.1)).toFixed(2)}c</div>
+                                <div className="mt-2 pt-2 border-t border-white/10 uppercase tracking-widest text-white/20">
+                                    Universe_Stream: ACTIVE
+                                </div>
+                            </div>
+
                             {/* HUD Overlays */}
-                            <div className="absolute top-8 left-8 z-10 font-mono">
+                            <div className="fixed top-8 left-8 z-10 font-mono">
                                 <div className="bg-cyber-green/10 border border-cyber-green px-4 py-2 text-cyber-green text-xs uppercase tracking-tighter backdrop-blur-sm">
                                     Connection: Secure_Link
                                 </div>
                             </div>
-                            <div className="absolute top-8 right-8 z-10 font-mono text-right">
-                                <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Global Load</div>
-                                <div className="text-xl text-cyber-green">74.2%</div>
-                            </div>
 
                             {/* Holographic Globe Visualization Area */}
-                            <div className="relative w-full h-full flex items-center justify-center" id="globe-container">
-                                <CyberpunkGlobe missions={missions} onNodeClick={handleNodeClick} />
+                            <div className="sticky top-0 w-full h-full flex items-center justify-center overflow-hidden" id="globe-container">
+                                <CyberpunkGlobe
+                                    missions={missions}
+                                    onNodeClick={handleNodeClick}
+                                    scrollOffset={scrollPosition}
+                                />
 
                                 {/* Scanning Line Overlay */}
                                 <div className="absolute left-0 right-0 bg-gradient-to-b from-transparent via-cyber-green/10 to-transparent h-1 w-full scan-line pointer-events-none z-10"></div>
                                 <div className="absolute inset-0 rounded-full border border-cyber-green/5 pointer-events-none z-20"></div>
                             </div>
 
+                            {/* Infinite Scroll Spacer */}
+                            <div className="absolute top-0 left-0 w-px h-[10000px] pointer-events-none"></div>
+
                             {/* Globe Controls */}
-                            <div className="absolute bottom-12 flex gap-4 z-30">
-                                <button className="bg-cyber-green text-black font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-white transition-colors shadow-[0_0_20px_rgba(0,255,136,0.3)]" onClick={() => setIsMissionModalOpen(true)}>
+                            <div className="fixed bottom-12 flex gap-4 z-30">
+                                <button
+                                    className="bg-cyber-green text-black font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-white transition-colors shadow-[0_0_20px_rgba(0,255,136,0.3)]"
+                                    onClick={() => setIsMissionModalOpen(true)}
+                                    toolname="open_create_mission"
+                                    tooldescription="Open the modal to create and deploy a new mission contract."
+                                >
                                     Deploy Node
                                 </button>
-                                <button className="border border-cyber-green text-cyber-green font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-cyber-green/10 transition-colors">
+                                <button
+                                    className="border border-cyber-green text-cyber-green font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-cyber-green/10 transition-colors"
+                                    toolname="scan_perimeter"
+                                    tooldescription="Scan the current map view for active nodes (Visual effect only)."
+                                >
                                     Scan Perimeter
                                 </button>
                             </div>
@@ -317,6 +355,8 @@ const Dashboard: React.FC = () => {
                             <button
                                 onClick={() => setCurrentView('missions')}
                                 className={`flex flex-col items-center gap-1 group ${currentView === 'missions' ? 'opacity-100' : 'opacity-40 hover:opacity-100'} transition-opacity`}
+                                toolname="nav_market"
+                                tooldescription="View the marketplace of active missions."
                             >
                                 <svg className="w-5 h-5 text-cyber-green" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
                                 <span className="text-[9px] font-mono uppercase text-cyber-green tracking-widest">Market</span>
@@ -324,6 +364,8 @@ const Dashboard: React.FC = () => {
                             <button
                                 onClick={() => setCurrentView('wallet')}
                                 className={`flex flex-col items-center gap-1 group ${currentView === 'wallet' ? 'opacity-100' : 'opacity-40 hover:opacity-100'} transition-opacity`}
+                                toolname="nav_wallet"
+                                tooldescription="Open the user wallet and funds management."
                             >
                                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
                                 <span className="text-[9px] font-mono uppercase text-white tracking-widest">Vault</span>
@@ -331,6 +373,8 @@ const Dashboard: React.FC = () => {
                             <button
                                 onClick={() => supabase.auth.signOut().then(() => navigate('/'))}
                                 className="flex flex-col items-center gap-1 group opacity-40 hover:opacity-100 transition-opacity"
+                                toolname="nav_logout"
+                                tooldescription="Sign out of the system."
                             >
                                 <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                 <span className="text-[9px] font-mono uppercase text-red-500 tracking-widest">Jack Out</span>

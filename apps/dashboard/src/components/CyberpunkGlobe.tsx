@@ -37,9 +37,10 @@ const getPseudoLocation = (id: string) => {
 interface CyberpunkGlobeProps {
     missions: Task[];
     onNodeClick?: (task: Task) => void;
+    scrollOffset?: number;
 }
 
-const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick }) => {
+const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, scrollOffset = 0 }) => {
     const globeEl = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -102,17 +103,20 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick }
     }, [missions]);
 
     useEffect(() => {
-        // Auto-rotate
+        // Auto-rotate and scroll interaction
         const globe = globeEl.current;
         if (globe) {
             globe.controls().autoRotate = true;
-            globe.controls().autoRotateSpeed = 0.5;
-            globe.controls().enableZoom = false; // Keep it clean for dashboard bg
+            globe.controls().autoRotateSpeed = 0.5 + (scrollOffset / 1000); // Speed up as we scroll
+            globe.controls().enableZoom = false;
 
-            // Adjust camera distance if needed
-            globe.pointOfView({ altitude: 2.5 });
+            // FTL Travel Zoom Effect
+            // As user scrolls, we "zoom in" slightly or adjust altitude
+            const baseAltitude = 2.5;
+            const altitudeOffset = (scrollOffset % 2000) / 4000; // Oscillate/zoom effect
+            globe.pointOfView({ altitude: baseAltitude - altitudeOffset });
         }
-    }, [dimensions]); // Re-adjust when dimensions change
+    }, [dimensions, scrollOffset]);
 
     return (
         <div ref={containerRef} className="absolute inset-0 z-0 opacity-40 pointer-events-auto w-full h-full flex items-center justify-center">
@@ -123,7 +127,8 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick }
                     height={dimensions.height}
                     globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
                     bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                    backgroundColor="rgba(0,0,0,0)"
+                    backgroundImageUrl="https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/cat-sky/night-sky.png"
+                    backgroundColor="rgba(0,0,0,1)"
                     atmosphereColor={NEON_GREEN}
                     atmosphereAltitude={0.15}
                     pointsData={points}
