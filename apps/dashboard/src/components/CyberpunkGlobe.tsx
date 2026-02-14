@@ -142,47 +142,48 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         // --- NEW: Orbital Satellite Swarm ---
         const satelliteGroup = new THREE.Group();
         satelliteGroup.name = 'orbitalSwarm';
-        const satGeometry = new THREE.SphereGeometry(0.2, 4, 4);
-        const satCount = 150;
+        const satCount = 100; // Un poco menos para mejorar rendimiento con modelos más complejos
 
         for (let i = 0; i < satCount; i++) {
-            // Un satélite ahora es un Grupo (Cuerpo + Paneles)
             const satObject = new THREE.Group();
 
             const satColor = Math.random() > 0.5 ? NEON_GREEN : HOLOGRAPHIC_BLUE;
-            const satMaterial = new THREE.MeshBasicMaterial({
+
+            // Material con brillo propio para que resalte en el espacio oscuro
+            const bodyMaterial = new THREE.MeshPhongMaterial({
                 color: satColor,
-                transparent: true,
-                opacity: 0.6 + Math.random() * 0.4
+                emissive: satColor,
+                emissiveIntensity: 0.8,
+                shininess: 100
             });
 
-            // Cuerpo del satélite (Cubo central)
-            const bodyGeom = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-            const body = new THREE.Mesh(bodyGeom, satMaterial);
+            // Cuerpo del satélite (Mucho más grande: 1.5 en lugar de 0.8)
+            const bodyGeom = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            const body = new THREE.Mesh(bodyGeom, bodyMaterial);
             satObject.add(body);
 
-            // Paneles solares (Barras laterales finas)
-            const panelGeom = new THREE.BoxGeometry(3, 0.4, 0.1);
-            const panels = new THREE.Mesh(panelGeom, satMaterial);
+            // Paneles solares (Más anchos y notorios: 5 x 1.2)
+            const panelGeom = new THREE.BoxGeometry(5, 1.2, 0.4);
+            const panels = new THREE.Mesh(panelGeom, bodyMaterial);
             satObject.add(panels);
 
             // Antena / Detalle superior
-            const antGeom = new THREE.CylinderGeometry(0.05, 0.05, 1);
-            const antenna = new THREE.Mesh(antGeom, satMaterial);
-            antenna.position.y = 0.6;
+            const antGeom = new THREE.CylinderGeometry(0.15, 0.15, 2.5);
+            const antenna = new THREE.Mesh(antGeom, bodyMaterial);
+            antenna.position.y = 0.8;
             satObject.add(antenna);
 
-            // Random orbit
-            const radius = 135 + Math.random() * 35;
+            // Órbita más externa para que se vean grandes en perspectiva
+            const radius = 145 + Math.random() * 55;
             const phi = Math.acos(-1 + (2 * i) / satCount);
             const theta = Math.sqrt(satCount * Math.PI) * phi;
 
             satObject.position.setFromSphericalCoords(radius, phi, theta);
-            satObject.lookAt(0, 0, 0); // Orientar hacia el planeta
+            satObject.lookAt(0, 0, 0);
 
-            // Custom speed property
+            // Velocidad más lenta para poder apreciar la forma 3D
             (satObject as any).userData = {
-                speed: 0.0003 + Math.random() * 0.0008,
+                speed: 0.0002 + Math.random() * 0.0005,
                 axis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize()
             };
 
