@@ -132,7 +132,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
             color: HOLOGRAPHIC_BLUE,
             wireframe: true,
             transparent: true,
-            opacity: 0.7,
+            opacity: 0.9,
             side: THREE.DoubleSide
         });
         const shield = new THREE.Mesh(geometry, material);
@@ -242,7 +242,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     height={dimensions.height}
                     globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
                     bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
-                    backgroundImageUrl="https://images.unsplash.com/photo-1464802686167-b939a6910659?q=80&w=2070&auto=format&fit=crop" // High-res Nebula
+                    backgroundImageUrl="https://unpkg.com/three-globe/example/img/night-sky.png"
                     backgroundColor="rgba(0,0,0,1)"
                     showAtmosphere={true}
                     atmosphereColor={NEON_GREEN}
