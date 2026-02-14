@@ -133,17 +133,20 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         if (globe) {
             globe.controls().autoRotate = false;
             globe.controls().autoRotateSpeed = 0;
-            globe.controls().enableZoom = false;
+            globe.controls().enableZoom = true;
+            globe.controls().minDistance = 150; // Prevent going inside the planet
+            globe.controls().maxDistance = 800; // Prevent going too far
             globe.controls().enableDamping = true;
             globe.controls().dampingFactor = 0.05;
 
-            // FTL Travel Zoom Effect
-            // As user scrolls, we "zoom in" slightly or adjust altitude
-            const baseAltitude = 2.5;
-            const altitudeOffset = (scrollOffset % 2000) / 4000; // Oscillate/zoom effect
-            globe.pointOfView({ altitude: baseAltitude - altitudeOffset });
+            // FTL Travel Zoom Effect (Only apply if not currently focused on a node)
+            if (!focusNode) {
+                const baseAltitude = 2.5;
+                const altitudeOffset = (scrollOffset % 2000) / 4000;
+                globe.pointOfView({ altitude: baseAltitude - altitudeOffset }, 400); // Add a short transition for smoothness
+            }
         }
-    }, [dimensions, scrollOffset]);
+    }, [dimensions, scrollOffset, focusNode]);
 
     useEffect(() => {
         // Area Pings on Sector Change
@@ -170,7 +173,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
             globe.pointOfView({
                 lat: focusNode.lat,
                 lng: focusNode.lng,
-                altitude: 1.8 // Zoom in slightly
+                altitude: 1.5 // Zoom in closer for inspection
             }, 1000); // 1s transition
         }
     }, [focusNode]);
