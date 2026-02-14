@@ -242,8 +242,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     height={dimensions.height}
                     globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
                     bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
-                    backgroundImageUrl="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2071&auto=format&fit=crop" // Premium Deep Blue Space
-                    backgroundColor="rgba(0,0,0,1)"
+                    backgroundColor="rgba(0,0,0,0)" // Transparent background
                     showAtmosphere={true}
                     atmosphereColor={NEON_GREEN}
                     atmosphereAltitude={0.17 + (scrollOffset / 10000)}

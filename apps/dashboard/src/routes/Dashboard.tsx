@@ -6,6 +6,7 @@ import CreateMissionModalV2 from '../components/CreateMissionModalV2';
 import TaskActionModal from '../components/TaskActionModal';
 import ContractAcceptanceModal from '../components/ContractAcceptanceModal';
 import CyberpunkGlobe from '../components/CyberpunkGlobe';
+import SpaceBackground from '../components/SpaceBackground';
 
 type View = 'overview' | 'wallet' | 'agents' | 'missions';
 
@@ -230,6 +231,11 @@ const Dashboard: React.FC = () => {
                             onScroll={handleScroll}
                             className="flex-1 relative flex items-center justify-center overflow-y-auto custom-scrollbar"
                         >
+                            {/* NEW: Interactive Cosmic Background */}
+                            <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+                                <SpaceBackground />
+                            </div>
+
                             {/* Universe Telemetry HUD (Gamification) */}
                             <div className="fixed top-8 right-8 z-30 font-mono text-[10px] text-cyber-green/60 space-y-1 pointer-events-none text-right">
                                 <div className="flex items-center justify-end gap-2">
