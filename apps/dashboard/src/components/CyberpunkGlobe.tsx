@@ -103,8 +103,29 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
             }));
 
         setRings(activeRings);
-
     }, [missions]);
+
+    // Holographic Arc Links (Live Network Flow)
+    const arcs = useMemo(() => {
+        const result = [];
+        for (let i = 0; i < points.length; i += 3) {
+            if (points[i + 1]) {
+                result.push({
+                    startLat: points[i].lat,
+                    startLng: points[i].lng,
+                    endLat: points[i + 1].lat,
+                    endLng: points[i + 1].lng,
+                    color: i % 2 === 0 ? [NEON_GREEN, 'transparent'] : [HOLOGRAPHIC_BLUE, 'transparent']
+                });
+            }
+        }
+        return result;
+    }, [points]);
+
+    // Memoized labels for performance
+    const htmlData = useMemo(() => {
+        return [...points, ...(hoverNode ? [{ ...hoverNode, isHover: true }] : [])];
+    }, [points, hoverNode]);
 
     useEffect(() => {
         // Auto-rotate and scroll interaction
@@ -193,21 +214,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
                     pointLabel="label"
 
                     // Holographic Arc Links (Live Network Flow)
-                    arcsData={useMemo(() => {
-                        const arcs = [];
-                        for (let i = 0; i < points.length; i += 3) {
-                            if (points[i + 1]) {
-                                arcs.push({
-                                    startLat: points[i].lat,
-                                    startLng: points[i].lng,
-                                    endLat: points[i + 1].lat,
-                                    endLng: points[i + 1].lng,
-                                    color: i % 2 === 0 ? [NEON_GREEN, 'transparent'] : [HOLOGRAPHIC_BLUE, 'transparent']
-                                });
-                            }
-                        }
-                        return arcs;
-                    }, [points])}
+                    arcsData={arcs}
                     arcColor="color"
                     arcDashLength={0.4}
                     arcDashGap={4}
@@ -220,7 +227,7 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
 
                     // Proximity Scanner (Hover Panel)
                     onPointHover={(point: any) => setHoverNode(point)}
-                    htmlElementsData={[...points, ...(hoverNode ? [{ ...hoverNode, isHover: true }] : [])]}
+                    htmlElementsData={htmlData}
                     htmlElement={(d: any) => {
                         const el = document.createElement('div');
                         if (d.isHover) {
