@@ -27,6 +27,43 @@ const getPseudoLocation = (id: string) => {
     return { lat, lng };
 };
 
+// Generar textura de icono de satélite real
+const createSatelliteTexture = (color: string) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+
+    // Cuerpo central
+    ctx.strokeRect(24, 24, 16, 16);
+    ctx.fillStyle = color;
+    ctx.fillRect(28, 28, 8, 8);
+
+    // Paneles laterales
+    ctx.beginPath();
+    ctx.moveTo(8, 28); ctx.lineTo(24, 28);
+    ctx.moveTo(8, 36); ctx.lineTo(24, 36);
+    ctx.moveTo(8, 28); ctx.lineTo(8, 36); // Panel Izq
+
+    ctx.moveTo(40, 28); ctx.lineTo(56, 28);
+    ctx.moveTo(40, 36); ctx.lineTo(56, 36);
+    ctx.moveTo(56, 28); ctx.lineTo(56, 36); // Panel Der
+
+    // Antenas
+    ctx.moveTo(32, 24); ctx.lineTo(32, 12);
+    ctx.moveTo(28, 12); ctx.lineTo(36, 12);
+
+    ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+};
+
 interface CyberpunkGlobeProps {
     missions: Task[];
     onNodeClick?: (task: Task) => void;
@@ -93,22 +130,8 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         setRings(activeRings);
     }, [missions]);
 
-    // Arcs
-    const arcs = useMemo(() => {
-        const res = [];
-        for (let i = 0; i < points.length; i += 3) {
-            if (points[i + 1]) {
-                res.push({
-                    startLat: points[i].lat,
-                    startLng: points[i].lng,
-                    endLat: points[i + 1].lat,
-                    endLng: points[i + 1].lng,
-                    color: i % 2 === 0 ? [NEON_GREEN, 'transparent'] : [HOLOGRAPHIC_BLUE, 'transparent']
-                });
-            }
-        }
-        return res;
-    }, [points]);
+    // Arcs (Desactivados para una vista más limpia según feedback)
+    const arcs = useMemo(() => [], []);
 
     // HTML Markers Data
     const htmlData = useMemo(() => {
@@ -145,49 +168,39 @@ const CyberpunkGlobe: React.FC<CyberpunkGlobeProps> = ({ missions, onNodeClick, 
         const satCount = 100; // Un poco menos para mejorar rendimiento con modelos más complejos
 
         for (let i = 0; i < satCount; i++) {
-            const satObject = new THREE.Group();
-
             const satColor = Math.random() > 0.5 ? NEON_GREEN : HOLOGRAPHIC_BLUE;
+            const texture = createSatelliteTexture(satColor);
 
-            // Material con brillo propio para que resalte en el espacio oscuro
-            const bodyMaterial = new THREE.MeshPhongMaterial({
-                color: satColor,
-                emissive: satColor,
-                emissiveIntensity: 0.8,
-                shininess: 100
+            if (!texture) continue;
+
+            const material = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.9,
+                color: 0xffffff // Mantener colores de textura
             });
 
-            // Cuerpo del satélite (Mucho más grande: 1.5 en lugar de 0.8)
-            const bodyGeom = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-            const body = new THREE.Mesh(bodyGeom, bodyMaterial);
-            satObject.add(body);
+            const sprite = new THREE.Sprite(material);
 
-            // Paneles solares (Más anchos y notorios: 5 x 1.2)
-            const panelGeom = new THREE.BoxGeometry(5, 1.2, 0.4);
-            const panels = new THREE.Mesh(panelGeom, bodyMaterial);
-            satObject.add(panels);
+            // Tamaño mucho más grande para que se vea el ICONO (8 unidades)
+            sprite.scale.set(8, 8, 1);
 
-            // Antena / Detalle superior
-            const antGeom = new THREE.CylinderGeometry(0.15, 0.15, 2.5);
-            const antenna = new THREE.Mesh(antGeom, bodyMaterial);
-            antenna.position.y = 0.8;
-            satObject.add(antenna);
-
-            // Órbita más externa para que se vean grandes en perspectiva
-            const radius = 145 + Math.random() * 55;
+            // Random orbit
+            const radius = 140 + Math.random() * 60;
             const phi = Math.acos(-1 + (2 * i) / satCount);
             const theta = Math.sqrt(satCount * Math.PI) * phi;
 
-            satObject.position.setFromSphericalCoords(radius, phi, theta);
-            satObject.lookAt(0, 0, 0);
+            sprite.position.setFromSphericalCoords(radius, phi, theta);
 
-            // Velocidad más lenta para poder apreciar la forma 3D
-            (satObject as any).userData = {
-                speed: 0.0002 + Math.random() * 0.0005,
-                axis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize()
+            (sprite as any).userData = {
+                speed: 0.0003 + Math.random() * 0.0006,
+                axis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize(),
+                satRadius: radius,
+                phi: phi,
+                theta: theta
             };
 
-            satelliteGroup.add(satObject);
+            satelliteGroup.add(sprite);
         }
         scene.add(satelliteGroup);
         // ------------------------------------
