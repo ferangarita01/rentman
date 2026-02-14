@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import WalletPage from './Wallet';
 import CreateMissionModal from '../components/CreateMissionModal';
 import TaskActionModal from '../components/TaskActionModal';
+import CyberpunkGlobe from '../components/CyberpunkGlobe';
 
 type View = 'overview' | 'wallet' | 'agents' | 'missions';
 
@@ -184,52 +185,16 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             {/* Holographic Globe Visualization Area */}
-                            <div className="relative w-[600px] h-[600px] rounded-full hologram-glow flex items-center justify-center bg-transparent" id="globe-container" ref={globeRef}>
-                                {/* Tactical 3D Globe Visualization */}
-                                <div className="relative w-full h-full flex items-center justify-center globe-layer">
-                                    <svg className="w-full h-full opacity-90 overflow-visible" viewBox="0 0 200 200">
-                                        <defs>
-                                            <radialGradient cx="50%" cy="50%" id="globeGrad" r="50%">
-                                                <stop offset="70%" stopColor="rgba(5,5,5,1)"></stop>
-                                                <stop offset="100%" stopColor="rgba(0,255,136,0.2)"></stop>
-                                            </radialGradient>
-                                            <filter id="glow">
-                                                <feGaussianBlur result="blur" stdDeviation="1.5"></feGaussianBlur>
-                                                <feComposite in="SourceGraphic" in2="blur" operator="over"></feComposite>
-                                            </filter>
-                                        </defs>
-                                        {/* Atmosphere/Glow */}
-                                        <circle cx="100" cy="100" fill="url(#globeGrad)" r="98"></circle>
-                                        <circle cx="100" cy="100" fill="none" r="98" stroke="rgba(0, 255, 136, 0.3)" strokeWidth="0.5"></circle>
-                                        {/* Rotating Grid Lines */}
-                                        <g fill="none" stroke="rgba(0, 255, 136, 0.15)" strokeWidth="0.3">
-                                            <ellipse cx="100" cy="100" rx="98" ry="30"></ellipse>
-                                            <ellipse cx="100" cy="100" rx="98" ry="60"></ellipse>
-                                            <ellipse cx="100" cy="100" rx="30" ry="98"></ellipse>
-                                            <ellipse cx="100" cy="100" rx="60" ry="98"></ellipse>
-                                            <line x1="100" x2="100" y1="2" y2="198"></line>
-                                            <line x1="2" x2="198" y1="100" y2="100"></line>
-                                        </g>
-                                        {/* Abstract Continents */}
-                                        <path d="M60 70 Q70 60 90 65 T120 80 T140 110 T110 140 T70 130 T50 100 Z" fill="rgba(0, 255, 136, 0.05)" filter="url(#glow)" stroke="#00ff88" strokeWidth="0.7"></path>
-                                        <path d="M140 50 Q160 40 170 60 T160 90 T130 80 Z" fill="rgba(0, 255, 136, 0.05)" filter="url(#glow)" stroke="#00ff88" strokeWidth="0.7"></path>
-                                        <path d="M40 140 Q30 150 45 170 T70 160 T60 140 Z" fill="rgba(0, 255, 136, 0.05)" filter="url(#glow)" stroke="#00ff88" strokeWidth="0.7"></path>
-                                        {/* Mission Nodes (Pulsing) */}
-                                        <g filter="url(#glow)">
-                                            <circle className="animate-pulse-green origin-center" cx="85" cy="75" fill="#00ff88" r="2.5" style={{ animationDelay: '0s' }}></circle>
-                                            <circle className="animate-pulse-green origin-center" cx="150" cy="65" fill="#00ff88" r="2.5" style={{ animationDelay: '0.5s' }}></circle>
-                                            <circle className="animate-pulse-green origin-center" cx="115" cy="125" fill="#00ff88" r="2.5" style={{ animationDelay: '1s' }}></circle>
-                                            <circle className="animate-pulse-green origin-center" cx="55" cy="155" fill="#00ff88" r="2.5" style={{ animationDelay: '1.5s' }}></circle>
-                                        </g>
-                                    </svg>
-                                </div>
+                            <div className="relative w-full h-full flex items-center justify-center" id="globe-container">
+                                <CyberpunkGlobe missions={missions} />
+
                                 {/* Scanning Line Overlay */}
-                                <div className="absolute left-0 right-0 bg-gradient-to-b from-transparent via-cyber-green/20 to-transparent h-1 w-full scan-line pointer-events-none z-10"></div>
-                                <div className="absolute inset-0 rounded-full border border-cyber-green/5 pointer-events-none"></div>
+                                <div className="absolute left-0 right-0 bg-gradient-to-b from-transparent via-cyber-green/10 to-transparent h-1 w-full scan-line pointer-events-none z-10"></div>
+                                <div className="absolute inset-0 rounded-full border border-cyber-green/5 pointer-events-none z-20"></div>
                             </div>
 
                             {/* Globe Controls */}
-                            <div className="absolute bottom-12 flex gap-4">
+                            <div className="absolute bottom-12 flex gap-4 z-30">
                                 <button className="bg-cyber-green text-black font-mono text-xs px-6 py-3 font-bold uppercase hover:bg-white transition-colors shadow-[0_0_20px_rgba(0,255,136,0.3)]" onClick={() => setIsMissionModalOpen(true)}>
                                     Deploy Node
                                 </button>
